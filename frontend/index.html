@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Traveller">
+  <meta name="theme-color" content="#667eea">
+  <title>Traveller - Charakterdatenblatt</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-top">
+        <h1>Traveller</h1>
+        <button id="toggleEditBtn" class="btn-edit">✎ Bearbeiten</button>
+      </div>
+      <div class="header-controls">
+        <div class="character-selector">
+          <select id="characterSelect">
+            <option value="">-- Charakter wählen --</option>
+          </select>
+          <button id="newCharBtn" title="Neuer Charakter">+</button>
+          <button id="deleteCharBtn" title="Charakter löschen">✕</button>
+        </div>
+        <div class="header-actions">
+          <button id="saveBtn" class="btn-save">Speichern</button>
+          <span id="status-message" class="status"></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="tab-navigation">
+      <button class="tab-btn active" data-page="metadata">
+        <span class="tab-icon">👤</span>
+        <span class="tab-label">Charakter</span>
+      </button>
+      <button class="tab-btn" data-page="attributes">
+        <span class="tab-icon">⚡</span>
+        <span class="tab-label">Attribute</span>
+      </button>
+      <button class="tab-btn" data-page="equipment">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Ausrüstung</span>
+      </button>
+      <button class="tab-btn" data-page="career">
+        <span class="tab-icon">🗺️</span>
+        <span class="tab-label">Werdegang</span>
+      </button>
+      <button class="tab-btn" data-page="notes">
+        <span class="tab-icon">📝</span>
+        <span class="tab-label">Notizen</span>
+      </button>
+    </nav>
+
+    <!-- Content Bereich -->
+    <main class="content">
+      <div id="metadata-page" class="page-content active"></div>
+      <div id="attributes-page" class="page-content"></div>
+      <div id="equipment-page" class="page-content"></div>
+      <div id="career-page" class="page-content"></div>
+      <div id="notes-page" class="page-content"></div>
+    </main>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data/skills.js"></script>
+  <script src="js/models/character.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/pages/metadata.js"></script>
+  <script src="js/pages/attributes.js"></script>
+  <script src="js/pages/equipment.js"></script>
+  <script src="js/pages/career.js"></script>
+  <script src="js/pages/notes.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
