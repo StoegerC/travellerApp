@@ -6321,6 +6321,120 @@ body.dark-mode .dm-info-box {
   color: #c8cce8;
 }
 
+/* ── Status-Badges ── */
+body.dark-mode .rel-friendly   { background: #0d1e35; color: #60a5fa; }
+body.dark-mode .rel-neutral    { background: #252840; color: #9095b8; }
+body.dark-mode .rel-hostile    { background: #2d0d10; color: #f87171; }
+body.dark-mode .status-dead    { background: #2d0d10; color: #f87171; }
+body.dark-mode .status-unknown { background: #252840; color: #9095b8; }
+body.dark-mode .loc-known      { background: #1e1a08; color: #fbbf24; }
+body.dark-mode .loc-rumor      { background: #252840; color: #9095b8; }
+body.dark-mode .qst-backlog    { background: #252840; color: #9095b8; }
+body.dark-mode .qst-failed     { background: #2d0d10; color: #f87171; }
+body.dark-mode .qst-completed  { background: #0d1e35; color: #60a5fa; }
+body.dark-mode .location-link  { background: #1e1a08; color: #fbbf24; }
+body.dark-mode .quest-link     { background: #2d0d10; color: #f87171; }
+
+/* ── Zurück-Button ── */
+body.dark-mode .btn-back {
+  background: #1d2035;
+  color: #9095b8;
+  border-color: #2c3050;
+}
+body.dark-mode .btn-back:hover { background: #252840; }
+
+/* ── Ausrüstung – Kategorien & Details ── */
+body.dark-mode .cat-equipment { background: #1e1535; color: #c4b5fd; }
+body.dark-mode .cat-other     { background: #252840; color: #9095b8; }
+body.dark-mode .traits-modal  { background: #161929; color: #dde0f5; }
+body.dark-mode .traits-modal h3 { color: #dde0f5; }
+
+/* ── Strahlungsdosis ── */
+body.dark-mode .combat-rad         { background: #161929; border-color: #2c3050; }
+body.dark-mode .combat-rad-input   { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
+body.dark-mode .combat-rad-btn     { background: #252840; color: #dde0f5; border-color: #2c3050; }
+body.dark-mode .combat-rad-add     { background: #0d2218; border-color: #28a745; color: #4ade80; }
+body.dark-mode .combat-rad-reset   { background: #1d2035; color: #9095b8; border-color: #2c3050; }
+body.dark-mode .combat-rad-display { color: #dde0f5; }
+body.dark-mode .rad-green          { background: #0d2218; border-color: #28a745; color: #4ade80; }
+body.dark-mode .rad-yellow         { background: #1e1a08; border-color: #ffc107; color: #fbbf24; }
+body.dark-mode .rad-orange         { background: #1e1108; border-color: #fd7e14; color: #fb923c; }
+body.dark-mode .rad-red            { background: #2d0d10; border-color: #dc3545; color: #f87171; }
+
+/* ── Weiterbildung / Training ── */
+body.dark-mode .training-card {
+  background: #161929;
+  border-color: #2c3050;
+  border-left-color: #667eea;
+}
+body.dark-mode .training-card--ready {
+  border-left-color: #10b981;
+  background: #0d1e18;
+}
+body.dark-mode .training-card-top   { color: #dde0f5; }
+body.dark-mode .training-card-notes { background: #1d2035; border-color: #2c3050; color: #c8cce8; }
+body.dark-mode .training-empty      { color: #4a5070; }
+body.dark-mode .train-method-self   { background: #0d1e35; color: #60a5fa; }
+body.dark-mode .train-method-teacher { background: #0d2218; color: #34d399; }
+body.dark-mode .train-method-course  { background: #1e1a08; color: #fbbf24; }
+body.dark-mode .train-method-small   { color: #4a5070; }
+body.dark-mode .training-pm-btn {
+  background: #1d2035;
+  border-color: #2c3050;
+  color: #dde0f5;
+}
+body.dark-mode .training-pm-btn:active { background: #252840; border-color: #667eea; }
+
+/* ── Werdegang ── */
+body.dark-mode .cr-event-row        { background: #161929; border-color: #2c3050; }
+body.dark-mode .cr-event-row.expanded .cr-event-header { background: #1a1e35; }
+body.dark-mode .cr-event-title      { color: #dde0f5; }
+body.dark-mode .cr-event-term       { background: #252840; color: #9095b8; }
+body.dark-mode .cr-skill-tag        { background: #252840; color: #c8cce8; }
+body.dark-mode .cr-sort-btn         { background: #1d2035; border-color: #2c3050; color: #9095b8; }
+body.dark-mode .cr-sort-btn.active  { background: #1a1e35; border-color: #667eea; color: #818cf8; }
+body.dark-mode .cr-bg-field         { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
+body.dark-mode .cr-fav-row          { background: #161929; border-color: #2c3050; }
+body.dark-mode .cr-fav-row:hover    { background: #1a1e35; }
+body.dark-mode .cr-fav-name         { color: #dde0f5; }
+body.dark-mode .cr-fav-role         { color: #6068a0; }
+body.dark-mode .cr-fav-desc         { color: #8890b0; }
+
+/* ── Finanzen Modal & Schulden ── */
+body.dark-mode .fin-modal           { background: #161929; color: #dde0f5; }
+body.dark-mode .fin-modal h3        { color: #dde0f5; }
+body.dark-mode .fin-modal-field     { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
+body.dark-mode .fin-modal-field:focus { background: #1d2035; }
+body.dark-mode .fin-modal-textarea  { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
+body.dark-mode .fin-btn-cancel      { background: #1d2035; color: #9095b8; border-color: #2c3050; }
+body.dark-mode .fin-btn-cancel:active { background: #252840; }
+body.dark-mode .fin-btn-settle      { background: #1e1a08; color: #fbbf24; border-color: #856404; }
+body.dark-mode .fin-debt-card       { background: #161929; border-color: #2c3050; }
+body.dark-mode .fin-debt-name       { color: #dde0f5; }
+body.dark-mode .fin-debt-creditor   { color: #8890b0; }
+body.dark-mode .fin-debt-info       { color: #8890b0; }
+body.dark-mode .fin-debt-pay        { background: #2d0d10; color: #f87171; border-color: #dc3545; }
+body.dark-mode .fin-block           { background: #161929; border-color: #2c3050; }
+body.dark-mode .fin-block-title     { color: #9095b8; }
+
+/* ── Markdown-Inhalte (Session-Content) ── */
+body.dark-mode .md-content               { color: #c8cce8; }
+body.dark-mode .md-content .md-h1,
+body.dark-mode .md-content .md-h2,
+body.dark-mode .md-content .md-h3       { color: #dde0f5; }
+body.dark-mode .md-content .md-h1       { border-bottom-color: #2c3050; }
+body.dark-mode .md-content .md-p        { color: #c8cce8; }
+body.dark-mode .md-content .md-table th { background: #161929; color: #9095b8; }
+body.dark-mode .md-content .md-table td { border-color: #2c3050; }
+body.dark-mode .md-content .md-table tr:nth-child(even) td { background: #1a1d2e; }
+body.dark-mode .md-content .md-pre      { background: #0d0f1a; border-color: #2c3050; color: #c8cce8; }
+body.dark-mode .md-content .md-hr       { border-color: #2c3050; }
+
+/* ── Orte – Autocomplete & Suggestions ── */
+body.dark-mode .loc-suggest-item    { background: #161929; color: #dde0f5; border-color: #2c3050; }
+body.dark-mode .loc-suggest-item:hover { background: #1d2035; }
+body.dark-mode .loc-trav-action.saved { background: #1a1e35; color: #818cf8; border-color: #3a4480; }
+
 /* ── Scrollbar (Webkit) ── */
 body.dark-mode ::-webkit-scrollbar {
   width: 6px;
