@@ -78,8 +78,8 @@ const KartePage = {
     Object.assign(host.style, {
       display: 'block',
       top:    Math.round(r.top)    + 'px',
-      left:   '0',
-      width:  '100vw',
+      left:   Math.round(r.left)   + 'px',
+      width:  Math.round(r.width)  + 'px',
       height: Math.round(r.height) + 'px',
     });
   },
