@@ -262,10 +262,11 @@ const App = {
     const container = document.getElementById(`${this.currentPage}-page`);
     container.innerHTML = page.render(this.currentCharacter);
 
-    if (page.attachListeners) page.attachListeners();
-
+    // active vor attachListeners setzen, damit getBoundingClientRect() korrekte Werte liefert
     document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
     container.classList.add('active');
+
+    if (page.attachListeners) page.attachListeners();
 
     this.updateEditButton();
     this._updateUndoBtn();
