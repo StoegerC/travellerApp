@@ -6495,8 +6495,32 @@ body.dark-mode .combat-armor-row-name { color: #9095b8; }
 body.dark-mode .combat-armor-row-prot { color: #dde0f5; }
 body.dark-mode .combat-armor-rad   { background: #252840; color: #9095b8; }
 
+/* Status-Banner */
+body.dark-mode .combat-status-fit         { background: #0d2218; color: #4ade80; }
+body.dark-mode .combat-status-wounded     { background: #1e1a08; color: #fbbf24; }
+body.dark-mode .combat-status-unconscious { background: #220d10; color: #f87171; }
+
+/* Initiative-Buttons (farbige Varianten) */
+body.dark-mode .combat-init-react  { background: #1e1a08; border-color: #ffc107; color: #fbbf24; }
+body.dark-mode .combat-init-roll   { background: #161d40; border-color: #667eea; color: #818cf8; }
+body.dark-mode .combat-init-dex-info { color: #6068a0; }
+
+/* Munition */
+body.dark-mode .combat-ammo-btn    { background: #1d2035; border-color: #2c3050; color: #dde0f5; }
+body.dark-mode .combat-ammo-reload { background: #0d2218; border-color: #28a745; color: #4ade80; }
+body.dark-mode .combat-ammo-count  { color: #dde0f5; }
+body.dark-mode .combat-ammo-sep    { color: #4a5070; }
+body.dark-mode .combat-ammo-mag    { color: #6068a0; }
+
+/* Rückstoß-Warnung */
+body.dark-mode .combat-recoil-warn { background: #1e1a08; border-color: #ffc107; color: #fbbf24; }
+
 /* Erste Hilfe */
 body.dark-mode .combat-fa-btn      { background: #0d2218; border-color: #28a745; color: #4ade80; }
+body.dark-mode .combat-fa-warn     { background: #1e1a08; border-color: #ffc107; color: #fbbf24; }
+body.dark-mode .combat-fa-entry    { background: #1a1d2e; border-color: #2c3050; }
+body.dark-mode .combat-fa-label    { color: #c8cce8; }
+body.dark-mode .combat-fa-del      { color: #4a5070; }
 
 /* Rüstung in Ausrüstungs-Tab */
 body.dark-mode .item-equipped td,
