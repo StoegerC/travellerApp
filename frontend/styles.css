@@ -6168,20 +6168,71 @@ body.dark-mode .md-table td {
 }
 
 /* ── Kampf-Seite ── */
-body.dark-mode .combat-tile {
+body.dark-mode .combat-block {
   background: #161929;
   border-color: #2c3050;
 }
-body.dark-mode .combat-tile h3 {
+body.dark-mode .combat-block-title {
   color: #9095b8;
-  border-bottom-color: #2c3050;
 }
-body.dark-mode .combat-val {
-  color: #dde0f5;
-}
-body.dark-mode .combat-label {
-  color: #6068a0;
-}
+
+/* Attribut-Karten */
+body.dark-mode .combat-attr-green  { background: #0d2218; border-color: #28a745; }
+body.dark-mode .combat-attr-yellow { background: #1e1a08; border-color: #ffc107; }
+body.dark-mode .combat-attr-red    { background: #220d10; border-color: #dc3545; }
+body.dark-mode .combat-attr-label  { color: #9095b8; }
+body.dark-mode .combat-attr-dm     { color: #dde0f5; }
+body.dark-mode .combat-attr-current { color: #eef0ff; }
+body.dark-mode .combat-attr-sep    { color: #4a5070; }
+body.dark-mode .combat-attr-max    { color: #8890b0; }
+body.dark-mode .combat-attr-btn    { background: rgba(255,255,255,0.08); color: #dde0f5; }
+body.dark-mode .combat-attr-btn:active { background: rgba(255,255,255,0.16); }
+
+/* Initiative */
+body.dark-mode .combat-initiative  { background: #161929; border-color: #2c3050; }
+body.dark-mode .combat-init-val    { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
+body.dark-mode .combat-init-btn    { background: #252840; color: #dde0f5; border-color: #2c3050; }
+
+/* Aktive Ausrüstung / Fernkampf */
+body.dark-mode .combat-equip-item  { background: #1d2035; border-color: #2c3050; }
+body.dark-mode .combat-equip-name  { color: #dde0f5; }
+body.dark-mode .combat-equip-tag   { background: #252840; color: #9095b8; }
+body.dark-mode .combat-equip-stats { color: #c8cce8; }
+body.dark-mode .combat-equip-empty { color: #4a5070; }
+body.dark-mode .combat-recoil-warn { background: #1e1a08; color: #ffc107; border-color: #856404; }
+
+/* Munition */
+body.dark-mode .combat-ammo-count  { color: #dde0f5; }
+body.dark-mode .combat-ammo-sep    { color: #4a5070; }
+body.dark-mode .combat-ammo-mag    { color: #6068a0; }
+body.dark-mode .combat-ammo-btn    { background: #1d2035; border-color: #2c3050; color: #dde0f5; }
+body.dark-mode .combat-ammo-btn:active { background: #252840; }
+body.dark-mode .combat-ammo-reload { background: #0d2218; border-color: #28a745; color: #4ade80; }
+
+/* Schutz / Rüstungsblock */
+body.dark-mode .combat-prot        { background: #12162e; border-color: #2c3050; }
+body.dark-mode .combat-prot-value  { color: #818cf8; }
+body.dark-mode .combat-prot-label  { color: #6366f1; }
+body.dark-mode .combat-prot-empty  { color: #4a5070; }
+body.dark-mode .combat-armor-row-name { color: #9095b8; }
+body.dark-mode .combat-armor-row-prot { color: #dde0f5; }
+body.dark-mode .combat-armor-rad   { background: #252840; color: #9095b8; }
+
+/* Erste Hilfe */
+body.dark-mode .combat-fa-btn      { background: #0d2218; border-color: #28a745; color: #4ade80; }
+
+/* Rüstung in Ausrüstungs-Tab */
+body.dark-mode .item-equipped td,
+body.dark-mode .armor-active td    { background: #141c35; }
+body.dark-mode .armor-total td     { background: #12162e; border-top-color: #667eea !important; }
+body.dark-mode .armor-total-names  { color: #818cf8; }
+body.dark-mode .equip-toggle       { background: #1d2035; border-color: #2c3050; color: #4a5070; }
+body.dark-mode .equip-toggle.on    { border-color: #667eea; color: #667eea; }
+
+/* Traits Modal */
+body.dark-mode .traits-modal       { background: #161929; color: #dde0f5; }
+body.dark-mode .traits-modal h3    { color: #dde0f5; }
+body.dark-mode .traits-label       { color: #9095b8; }
 
 /* ── Finanzen-Seite ── */
 body.dark-mode .finance-card,
