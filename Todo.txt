@@ -61,4 +61,4 @@ UI / UX
 [ ] Mobile-Optimierung (auf kleinen Smartphones eng)
 [ ] Desktop-Layout verbessern (viel Leerraum)
 [x] Dark Mode: 🌙/☀️ Toggle-Button im Header, automatische Erkennung via prefers-color-scheme, Präferenz in localStorage
-[ ] Weiterbildung: automatisches Datum-Tracking statt manuellem +/- Monatszähler
+ja[ ] Weiterbildung: automatisches Datum-Tracking statt manuellem +/- Monatszähler
