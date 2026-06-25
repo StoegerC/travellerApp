@@ -5944,6 +5944,25 @@ body.dark-mode #sessionContent {
   border-color: #2c3050;
 }
 
+/* ── Session-Formular Datum & Tags ── */
+body.dark-mode .tag-section {
+  background: #0f1122;
+  border-color: #2c3050;
+}
+body.dark-mode .tag-section h4    { color: #818cf8; }
+body.dark-mode .tag-picker label  { color: #6068a0; }
+body.dark-mode .event-chip        { background: #1e1108; color: #fb923c; }
+body.dark-mode .tp-create-form    { border-bottom-color: #2c3050; }
+body.dark-mode .detail-form-actions { border-top-color: #2c3050; }
+body.dark-mode .trav-date-sub-label { color: #6068a0; }
+body.dark-mode .trav-date-num-inp {
+  background: #1d2035;
+  color: #dde0f5;
+  border-color: #2c3050;
+}
+body.dark-mode .trav-date-num-inp:focus { border-color: #667eea; }
+body.dark-mode .trav-date-preview { color: #a78bfa; }
+
 /* ── Tag Picker ── */
 body.dark-mode .tag-picker-dropdown {
   background: #161929;
