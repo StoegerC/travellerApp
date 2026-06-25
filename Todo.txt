@@ -1,73 +1,67 @@
-Traveller Charsheet – Offene Punkte
-====================================
+Traveller Charsheet – Changelog & Backlog
+==========================================
+
+VERSION 1.0.0  (2026-06-25)
+════════════════════════════
 
 DATENHALTUNG & PERSISTENZ
 [x] Autosave (1,5 Sek. Debounce nach jeder Eingabe; Speichern-Button entfernt)
-[ ] Backend-API aktivieren (server.js ist Dummy, keine echte Persistenz)
-[x] localStorage-Limit: auf IndexedDB umgestellt (kein relevantes Limit mehr)
-[ ] Sync zwischen Geräten (SyncProvider-Abstraktion vorbereitet, Cloudflare R2 als nächster Schritt)
+[x] IndexedDB statt localStorage (kein relevantes Limit mehr)
+[x] JSON-Export / Import (Backup & Geräte-Transfer)
 
 CHARAKTERVERWALTUNG
-[ ] Regel-System-Switch (character.system wird gesetzt aber nie ausgewertet)
-[x] Undo / Versionsverlauf: in-memory Undo (↩ Button + Cmd/Strg+Z), persistente Versionen in IndexedDB (gespeichert bei Tab-Wechsel / Fertig), Verlauf-Modal
+[x] Undo / Versionsverlauf: in-memory Undo (↩ Button + Cmd/Strg+Z), persistente Versionen
+    in IndexedDB (gespeichert bei Tab-Wechsel / Fertig), Verlauf-Modal
+[x] Mehrere Porträts mit Pfeil-Navigation (‹ ›), Upload, Löschen
+
+KAMPF
+[x] Physische Attribute und Aktive Rüstung getrennte Kacheln
+[x] 2×2-Grid-Layout: Initiative | Bewaffnung / Attribute | Rüstung / Strahlungsdosis
+[x] Dark-Mode: Statusanzeige, Initiative-Buttons, Munition, Erste Hilfe
+
+NOTIZEN / LOG
+[x] Kreuzverweise: Session ↔ Person / Ort / Quest (bidirektionale Link-Chips)
+[x] Personen: Rasse-Feld, Status-Default „Lebend", Filter, Bearbeitungsflow
+[x] Orte: Travellermap-Integration, UWP-Dekodierung, Imperialkalender (YYYY-DDD)
+[x] Sessions: Markdown-Editor, Volltext-Suche, Filter, Aktiv-Markierung
+[x] Zeitstempel (createdAt) überall; Sortierung nach Datum / Name / Besuchsdatum
+[x] Autosave-Bug: _editTags wurde nach Autosave genullt → behoben
+
+KARTE
+[x] Eigener Karte-Tab mit Travellermap-Iframe (persistent, Safari-kompatibel)
+[x] Vollbild-Karte mit sichtbarer Seitenleisten-Navigation
+[x] Orte direkt aus Log auf Karte verknüpfbar
+
+UI / UX
+[x] Favicon (Traveller-Stern, Canvas-generiert, Safari-kompatibel)
+[x] Responsives Layout: kompakter Header mobil, Sidebar-Navigation ≥ 1280px
+[x] Dark Mode (🌙/☀️ Toggle + automatische Erkennung via prefers-color-scheme)
+[x] PWA: installierbar auf iOS / iPad / Mac, vollständig offline-fähig
+[x] GitHub Pages: automatisches Deployment bei Push auf main
+
+════════════════════════════
+BACKLOG
+════════════════════════════
+
+DATENHALTUNG
+[ ] Sync zwischen Geräten (Cloudflare Workers + KV)
+[ ] Charakter per QR-Code oder Link teilen (Base64-JSON)
+[c] Backend-API (server.js Dummy) – durch PWA + IndexedDB ersetzt
+
+CHARAKTERVERWALTUNG
 [ ] Skill-Level -1 (nicht vorhanden) vs. 0 (Level 0) klar in der UI unterscheiden
+[ ] Regel-System-Switch (character.system wird gesetzt aber nie ausgewertet)
 
 NOTIZEN / VERKNÜPFUNGEN
-[x] Kreuzverweise: Session ↔ Person / Ort / Quest (bidirektionale Link-Chips)
-[x] Autosave-Bug: _editTags wurde nach Autosave genullt → Tags gingen verloren
-[x] Person mit Rasse-Feld (Default: Mensch)
 [ ] Person kann mehrere Orte haben (aktuell nur ein locationId)
 [ ] Quest: Ortsverknüpfung hinzufügen
 [ ] Quest: mehrere Auftraggeber ermöglichen
 [ ] Events in Session-Tags auswerten (werden gesammelt aber nirgendwo angezeigt)
 
-NOTIZEN – JOURNAL (SESSIONS)
-[x] Session als "Aktiv" markieren (nur eine gleichzeitig)
-[x] Markdown-Editor statt Rich-Text-Buttons
-[x] Volltext-Suche (Titel + Inhalt)
-[x] Filter: Personen-Dropdown + Orte-Dropdown (gruppiert mit "Filter"-Label)
-[x] Neue Person / Ort beim Anlegen mit aktiver Session verknüpfen (Checkbox)
-[x] + Session Button im Nicht-Bearbeitungsmodus verfügbar
-
-NOTIZEN – ZEITSTEMPEL & SORTIERUNG
-[x] createdAt-Zeitstempel bei Sessions, Personen, Orten, Quests (editierbar im Bearbeitungsmodus)
-[x] createdAt bei Ausrüstungseinträgen (sichtbar im Details-Modal)
-[x] createdAt bei Werdegang-Termen und Ereignissen (sichtbar im Modal)
-[x] Sortierung nach Erstellungsdatum / Name / Besuchsdatum (Orte)
-[x] Imperialkalender einheitlich: Jahr + Tag (YYYY-DDD), bei Session und Ort
-[x] Datumsanzeige überall als YYYY-DDD
-
-NOTIZEN – PERSONEN
-[x] + Person Button im Nicht-Bearbeitungsmodus; Bearbeitungsmodus öffnet sich automatisch
-[x] Neuen Person: Bearbeitungsmodus schließt sich nach "Erstellen"
-[x] Status-Default: Lebend; keine Bulletpoints
-[x] Filter: Beziehungs-Dropdown + Orte-Dropdown (gruppiert mit "Filter"-Label)
-
-NOTIZEN – ORTE
-[x] Travellermap-Integration: Kartenansicht mit Planetensuche (Welten + Sektoren + Teilsektoren)
-[x] UWP-Dekodierung in der Detailansicht (Leseansicht = Erklärungen, Bearbeitungsmodus = Rohcode)
-[x] Imperialkalender-Datumspicker (YYYY-DDD Format, Jahr + Tag)
-[x] Besuchsdatum ersetzt "Besucht"-Badge; besuchte Orte grün
-[x] Travellermap-Suche aus der Ortsliste entfernt
-[x] + Ort Button im Nicht-Bearbeitungsmodus verfügbar
-[x] Filter: Status-Dropdown (gruppiert mit "Filter"-Label)
-
-KAMPF
-[x] Physische Attribute und Aktive Rüstung getrennte Kacheln
-[x] 2×2-Grid-Layout: Initiative | Aktive Bewaffnung / Physische Attribute | Aktive Rüstung / Strahlungsdosis
-
 UI / UX
-[x] Favicon: Traveller-Stern (Canvas-generiert, Safari-kompatibel)
-[x] Mobile-Optimierung: kompakter Header, nur Tab-Icons, reduzierter Padding, Filter untereinander
-[x] Desktop-Layout: Sidebar-Navigation links (≥1280px), Content max-width 960px, Grid-Layouts für Finanzen/Karriere
-[x] Dark Mode: 🌙/☀️ Toggle-Button im Header, automatische Erkennung via prefers-color-scheme, Präferenz in localStorage
 [ ] Weiterbildung: automatisches Datum-Tracking statt manuellem +/- Monatszähler
+[ ] Würfelwurf-Widget: 2d6 + Modifikator direkt in der App
+[ ] Schnellsuche global im Header (Personen, Orte, Quests, Sessions)
+[ ] Timeline-Ansicht: Sessions chronologisch als Zeitstrahl
 [ ] Druckansicht / PDF-Export des Charakterbogens
-[ ] Würfelwurf-Widget: 2d6 + Modifikator direkt in der App (Traveller-Kernsystem)
-[ ] Schnellsuche über alle Daten (Personen, Orte, Quests, Sessions) global im Header
-[ ] Timeline-Ansicht: Sessions chronologisch als Zeitstrahl darstellen
-[ ] Schiffs-Log: eigener Tab für Raumschiff-Daten und Reise-Einträge (Traveller-spezifisch)
-
-EXPORT & BACKUP
-[ ] JSON-Export/Import für Charakterdaten (Backup / Geräte-Transfer)
-[ ] Charakter zwischen Geräten teilen (QR-Code oder Link mit Base64-kodiertem JSON)
+[ ] Schiffs-Log: eigener Tab für Raumschiff-Daten und Reisen (Traveller-spezifisch)
