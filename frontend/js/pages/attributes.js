@@ -80,7 +80,7 @@ const AttributesPage = {
               <input type="number" class="attr-current" data-attr="${key}" value="${current}" min="${isPsi ? -1 : 0}" max="15" style="width: 100%; padding: 6px;">
             </td>
             <td style="padding: 12px;">
-              <input type="number" class="attr-dm" data-attr="${key}" value="${dmValue}" min="-10" max="10" readonly style="width: 100%; padding: 6px; background: #f5f5f5; color: #666;">
+              <input type="number" class="attr-dm" data-attr="${key}" value="${dmValue}" min="-10" max="10" readonly style="width: 100%; padding: 6px;">
             </td>
           </tr>
         `;
@@ -101,7 +101,7 @@ const AttributesPage = {
     const maxSkillLevels = 3 * (eduDM + intDM);
     const fmt = n => n >= 0 ? `+${n}` : `${n}`;
 
-    html += `<p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">Max. Skill Levels = 3 × (EDU DM + INT DM) = 3 × (${fmt(eduDM)} + ${fmt(intDM)}) = <strong>${maxSkillLevels}</strong></p>`;
+    html += `<p class="attr-max-skill-hint">Max. Skill Levels = 3 × (EDU DM + INT DM) = 3 × (${fmt(eduDM)} + ${fmt(intDM)}) = <strong>${maxSkillLevels}</strong></p>`;
     
     // Suchfilter und Add-Button (Add-Button nur im Edit-Modus)
     html += `
