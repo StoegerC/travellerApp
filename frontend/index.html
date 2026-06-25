@@ -127,13 +127,12 @@
 
   </div>
 
-  <!-- Persistenter Karten-iframe – lebt außerhalb des Re-Render-Zyklus -->
-  <div id="map-iframe-stash"
-       style="position:fixed;left:-9999px;width:1px;height:1px;overflow:hidden;"
-       aria-hidden="true">
+  <!-- Persistenter Karten-iframe – position:fixed, nie im DOM verschoben (Safari-safe) -->
+  <div id="map-iframe-host"
+       style="display:none;position:fixed;z-index:5;overflow:hidden;">
     <iframe id="travellerMapFrame"
-            class="traveller-map-iframe"
-            allowfullscreen></iframe>
+            allowfullscreen
+            style="width:100%;height:100%;border:none;display:block;"></iframe>
   </div>
 
   <!-- Versionsverlauf Modal -->

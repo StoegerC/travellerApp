@@ -8,11 +8,13 @@
  *                  temporärer Zustand während der Session-Bearbeitung
  */
 const NotesPage = {
-  _activeTab:       'sessions',
-  _detailId:        null,
-  _editTags:        null,
-  _mapFocusId:      null,
-  _prefillLocation: null,
+  _activeTab:          'sessions',
+  _detailId:           null,
+  _editTags:           null,
+  _mapFocusId:         null,
+  _prefillLocation:    null,
+  _mapScrollHandler:   null,
+  _mapResizeHandler:   null,
   _notesSort:       { sessions: 'createdAt', persons: 'name', locations: 'name', quests: 'createdAt' },
   _notesDir:        { sessions: 'desc', persons: 'asc', locations: 'asc', quests: 'desc' },
   _questFilterVal:  'active',
@@ -554,6 +556,32 @@ const NotesPage = {
     </div>`;
   },
 
+  hideMapIframe() {
+    const host = document.getElementById('map-iframe-host');
+    if (host) host.style.display = 'none';
+    const content = document.querySelector('.content');
+    if (this._mapScrollHandler) {
+      content?.removeEventListener('scroll', this._mapScrollHandler);
+      window.removeEventListener('resize', this._mapResizeHandler);
+      this._mapScrollHandler = null;
+      this._mapResizeHandler = null;
+    }
+  },
+
+  _syncMapPos() {
+    const slot = document.getElementById('mapIframeSlot');
+    const host = document.getElementById('map-iframe-host');
+    if (!slot || !host) { this.hideMapIframe(); return; }
+    const r = slot.getBoundingClientRect();
+    Object.assign(host.style, {
+      display: 'block',
+      top:    r.top    + 'px',
+      left:   r.left  + 'px',
+      width:  r.width + 'px',
+      height: r.height + 'px',
+    });
+  },
+
   _initMapIframe() {
     const iframe = document.getElementById('travellerMapFrame');
     if (!iframe) return;
@@ -565,13 +593,23 @@ const NotesPage = {
       this._mapFocusId = null;
       if (focus?.mapSector && focus?.mapHex) {
         iframe.src = `https://travellermap.com/?sector=${encodeURIComponent(focus.mapSector)}&hex=${focus.mapHex}&scale=64&style=poster&options=87046`;
-        return;
       }
-    }
-    // Nur beim ersten Laden eine URL setzen
-    if (!iframe.src || iframe.src === 'about:blank') {
+    } else if (!iframe.src || iframe.src === 'about:blank') {
       iframe.src = DEFAULT;
     }
+
+    // Scroll- und Resize-Listener um den Host über dem Slot zu halten
+    const content = document.querySelector('.content');
+    if (this._mapScrollHandler) {
+      content?.removeEventListener('scroll', this._mapScrollHandler);
+      window.removeEventListener('resize', this._mapResizeHandler);
+    }
+    const sync = () => this._syncMapPos();
+    this._mapScrollHandler = sync;
+    this._mapResizeHandler = sync;
+    content?.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', sync, { passive: true });
+    sync();
   },
 
   // ─────────────────── IMPERIALKALENDER HELPERS ────────────────────────────
