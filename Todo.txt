@@ -58,8 +58,8 @@ KAMPF
 
 UI / UX
 [x] Favicon: Traveller-Stern (Canvas-generiert, Safari-kompatibel)
-[ ] Mobile-Optimierung (auf kleinen Smartphones eng)
-[ ] Desktop-Layout verbessern (viel Leerraum)
+[x] Mobile-Optimierung: kompakter Header, nur Tab-Icons, reduzierter Padding, Filter untereinander
+[x] Desktop-Layout: Sidebar-Navigation links (≥1280px), Content max-width 960px, Grid-Layouts für Finanzen/Karriere
 [x] Dark Mode: 🌙/☀️ Toggle-Button im Header, automatische Erkennung via prefers-color-scheme, Präferenz in localStorage
 [ ] Weiterbildung: automatisches Datum-Tracking statt manuellem +/- Monatszähler
 [ ] Druckansicht / PDF-Export des Charakterbogens
