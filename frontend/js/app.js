@@ -265,6 +265,7 @@ const App = {
     // active vor attachListeners setzen, damit getBoundingClientRect() korrekte Werte liefert
     document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
     container.classList.add('active');
+    document.body.classList.toggle('page-karte', this.currentPage === 'karte');
 
     if (page.attachListeners) page.attachListeners();
 

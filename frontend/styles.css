@@ -5076,8 +5076,8 @@ button {
   display: flex;
   flex-direction: column;
   gap: 0;
-  height: calc(200vh - 400px);
-  min-height: 800px;
+  flex: 1;
+  min-height: 0;
 }
 
 /* ── Map search bar ── */
@@ -5690,6 +5690,31 @@ button {
   .person-cards-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   }
+}
+
+/* ===== KARTE-VOLLBILD ===== */
+body.page-karte .content {
+  padding: 0;
+  padding-bottom: env(safe-area-inset-bottom);
+  overflow: hidden;
+}
+
+body.page-karte #karte-page.active {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+body.page-karte #karte-page h2 {
+  display: none;
+}
+
+body.page-karte .map-search-bar {
+  border-radius: 0;
+}
+
+body.page-karte .map-loc-bar {
+  border-radius: 0;
 }
 
 /* ===================================================================

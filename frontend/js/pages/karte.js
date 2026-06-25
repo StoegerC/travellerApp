@@ -77,10 +77,10 @@ const KartePage = {
     const r = slot.getBoundingClientRect();
     Object.assign(host.style, {
       display: 'block',
-      top:    r.top    + 'px',
-      left:   r.left  + 'px',
-      width:  r.width + 'px',
-      height: r.height + 'px',
+      top:    Math.round(r.top)    + 'px',
+      left:   '0',
+      width:  '100vw',
+      height: Math.round(r.height) + 'px',
     });
   },
 
