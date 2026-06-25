@@ -6179,7 +6179,32 @@ body.dark-mode .session-active-badge {
   border-color: #14532d;
 }
 
+/* ── Personen-Bearbeitungsformular ── */
+body.dark-mode .person-img-wrap {
+  background: #1d2035;
+  border-color: #2c3050;
+}
+body.dark-mode .detail-desc {
+  background: #161929;
+  color: #c8cce8;
+}
+body.dark-mode .detail-notes {
+  background: #1a1608;
+  border-left-color: #ffc107;
+  color: #c8cce8;
+}
+body.dark-mode .detail-section {
+  color: #c8cce8;
+}
+body.dark-mode .detail-section strong { color: #9095b8; }
+body.dark-mode .person-role { color: #8890b0; }
+body.dark-mode .person-race { color: #6068a0; }
+
 /* ── Person Picker (Auftraggeber) ── */
+body.dark-mode .person-picker-field {
+  background: #1d2035;
+  border-color: #2c3050;
+}
 body.dark-mode .person-picker-dropdown {
   background: #161929;
   border-color: #2c3050;
@@ -6189,6 +6214,22 @@ body.dark-mode .person-picker-option {
 }
 body.dark-mode .person-picker-option:hover {
   background: #252840;
+}
+body.dark-mode .pp-name { color: #dde0f5; }
+body.dark-mode .pp-role { color: #6068a0; }
+body.dark-mode .pp-empty { color: #4a5070; }
+
+/* ── Ort-Bearbeitungsformular ── */
+body.dark-mode .loc-suggestions {
+  background: #161929;
+  border-color: #2c3050;
+}
+body.dark-mode .loc-suggest-item strong { color: #dde0f5; }
+body.dark-mode .loc-suggest-item span   { color: #6068a0; }
+body.dark-mode .loc-map-badge {
+  background: #0d2218;
+  border-color: #166534;
+  color: #4ade80;
 }
 
 /* ── Markdown-Rendering ── */
