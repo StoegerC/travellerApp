@@ -525,15 +525,6 @@ const NotesPage = {
   // ─────────────────────────── TRAVELLER MAP ───────────────────────────────
   _mapView(data) {
     const linked = data.locations.filter(l => l.mapX != null);
-    const focus  = this._mapFocusId
-      ? data.locations.find(l => l.id === this._mapFocusId)
-      : null;
-    this._mapFocusId = null;
-
-    const src = (focus?.mapSector && focus?.mapHex)
-      ? `https://travellermap.com/?sector=${encodeURIComponent(focus.mapSector)}&hex=${focus.mapHex}&scale=64&style=poster&options=87046`
-      : 'https://travellermap.com/?sector=Spinward+Marches&hex=1910&scale=32&style=poster&options=87046';
-
     return `<div class="map-view">
       <div class="map-search-bar">
         <div class="map-search-wrap">
@@ -544,8 +535,7 @@ const NotesPage = {
           <div id="mapSearchSuggestions" class="map-suggestions"></div>
         </div>
       </div>
-      <iframe id="travellerMapFrame" src="${src}"
-        class="traveller-map-iframe" allowfullscreen loading="lazy"></iframe>
+      <div id="mapIframeSlot" class="traveller-map-iframe"></div>
       <div id="mapWorldInfo" class="map-world-info" style="display:none"></div>
       <div class="map-loc-bar">
         ${linked.length
@@ -562,6 +552,26 @@ const NotesPage = {
         }
       </div>
     </div>`;
+  },
+
+  _initMapIframe() {
+    const iframe = document.getElementById('travellerMapFrame');
+    if (!iframe) return;
+    const DEFAULT = 'https://travellermap.com/?sector=Spinward+Marches&hex=1910&scale=32&style=poster&options=87046';
+
+    if (this._mapFocusId) {
+      const data  = this._d(window.currentCharacter);
+      const focus = data.locations.find(l => l.id === this._mapFocusId);
+      this._mapFocusId = null;
+      if (focus?.mapSector && focus?.mapHex) {
+        iframe.src = `https://travellermap.com/?sector=${encodeURIComponent(focus.mapSector)}&hex=${focus.mapHex}&scale=64&style=poster&options=87046`;
+        return;
+      }
+    }
+    // Nur beim ersten Laden eine URL setzen
+    if (!iframe.src || iframe.src === 'about:blank') {
+      iframe.src = DEFAULT;
+    }
   },
 
   // ─────────────────── IMPERIALKALENDER HELPERS ────────────────────────────
@@ -1405,6 +1415,7 @@ const NotesPage = {
 
     this._attachLocAutocomplete();
     this._attachMapSearch();
+    this._initMapIframe();
 
     // Listen-Items → Detail-Ansicht
     document.querySelectorAll('.notes-list-item').forEach(item => {

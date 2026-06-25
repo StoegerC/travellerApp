@@ -255,10 +255,19 @@ const App = {
     const page = this.pages[this.currentPage];
     if (!page) return;
 
+    // Karten-iframe vor innerHTML-Ersatz sichern (verhindert Neu-Laden)
+    const mapIframe = document.getElementById('travellerMapFrame');
+    const mapStash  = document.getElementById('map-iframe-stash');
+    if (mapIframe && mapStash) mapStash.appendChild(mapIframe);
+
     const container = document.getElementById(`${this.currentPage}-page`);
     container.innerHTML = page.render(this.currentCharacter);
 
     if (page.attachListeners) page.attachListeners();
+
+    // iframe in den Slot zurückbewegen, falls die Seite einen anzeigt
+    const mapSlot = document.getElementById('mapIframeSlot');
+    if (mapSlot && mapIframe) mapSlot.parentNode.replaceChild(mapIframe, mapSlot);
 
     document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
     container.classList.add('active');

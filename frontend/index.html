@@ -127,6 +127,15 @@
 
   </div>
 
+  <!-- Persistenter Karten-iframe – lebt außerhalb des Re-Render-Zyklus -->
+  <div id="map-iframe-stash"
+       style="position:fixed;left:-9999px;width:1px;height:1px;overflow:hidden;"
+       aria-hidden="true">
+    <iframe id="travellerMapFrame"
+            class="traveller-map-iframe"
+            allowfullscreen></iframe>
+  </div>
+
   <!-- Versionsverlauf Modal -->
   <div id="versionModal" class="vh-modal">
     <div class="vh-panel">
