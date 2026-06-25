@@ -6262,6 +6262,17 @@ body.dark-mode .career-event {
   color: #c8cce8;
 }
 
+/* ── Charakter-Selektor Panel ── */
+body.dark-mode .char-selector-panel {
+  background: #161929;
+  border-color: #2c3050;
+}
+body.dark-mode .char-selector-select {
+  background: #1d2035;
+  color: #dde0f5;
+  border-color: #2c3050;
+}
+
 /* ── Generische Cards / Panels ── */
 body.dark-mode .card,
 body.dark-mode .panel,
