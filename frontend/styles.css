@@ -6416,6 +6416,43 @@ body.dark-mode .fin-debt-info       { color: #8890b0; }
 body.dark-mode .fin-debt-pay        { background: #2d0d10; color: #f87171; border-color: #dc3545; }
 body.dark-mode .fin-block           { background: #161929; border-color: #2c3050; }
 body.dark-mode .fin-block-title     { color: #9095b8; }
+body.dark-mode .fin-pos             { color: #4ade80; }
+body.dark-mode .fin-neg             { color: #f87171; }
+body.dark-mode .fin-summary-row     { border-bottom-color: #2c3050; color: #c8cce8; }
+body.dark-mode .fin-pension-edit    { color: #4a5070; }
+
+/* ── Transaktionen ── */
+body.dark-mode .fin-filter-btn      { background: #1d2035; border-color: #2c3050; color: #9095b8; }
+body.dark-mode .fin-filter-btn.active { background: #667eea; border-color: #667eea; color: #fff; }
+body.dark-mode .fin-tx-row          { background: #1a1d2e; border-color: #2c3050; color: #c8cce8; }
+body.dark-mode .fin-tx-date         { color: #6068a0; }
+body.dark-mode .fin-tx-desc         { color: #c8cce8; }
+body.dark-mode .fin-tx-del          { color: #4a5070; }
+body.dark-mode .fin-badge           { border-color: #2c3050; }
+body.dark-mode .cat-sold            { background: #0d1e35; color: #60a5fa; }
+body.dark-mode .cat-ship            { background: #0a1e22; color: #67e8f9; }
+body.dark-mode .cat-trade           { background: #0d2218; color: #4ade80; }
+
+/* ── Wiederkehrende Posten ── */
+body.dark-mode .fin-rec-row         { border-bottom-color: #2c3050; }
+body.dark-mode .fin-rec-desc        { color: #dde0f5; }
+body.dark-mode .fin-rec-interval    { color: #6068a0; }
+body.dark-mode .fin-rec-del         { color: #4a5070; }
+body.dark-mode .fin-switch-slider   { background: #2c3050; }
+body.dark-mode .fin-btn-secondary   { background: #1a1e35; border-color: #3a4480; color: #818cf8; }
+
+/* ── Schulden ── */
+body.dark-mode .fin-progress-track  { background: #252840; }
+body.dark-mode .fin-debt-done       { color: #4ade80; }
+
+/* ── Abrechnungs-Modal ── */
+body.dark-mode .fin-settle          { background: #161929; color: #dde0f5; }
+body.dark-mode .fin-settle h3       { color: #dde0f5; }
+body.dark-mode .fin-settle-item     { background: #1a1d2e; border-color: #2c3050; }
+body.dark-mode .fin-settle-item:has(.fin-settle-cb:checked) { background: #1a1e35; border-color: #667eea; }
+body.dark-mode .fin-settle-desc     { color: #c8cce8; }
+body.dark-mode .fin-settle-interval { color: #6068a0; }
+body.dark-mode .fin-settle-total    { background: #1d2035; border-color: #2c3050; color: #c8cce8; }
 
 /* ── Markdown-Inhalte (Session-Content) ── */
 body.dark-mode .md-content               { color: #c8cce8; }
