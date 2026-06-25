@@ -15,6 +15,7 @@ const NotesPage = {
   _prefillLocation: null,
   _notesSort:       { sessions: 'createdAt', persons: 'name', locations: 'name', quests: 'createdAt' },
   _notesDir:        { sessions: 'desc', persons: 'asc', locations: 'asc', quests: 'desc' },
+  _questFilterVal:  'active',
 
   // ─────────────────────────────── Datenzugriff ────────────────────────────
   _d(char) {
@@ -993,13 +994,19 @@ const NotesPage = {
     const counts = { active: 0, backlog: 0, completed: 0, failed: 0 };
     data.quests.forEach(q => { if (counts[q.status] !== undefined) counts[q.status]++; });
 
+    const f = this._questFilterVal;
     let html = `<div class="notes-list-header">
-      <div class="quest-filter-tabs">
-        <button class="qf-btn active" data-filter="active">Aktiv (${counts.active})</button>
-        <button class="qf-btn" data-filter="backlog">Backlog (${counts.backlog})</button>
-        <button class="qf-btn" data-filter="completed">Erledigt (${counts.completed})</button>
-        <button class="qf-btn" data-filter="failed">Gescheitert (${counts.failed})</button>
-        <button class="qf-btn" data-filter="all">Alle</button>
+      <div class="session-filter-group">
+        <span class="session-filter-label">Filter</span>
+        <div class="session-filter-fields">
+          <select id="filterQuestStatus">
+            <option value="active"    ${f==='active'    ?'selected':''}>Aktiv (${counts.active})</option>
+            <option value="backlog"   ${f==='backlog'   ?'selected':''}>Backlog (${counts.backlog})</option>
+            <option value="completed" ${f==='completed' ?'selected':''}>Erledigt (${counts.completed})</option>
+            <option value="failed"    ${f==='failed'    ?'selected':''}>Gescheitert (${counts.failed})</option>
+            <option value=""          ${f===''          ?'selected':''}>Alle</option>
+          </select>
+        </div>
       </div>
       <div class="loc-filter-row">
         ${App.editMode ? '<button id="addQuestBtn" class="btn-success">+ Quest</button>' : ''}
@@ -1007,17 +1014,19 @@ const NotesPage = {
       </div>
     </div><div class="notes-list" id="questList">`;
 
+    const filtered = this._sortedList(data.quests, 'quests')
+      .filter(q => !f || (q.status || 'active') === f);
+
     if (data.quests.length === 0) {
       html += '<p class="notes-empty">Noch keine Quests eingetragen.</p>';
-    } else if (counts.active === 0) {
-      html += '<p class="notes-hint">Keine aktiven Quests – nutze die Filter oben.</p>';
+    } else if (filtered.length === 0) {
+      html += '<p class="notes-hint">Keine Quests in dieser Kategorie.</p>';
     }
 
-    this._sortedList(data.quests, 'quests').forEach(q => {
-      const giver   = data.persons.find(p => p.id === q.questgiverId);
-      const visible = (q.status === 'active') ? '' : ' nli-hidden';
+    filtered.forEach(q => {
+      const giver = data.persons.find(p => p.id === q.questgiverId);
       html += `
-        <div class="notes-list-item quest-list-item${visible}"
+        <div class="notes-list-item quest-list-item"
              data-id="${q.id}" data-qstatus="${q.status || 'active'}">
           <div class="nli-row">
             <span class="nli-title">${this._esc(q.title || 'Ohne Titel')}</span>
@@ -2022,17 +2031,9 @@ const NotesPage = {
   },
 
   _attachQuestFilter() {
-    document.querySelectorAll('.qf-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.qf-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        const filter = btn.dataset.filter;
-        document.querySelectorAll('.quest-list-item').forEach(item => {
-          const show = filter === 'all' || item.dataset.qstatus === filter;
-          if (show) item.classList.remove('nli-hidden');
-          item.style.display = show ? '' : 'none';
-        });
-      });
+    document.getElementById('filterQuestStatus')?.addEventListener('change', e => {
+      this._questFilterVal = e.target.value;
+      App.renderCurrentPage();
     });
   },
 
