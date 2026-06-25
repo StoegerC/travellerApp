@@ -10,7 +10,9 @@ class Character {
       title: data.metadata?.title || '',
       homeworld: data.metadata?.homeworld || '',
       age: data.metadata?.age || 18,
-      portraitImage: data.metadata?.portraitImage || null // Base64 encoded image
+      // Mehrere Porträts; Rückwärtskompatibilität: altes portraitImage → portraits[0]
+      portraits:      data.metadata?.portraits      || (data.metadata?.portraitImage ? [data.metadata.portraitImage] : []),
+      portraitIndex:  data.metadata?.portraitIndex  || 0
     };
     this.attributes = {
       strength: data.attributes?.strength || { value: 6, current: 6, dm: 0 },

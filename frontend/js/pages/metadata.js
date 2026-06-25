@@ -12,8 +12,11 @@ const MetadataPage = {
   },
 
   render(character) {
-    const meta = character.metadata;
-    window.currentPortraitImage = meta.portraitImage || null;
+    const meta       = character.metadata;
+    const portraits  = meta.portraits || [];
+    const idx        = Math.min(meta.portraitIndex || 0, Math.max(0, portraits.length - 1));
+    const current    = portraits[idx] || null;
+    const total      = portraits.length;
 
     const characters = Storage.listCharacters();
 
@@ -34,25 +37,42 @@ const MetadataPage = {
 
     html += '<h2>Charakterinformationen</h2>';
 
-    if (App.editMode) {
-      // ── Bearbeitungsmodus ─────────────────────────────────────────────
-      html += `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; padding: 10px 0 20px;">
+    // ── Portrait-Widget (gemeinsam für Lese- und Bearbeitungsmodus) ─────
+    const portraitDisplay = current
+      ? `<img class="portrait-img" src="${current}" alt="Portrait">`
+      : `<div class="portrait-placeholder">Kein Portrait</div>`;
 
-          <!-- Portrait -->
+    const navButtons = total > 1 ? `
+      <button class="portrait-nav portrait-prev" id="portraitPrev" ${idx === 0 ? 'disabled' : ''}>‹</button>
+      <button class="portrait-nav portrait-next" id="portraitNext" ${idx === total - 1 ? 'disabled' : ''}>›</button>` : '';
+
+    const counter = total > 1 ? `<span class="portrait-counter">${idx + 1} / ${total}</span>` : '';
+
+    const editControls = App.editMode ? `
+      <div class="portrait-edit-row">
+        <label for="portraitUpload" class="btn-secondary portrait-add-btn">+ Hinzufügen</label>
+        <input type="file" id="portraitUpload" accept="image/*" style="display:none;">
+        ${total > 0 ? `<button id="portraitDelete" class="btn-danger portrait-del-btn">🗑 Entfernen</button>` : ''}
+        <span class="portrait-hint">JPG, PNG oder WebP</span>
+      </div>` : '';
+
+    const portraitWidget = `
+      <div class="portrait-widget">
+        <div class="portrait-frame" id="portraitFrame">
+          ${portraitDisplay}
+          ${navButtons}
+          ${counter}
+        </div>
+        ${editControls}
+      </div>`;
+
+    if (App.editMode) {
+      html += `
+        <div class="meta-grid">
           <div>
             <h3>Portrait</h3>
-            <div id="portraitContainer" style="margin-bottom: 16px;">
-              ${meta.portraitImage
-                ? `<img id="portraitImg" src="${meta.portraitImage}" style="width:100%;max-width:400px;aspect-ratio:3/4;object-fit:cover;border:2px solid #ddd;border-radius:8px;">`
-                : `<div style="width:100%;max-width:400px;aspect-ratio:3/4;background:#f0f0f0;border:2px dashed #ccc;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;">Kein Portrait</div>`}
-            </div>
-            <label for="portraitUpload" style="display:inline-block;padding:10px 15px;background:#007bff;color:white;border-radius:6px;cursor:pointer;font-weight:500;">Bild wählen</label>
-            <input type="file" id="portraitUpload" accept="image/*" style="display:none;">
-            <p style="font-size:0.85em;color:#666;margin-top:8px;">JPG, PNG oder WebP (wird automatisch komprimiert)</p>
+            ${portraitWidget}
           </div>
-
-          <!-- Charakterdaten -->
           <div>
             <h3>Charakterdaten</h3>
             <div class="form-group">
@@ -75,24 +95,15 @@ const MetadataPage = {
         </div>
       `;
     } else {
-      // ── Lesemodus ────────────────────────────────────────────────────
       html += `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; padding: 10px 0 20px;">
-
-          <!-- Portrait -->
+        <div class="meta-grid">
           <div>
             <h3>Portrait</h3>
-            <div style="margin-bottom: 16px;">
-              ${meta.portraitImage
-                ? `<img src="${meta.portraitImage}" style="width:100%;max-width:400px;aspect-ratio:3/4;object-fit:cover;border:2px solid #ddd;border-radius:8px;">`
-                : `<div style="width:100%;max-width:400px;aspect-ratio:3/4;background:#f0f0f0;border:2px dashed #ccc;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;">Kein Portrait</div>`}
-            </div>
+            ${portraitWidget}
           </div>
-
-          <!-- Charakterdaten -->
           <div>
             <h3>Charakterdaten</h3>
-            <div style="display: grid; gap: 12px;">
+            <div style="display:grid;gap:12px;">
               <div><strong>Name:</strong> ${this._esc(meta.name) || '–'}</div>
               <div><strong>Titel / Rang:</strong> ${this._esc(meta.title) || '–'}</div>
               <div><strong>Alter:</strong> ${meta.age || 18} Jahre</div>
@@ -103,7 +114,7 @@ const MetadataPage = {
       `;
     }
 
-    // ── Export / Import ───────────────────────────────────────────────────
+    // ── Export / Import ─────────────────────────────────────────────────
     html += `
       <div class="export-section">
         <div class="export-btn-row">
@@ -119,23 +130,15 @@ const MetadataPage = {
     return html;
   },
 
-  getData() {
-    return {
-      name:          document.getElementById('charName')?.value || '',
-      title:         document.getElementById('charTitle')?.value || '',
-      age:           parseInt(document.getElementById('charAge')?.value) || 18,
-      homeworld:     document.getElementById('charHomeworld')?.value || '',
-      portraitImage: window.currentPortraitImage || window.currentCharacter?.metadata?.portraitImage || null
-    };
-  },
-
   save(character) {
-    if (!document.getElementById('charName')) return; // nicht im Edit-Modus
-    character.metadata = { ...character.metadata, ...this.getData() };
-  },
-
-  reset() {
-    document.getElementById('metadata-page').innerHTML = '';
+    if (!document.getElementById('charName')) return;
+    character.metadata = {
+      ...character.metadata,
+      name:      document.getElementById('charName')?.value      || '',
+      title:     document.getElementById('charTitle')?.value     || '',
+      age:       parseInt(document.getElementById('charAge')?.value) || 18,
+      homeworld: document.getElementById('charHomeworld')?.value || '',
+    };
   },
 
   attachListeners() {
@@ -146,12 +149,41 @@ const MetadataPage = {
     document.getElementById('newCharBtn')?.addEventListener('click', () => App.createNewCharacter());
     document.getElementById('deleteCharBtn')?.addEventListener('click', () => App.deleteCharacter());
 
-    // Portrait-Upload – komprimiert auf max 400×533 (3:4), JPEG 0.8
+    // Portrait-Navigation
+    document.getElementById('portraitPrev')?.addEventListener('click', () => {
+      const meta = App.currentCharacter.metadata;
+      if (meta.portraitIndex > 0) {
+        meta.portraitIndex--;
+        App._doSave();
+        App.renderCurrentPage();
+      }
+    });
+    document.getElementById('portraitNext')?.addEventListener('click', () => {
+      const meta = App.currentCharacter.metadata;
+      if (meta.portraitIndex < meta.portraits.length - 1) {
+        meta.portraitIndex++;
+        App._doSave();
+        App.renderCurrentPage();
+      }
+    });
+
+    // Portrait löschen
+    document.getElementById('portraitDelete')?.addEventListener('click', () => {
+      const meta = App.currentCharacter.metadata;
+      if (!meta.portraits.length) return;
+      if (!confirm('Dieses Portrait entfernen?')) return;
+      meta.portraits.splice(meta.portraitIndex, 1);
+      meta.portraitIndex = Math.min(meta.portraitIndex, Math.max(0, meta.portraits.length - 1));
+      App._doSave();
+      App.renderCurrentPage();
+    });
+
+    // Portrait-Upload
     if (App.editMode) {
       document.getElementById('portraitUpload')?.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        if (file.size > 4 * 1024 * 1024) { alert('Bild zu groß! Maximum 4 MB'); return; }
+        if (file.size > 8 * 1024 * 1024) { alert('Bild zu groß! Maximum 8 MB'); return; }
 
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -164,11 +196,12 @@ const MetadataPage = {
             canvas.height = Math.round(img.height * scale);
             canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
             const compressed = canvas.toDataURL('image/jpeg', 0.8);
-            window.currentPortraitImage = compressed;
-            const container = document.getElementById('portraitContainer');
-            if (container) {
-              container.innerHTML = `<img id="portraitImg" src="${compressed}" style="width:100%;max-width:400px;aspect-ratio:3/4;object-fit:cover;border:2px solid #ddd;border-radius:8px;">`;
-            }
+
+            const meta = App.currentCharacter.metadata;
+            meta.portraits.push(compressed);
+            meta.portraitIndex = meta.portraits.length - 1;
+            App._doSave();
+            App.renderCurrentPage();
           };
           img.src = event.target.result;
         };
@@ -176,17 +209,14 @@ const MetadataPage = {
       });
     }
 
-    // Export
+    // Export / Import
     document.getElementById('exportCharBtn')?.addEventListener('click', () => this._exportJSON());
-
-    // Import
     document.getElementById('importCharFile')?.addEventListener('change', (e) => this._importJSON(e));
   },
 
   _exportJSON() {
     const char = window.currentCharacter;
     if (!char) return;
-
     const json = JSON.stringify(char.toJSON(), null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
@@ -194,57 +224,37 @@ const MetadataPage = {
     const slug = (char.metadata.name || 'charakter')
       .normalize('NFD').replace(/[̀-ͯ]/g, '')
       .replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    const date = new Date().toISOString().split('T')[0];
-
     a.href     = url;
-    a.download = `traveller_${slug}_${date}.json`;
+    a.download = `traveller_${slug}_${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-
     App.showStatus('Export heruntergeladen ✓', 'success');
   },
 
   _importJSON(e) {
     const file = e.target.files[0];
-    e.target.value = ''; // Reset so dieselbe Datei erneut gewählt werden kann
+    e.target.value = '';
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (event) => {
       let data;
-      try {
-        data = JSON.parse(event.target.result);
-      } catch {
-        App.showStatus('Ungültige JSON-Datei', 'error');
-        return;
-      }
-
-      if (!data.id || !data.metadata) {
-        App.showStatus('Kein gültiger Traveller-Charakter', 'error');
-        return;
-      }
+      try { data = JSON.parse(event.target.result); }
+      catch { App.showStatus('Ungültige JSON-Datei', 'error'); return; }
+      if (!data.id || !data.metadata) { App.showStatus('Kein gültiger Traveller-Charakter', 'error'); return; }
 
       const existing = Storage.listCharacters();
       const conflict = existing.find(c => c.id === data.id);
-
       if (conflict) {
-        const overwrite = confirm(
-          `Ein Charakter namens „${conflict.name}" mit dieser ID existiert bereits.\n\nÜberschreiben? (Abbrechen = als Kopie importieren)`
-        );
-        if (!overwrite) {
-          data.id = 'char-' + Date.now();
-          data.metadata.name = (data.metadata.name || 'Charakter') + ' (Kopie)';
-        }
+        const overwrite = confirm(`„${conflict.name}" existiert bereits.\n\nÜberschreiben? (Abbrechen = als Kopie importieren)`);
+        if (!overwrite) { data.id = 'char-' + Date.now(); data.metadata.name = (data.metadata.name || 'Charakter') + ' (Kopie)'; }
       }
-
       const character = Character.fromJSON(data);
       Storage.saveCharacter(character);
       App.loadCharacter(character.id);
       App.showStatus(`„${character.metadata.name || 'Charakter'}" importiert ✓`, 'success');
     };
-
     reader.onerror = () => App.showStatus('Datei konnte nicht gelesen werden', 'error');
     reader.readAsText(file);
   }
