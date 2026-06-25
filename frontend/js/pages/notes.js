@@ -83,7 +83,7 @@ const NotesPage = {
   // ─────────────────────────────── Haupt-Render ────────────────────────────
   render(character) {
     const data = this._d(character);
-    let html = '<h2>Notizen</h2>';
+    let html = '<h2>Log</h2>';
     html += this._subTabs(data);
 
     switch (this._activeTab) {

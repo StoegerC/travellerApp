@@ -112,7 +112,7 @@ const MetadataPage = {
             <input type="file" id="importCharFile" accept=".json,application/json" style="display:none;">
           </label>
         </div>
-        <p class="export-hint">Sichert alle Charakterdaten inkl. Notizen, Journal und Quests.</p>
+        <p class="export-hint">Sichert alle Charakterdaten inkl. Log, Journal und Quests.</p>
       </div>
     `;
 
