@@ -8,13 +8,10 @@
  *                  temporärer Zustand während der Session-Bearbeitung
  */
 const NotesPage = {
-  _activeTab:          'sessions',
-  _detailId:           null,
-  _editTags:           null,
-  _mapFocusId:         null,
-  _prefillLocation:    null,
-  _mapScrollHandler:   null,
-  _mapResizeHandler:   null,
+  _activeTab:       'sessions',
+  _detailId:        null,
+  _editTags:        null,
+  _prefillLocation: null,
   _notesSort:       { sessions: 'createdAt', persons: 'name', locations: 'name', quests: 'createdAt' },
   _notesDir:        { sessions: 'desc', persons: 'asc', locations: 'asc', quests: 'desc' },
   _questFilterVal:  'active',
@@ -107,9 +104,6 @@ const NotesPage = {
           ? this._questDetail(this._detailId, data)
           : this._questList(data);
         break;
-      case 'map':
-        html += this._mapView(data);
-        break;
     }
     return html;
   },
@@ -120,7 +114,6 @@ const NotesPage = {
       { id: 'persons',   label: '👥 Personen', count: data.persons.length   },
       { id: 'locations', label: '🌍 Orte',     count: data.locations.length },
       { id: 'quests',    label: '⚔️ Quests',   count: data.quests.length    },
-      { id: 'map',       label: '🗺 Karte',    count: null                  },
     ];
     let html = '<div class="notes-subtabs">';
     tabs.forEach(t => {
@@ -524,94 +517,6 @@ const NotesPage = {
     return html;
   },
 
-  // ─────────────────────────── TRAVELLER MAP ───────────────────────────────
-  _mapView(data) {
-    const linked = data.locations.filter(l => l.mapX != null);
-    return `<div class="map-view">
-      <div class="map-search-bar">
-        <div class="map-search-wrap">
-          <span class="map-search-icon">🔍</span>
-          <input type="search" id="mapSearch" class="map-search-input"
-                 placeholder="Planet oder System suchen …"
-                 autocomplete="off" spellcheck="false">
-          <div id="mapSearchSuggestions" class="map-suggestions"></div>
-        </div>
-      </div>
-      <div id="mapIframeSlot" class="traveller-map-iframe"></div>
-      <div id="mapWorldInfo" class="map-world-info" style="display:none"></div>
-      <div class="map-loc-bar">
-        ${linked.length
-          ? linked.map(l => `
-              <button class="map-loc-chip"
-                      data-sector="${this._esc(l.mapSector || '')}"
-                      data-hex="${this._esc(l.mapHex || '')}"
-                      data-name="${this._esc(l.name)}"
-                      data-uwp="${this._esc(l.uwp || '')}"
-                      title="${this._esc(l.sector || '')}">
-                ${this._esc(l.name)}${l.uwp ? ` <code>${this._esc(l.uwp)}</code>` : ''}
-              </button>`).join('')
-          : `<span class="map-bar-hint">Orte über "🌍 Orte" → "Auf Karte verknüpfen" hinzufügen</span>`
-        }
-      </div>
-    </div>`;
-  },
-
-  hideMapIframe() {
-    const host = document.getElementById('map-iframe-host');
-    if (host) host.style.display = 'none';
-    const content = document.querySelector('.content');
-    if (this._mapScrollHandler) {
-      content?.removeEventListener('scroll', this._mapScrollHandler);
-      window.removeEventListener('resize', this._mapResizeHandler);
-      this._mapScrollHandler = null;
-      this._mapResizeHandler = null;
-    }
-  },
-
-  _syncMapPos() {
-    const slot = document.getElementById('mapIframeSlot');
-    const host = document.getElementById('map-iframe-host');
-    if (!slot || !host) { this.hideMapIframe(); return; }
-    const r = slot.getBoundingClientRect();
-    Object.assign(host.style, {
-      display: 'block',
-      top:    r.top    + 'px',
-      left:   r.left  + 'px',
-      width:  r.width + 'px',
-      height: r.height + 'px',
-    });
-  },
-
-  _initMapIframe() {
-    const iframe = document.getElementById('travellerMapFrame');
-    if (!iframe) return;
-    const DEFAULT = 'https://travellermap.com/?sector=Spinward+Marches&hex=1910&scale=32&style=poster&options=87046';
-
-    if (this._mapFocusId) {
-      const data  = this._d(window.currentCharacter);
-      const focus = data.locations.find(l => l.id === this._mapFocusId);
-      this._mapFocusId = null;
-      if (focus?.mapSector && focus?.mapHex) {
-        iframe.src = `https://travellermap.com/?sector=${encodeURIComponent(focus.mapSector)}&hex=${focus.mapHex}&scale=64&style=poster&options=87046`;
-      }
-    } else if (!iframe.src || iframe.src === 'about:blank') {
-      iframe.src = DEFAULT;
-    }
-
-    // Scroll- und Resize-Listener um den Host über dem Slot zu halten
-    const content = document.querySelector('.content');
-    if (this._mapScrollHandler) {
-      content?.removeEventListener('scroll', this._mapScrollHandler);
-      window.removeEventListener('resize', this._mapResizeHandler);
-    }
-    const sync = () => this._syncMapPos();
-    this._mapScrollHandler = sync;
-    this._mapResizeHandler = sync;
-    content?.addEventListener('scroll', sync, { passive: true });
-    window.addEventListener('resize', sync, { passive: true });
-    sync();
-  },
-
   // ─────────────────── IMPERIALKALENDER HELPERS ────────────────────────────
   // Format: "YYYY-DDD" (z.B. "1105-032" = Jahr 1105, Tag 32 = Monat 2, Tag 2)
   // 12 Monate × 30 Tage = 360 Tage + 5 Feiertage am Jahresende (361-365)
@@ -714,101 +619,6 @@ const NotesPage = {
                sublabel: `Teilsektor · ${ss.Sector || ''}`, navScale: 16 };
     }
     return null;
-  },
-
-  _showMapWorldInfo(result) {
-    const el = document.getElementById('mapWorldInfo');
-    if (!el) return;
-    const uwp        = result.type === 'world' ? this._decodeUWP(result.uwp) : null;
-    const TYPE_LABEL = { world: 'System', sector: 'Sektor', subsector: 'Teilsektor' };
-    const typeLabel  = TYPE_LABEL[result.type] || '';
-    const locParts   = [typeLabel];
-    if (result.sector && result.type !== 'sector') locParts.push(this._esc(result.sector));
-    if (result.hex)    locParts.push(this._esc(result.hex));
-
-    el.style.display = 'block';
-    el.innerHTML = `
-      <div class="map-wi-header">
-        <div class="map-wi-name">
-          <strong>${result.icon || ''} ${this._esc(result.name)}</strong>
-          <span class="map-wi-loc">${locParts.join(' · ')}</span>
-        </div>
-        ${result.uwp ? `<code class="map-wi-uwp">${this._esc(result.uwp)}</code>` : ''}
-        <button class="map-wi-close" id="mapWiClose">✕</button>
-      </div>
-      ${uwp ? `<div class="map-wi-stats">
-        <span title="Raumhafen">🚀 ${this._esc(uwp.starport)}</span>
-        <span title="Planetengröße">🌍 ${this._esc(uwp.size)}</span>
-        <span title="Atmosphäre">💨 ${this._esc(uwp.atmosphere)}</span>
-        <span title="Hydrosphäre">💧 ${this._esc(uwp.hydrosphere)}</span>
-        <span title="Bevölkerung">👥 ${this._esc(uwp.population)}</span>
-        <span title="Regierung">🏛 ${this._esc(uwp.government)}</span>
-        <span title="Gesetzesstufe">⚖️ Gesetz ${this._esc(uwp.lawLevel)}</span>
-        <span title="Technologiestufe">🔧 ${this._esc(uwp.techLevel)}</span>
-      </div>` : ''}`;
-    document.getElementById('mapWiClose')?.addEventListener('click', () => {
-      el.style.display = 'none';
-      document.querySelectorAll('.map-loc-chip').forEach(c => c.classList.remove('active'));
-    });
-  },
-
-  _attachMapSearch() {
-    const input     = document.getElementById('mapSearch');
-    const suggestEl = document.getElementById('mapSearchSuggestions');
-    if (!input || !suggestEl) return;
-    let timer = null;
-
-    const selectResult = (result) => {
-      input.value = result.name;
-      suggestEl.innerHTML = '';
-      const frame = document.getElementById('travellerMapFrame');
-      if (frame && result.sector) {
-        let url = `https://travellermap.com/?sector=${encodeURIComponent(result.sector)}&scale=${result.navScale}&style=poster&options=87046`;
-        if (result.hex) url += `&hex=${result.hex}`;
-        frame.src = url;
-      }
-      this._showMapWorldInfo(result);
-      document.querySelectorAll('.map-loc-chip').forEach(c => c.classList.remove('active'));
-    };
-
-    input.addEventListener('input', () => {
-      const q = input.value.trim();
-      clearTimeout(timer);
-      suggestEl.innerHTML = '';
-      if (q.length < 2) return;
-      suggestEl.innerHTML = '<div class="loc-suggest-loading">⏳ Suche in Travellermap …</div>';
-      timer = setTimeout(async () => {
-        try {
-          const res  = await fetch(`https://travellermap.com/api/search?q=${encodeURIComponent(q)}`, { mode: 'cors' });
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const json = await res.json();
-          const raw  = json.Results?.Items || [];
-          const hits = raw.map(i => this._parseTravellermapHit(i)).filter(Boolean).slice(0, 10);
-          if (!hits.length) {
-            suggestEl.innerHTML = '<div class="loc-suggest-empty">Kein Treffer</div>';
-            return;
-          }
-          suggestEl.innerHTML = hits.map((h, i) => `
-            <div class="loc-suggest-item map-suggest-item" data-idx="${i}">
-              <strong>${h.icon} ${this._esc(h.name)}</strong>
-              <span>${this._esc(h.sublabel)}</span>
-            </div>`).join('');
-          // Store parsed hits to avoid re-parsing on click
-          suggestEl._hits = hits;
-          suggestEl.querySelectorAll('.map-suggest-item').forEach(item => {
-            item.addEventListener('mousedown', (e) => {
-              e.preventDefault();
-              const hit = suggestEl._hits?.[parseInt(item.dataset.idx)];
-              if (hit) selectResult(hit);
-            });
-          });
-        } catch {
-          suggestEl.innerHTML = '<div class="loc-suggest-empty">⚠️ Travellermap nicht erreichbar</div>';
-        }
-      }, 320);
-    });
-
-    input.addEventListener('blur', () => setTimeout(() => { suggestEl.innerHTML = ''; }, 200));
   },
 
   // ─────────────────────────── ORTS-DATENBANK ──────────────────────────────
@@ -1423,37 +1233,20 @@ const NotesPage = {
       App.renderCurrentPage();
     });
 
-    // ── Karte ────────────────────────────────────────────────────────────────
-    document.querySelectorAll('.map-loc-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        const frame = document.getElementById('travellerMapFrame');
-        if (frame) frame.src = `https://travellermap.com/?sector=${encodeURIComponent(chip.dataset.sector)}&hex=${chip.dataset.hex}&scale=64&style=poster&options=87046`;
-        document.querySelectorAll('.map-loc-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        this._showMapWorldInfo({ type: 'world', icon: '🌐', name: chip.dataset.name, sector: chip.dataset.sector, hex: chip.dataset.hex, uwp: chip.dataset.uwp, navScale: 64 });
-      });
-    });
-
     document.getElementById('showOnMapBtn')?.addEventListener('click', (e) => {
-      this._mapFocusId = e.currentTarget.dataset.locid;
-      this._activeTab  = 'map';
-      this._detailId   = null;
-      App.renderCurrentPage();
+      KartePage._mapFocusId = e.currentTarget.dataset.locid;
+      App.switchPage('karte');
     });
 
     document.querySelectorAll('.loc-list-map-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        this._mapFocusId = btn.dataset.locid;
-        this._activeTab  = 'map';
-        this._detailId   = null;
-        App.renderCurrentPage();
+        KartePage._mapFocusId = btn.dataset.locid;
+        App.switchPage('karte');
       });
     });
 
     this._attachLocAutocomplete();
-    this._attachMapSearch();
-    this._initMapIframe();
 
     // Listen-Items → Detail-Ansicht
     document.querySelectorAll('.notes-list-item').forEach(item => {

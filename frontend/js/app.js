@@ -16,6 +16,7 @@ const App = {
     equipment:  EquipmentPage,
     career:     CareerPage,
     notes:      NotesPage,
+    karte:      KartePage,
     combat:     CombatPage,
     finances:   FinancesPage
   },
@@ -256,7 +257,7 @@ const App = {
     if (!page) return;
 
     // Karten-iframe verstecken bevor innerHTML ersetzt wird (Safari-safe: kein DOM-Move)
-    if (typeof NotesPage !== 'undefined') NotesPage.hideMapIframe();
+    if (typeof KartePage !== 'undefined') KartePage.hideMapIframe();
 
     const container = document.getElementById(`${this.currentPage}-page`);
     container.innerHTML = page.render(this.currentCharacter);
