@@ -6232,6 +6232,34 @@ body.dark-mode .loc-map-badge {
   color: #4ade80;
 }
 
+/* ── Ort-Detailansicht (Leseansicht) ── */
+body.dark-mode .loc-meta            { color: #8890b0; }
+body.dark-mode .loc-meta code       { background: #252840; color: #c8cce8; }
+body.dark-mode .loc-visited         { background: #0d2218; color: #4ade80; }
+body.dark-mode .loc-uwp-block       { background: #0f1122; border-color: #2c2a50; }
+body.dark-mode .loc-uwp-label       { color: #a78bfa; }
+body.dark-mode .loc-uwp-code        { background: #1a1535; color: #c4b5fd; border-color: #3d2e6e; }
+body.dark-mode .loc-uwp-key         { color: #6068a0; }
+body.dark-mode .loc-uwp-val         { color: #dde0f5; }
+
+/* ── Karten-Suche (Travellermap) ── */
+body.dark-mode .map-search-list     { border-color: #2c3050; }
+body.dark-mode .map-result-pick     { background: #161929; border-bottom-color: #2c3050; }
+body.dark-mode .map-result-pick:hover { background: #1a1e35; }
+body.dark-mode .map-result-pick strong { color: #dde0f5; }
+body.dark-mode .map-result-pick span   { color: #6068a0; }
+body.dark-mode .btn-map-show        { background: #0d2218; color: #4ade80; border-color: #166534; }
+body.dark-mode .btn-map-search      { background: #1a1e35; color: #818cf8; border-color: #3a4480; }
+
+/* ── Travellermap Suchliste (Orte-Subtab) ── */
+body.dark-mode .loc-trav-input      { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
+body.dark-mode .loc-trav-item       { background: #161929; }
+body.dark-mode .loc-trav-item:hover { background: #1a1e35 !important; }
+body.dark-mode .loc-trav-item-info strong { color: #dde0f5; }
+body.dark-mode .loc-trav-item-info span   { color: #6068a0; }
+body.dark-mode .loc-trav-action.add { background: #0d2218; color: #4ade80; border-color: #166534; }
+body.dark-mode .loc-trav-action.add:hover { background: #0a1e14; }
+
 /* ── Markdown-Rendering ── */
 body.dark-mode .md-p,
 body.dark-mode .md-ul,
