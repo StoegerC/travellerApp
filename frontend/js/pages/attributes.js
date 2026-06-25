@@ -413,9 +413,11 @@ const AttributesPage = {
       }
       
       if (input.classList.contains('attr-value')) {
-        attributes[attr].value = parseInt(input.value) || 6;
+        const v = parseInt(input.value, 10);
+        attributes[attr].value = isNaN(v) ? 6 : v;
       } else if (input.classList.contains('attr-current')) {
-        const current = parseInt(input.value) || 6;
+        const v = parseInt(input.value, 10);
+        const current = isNaN(v) ? 6 : v;
         attributes[attr].current = current;
         // DM wird vom aktuellen Wert berechnet
         if (attr === 'psi' && current === 0) {
@@ -438,10 +440,10 @@ const AttributesPage = {
   },
 
   save(character) {
-    // Sichere nur, wenn Eingabefelder existieren (Edit-Modus ist aktiv)
+    if (!App.editMode) return; // Im Lesemodus keine DOM-Werte zurückschreiben
     const attrInputs = document.querySelectorAll('[data-attr]');
     const skillLevelInputs = document.querySelectorAll('.skill-level');
-    if (attrInputs.length === 0 && skillLevelInputs.length === 0) return; // Keine Eingabefelder gefunden
+    if (attrInputs.length === 0 && skillLevelInputs.length === 0) return;
 
     const data = this.getData();
     // Merge neue/aktuelle Attribute in bestehende, damit dynamisch hinzugefügte Attribute erhalten bleiben
