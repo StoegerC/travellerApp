@@ -6259,6 +6259,11 @@ body.dark-mode .loc-trav-item-info strong { color: #dde0f5; }
 body.dark-mode .loc-trav-item-info span   { color: #6068a0; }
 body.dark-mode .loc-trav-action.add { background: #0d2218; color: #4ade80; border-color: #166534; }
 body.dark-mode .loc-trav-action.add:hover { background: #0a1e14; }
+body.dark-mode #locName[type="search"] {
+  background: #1d2035;
+  color: #dde0f5;
+  border-color: #2c3050;
+}
 
 /* ── Markdown-Rendering ── */
 body.dark-mode .md-p,
