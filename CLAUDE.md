@@ -87,6 +87,21 @@ Jede neue Funktion oder größere Änderung wird in einem eigenen Branch entwick
 
 **Ausnahmen** (direkt auf `main`): Tippfehler, 1–3 Zeilen CSS, explizite Anweisung des Users.
 
+## Todo-Liste
+
+Die offene Aufgabenliste liegt in **`Todo.txt`** im Projekt-Root.
+
+**Markierungen:**
+- `[ ]` — offen
+- `[x]` — erledigt
+- `[c]` — cancelled
+
+**Regeln für Claude:**
+- Nach Abschluss eines Features den entsprechenden Eintrag auf `[x]` setzen
+- Neue Ideen oder entdeckte Probleme eigenständig als `[ ]` eintragen
+- Erledigte Einträge nie löschen — sie dienen als Dokumentation
+- Die Liste ist nach Themenbereichen gruppiert; neue Einträge in den passenden Abschnitt einfügen
+
 ## Sprache
 
 - UI-Texte: **Deutsch**

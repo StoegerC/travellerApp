@@ -61,4 +61,13 @@ UI / UX
 [ ] Mobile-Optimierung (auf kleinen Smartphones eng)
 [ ] Desktop-Layout verbessern (viel Leerraum)
 [x] Dark Mode: 🌙/☀️ Toggle-Button im Header, automatische Erkennung via prefers-color-scheme, Präferenz in localStorage
-ja[ ] Weiterbildung: automatisches Datum-Tracking statt manuellem +/- Monatszähler
+[ ] Weiterbildung: automatisches Datum-Tracking statt manuellem +/- Monatszähler
+[ ] Druckansicht / PDF-Export des Charakterbogens
+[ ] Würfelwurf-Widget: 2d6 + Modifikator direkt in der App (Traveller-Kernsystem)
+[ ] Schnellsuche über alle Daten (Personen, Orte, Quests, Sessions) global im Header
+[ ] Timeline-Ansicht: Sessions chronologisch als Zeitstrahl darstellen
+[ ] Schiffs-Log: eigener Tab für Raumschiff-Daten und Reise-Einträge (Traveller-spezifisch)
+
+EXPORT & BACKUP
+[ ] JSON-Export/Import für Charakterdaten (Backup / Geräte-Transfer)
+[ ] Charakter zwischen Geräten teilen (QR-Code oder Link mit Base64-kodiertem JSON)
