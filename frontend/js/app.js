@@ -5,18 +5,24 @@ const App = {
   currentCharacter: null,
   currentPage: 'metadata',
   editMode: false,
+  _autosaveTimer: null,
+  _undoStack: [],      // in-memory snapshots (JSON objects)
+  _MAX_UNDO: 50,
+  _lastVersionSave: 0, // throttle persistent version saves
 
   pages: {
-    metadata: MetadataPage,
+    metadata:   MetadataPage,
     attributes: AttributesPage,
-    equipment: EquipmentPage,
-    career: CareerPage,
-    notes: NotesPage
+    equipment:  EquipmentPage,
+    career:     CareerPage,
+    notes:      NotesPage,
+    combat:     CombatPage,
+    finances:   FinancesPage
   },
 
   init() {
+    this.initDarkMode();
     this.setupEventListeners();
-    this.loadCharacters();
 
     const characters = Storage.listCharacters();
     if (characters.length > 0) {
@@ -29,6 +35,7 @@ const App = {
   },
 
   setupEventListeners() {
+    // Tab-Navigation
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const target = e.target.closest('.tab-btn');
@@ -36,64 +43,73 @@ const App = {
       });
     });
 
-    document.getElementById('characterSelect').addEventListener('change', (e) => {
-      if (e.target.value) this.loadCharacter(e.target.value);
-    });
-
-    document.getElementById('newCharBtn').addEventListener('click', () => this.createNewCharacter());
-    document.getElementById('deleteCharBtn').addEventListener('click', () => this.deleteCharacter());
-    document.getElementById('saveBtn').addEventListener('click', () => this.saveCharacter());
+    // Globale Header-Buttons
     document.getElementById('toggleEditBtn').addEventListener('click', () => this.toggleEditMode());
-  },
-
-  loadCharacters() {
-    const select = document.getElementById('characterSelect');
-    const characters = Storage.listCharacters();
-
-    select.innerHTML = '<option value="">-- Charakter wählen --</option>';
-    characters.forEach(char => {
-      const option = document.createElement('option');
-      option.value = char.id;
-      option.textContent = char.name || 'Namenlos';
-      select.appendChild(option);
+    document.getElementById('undoBtn').addEventListener('click', () => this.undo());
+    document.getElementById('historyBtn').addEventListener('click', () => this.showVersionHistory());
+    document.getElementById('darkModeBtn').addEventListener('click', () => this.toggleDarkMode());
+    document.getElementById('closeVersionModal').addEventListener('click', () => {
+      document.getElementById('versionModal').classList.remove('visible');
     });
+
+    // Autosave: jede Eingabe im Content-Bereich mit Debounce speichern
+    document.querySelector('.content').addEventListener('input',  () => this._scheduleAutosave());
+    document.querySelector('.content').addEventListener('change', () => this._scheduleAutosave());
+
+    // Undo keyboard shortcut (nur außerhalb von Eingabefeldern)
+    document.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        const tag = document.activeElement?.tagName;
+        if (tag !== 'INPUT' && tag !== 'TEXTAREA' && !document.activeElement?.isContentEditable) {
+          e.preventDefault();
+          this.undo();
+        }
+      }
+    });
+
+    // Charakter-Selector-Buttons leben jetzt in MetadataPage.attachListeners()
   },
 
+  // ── Charakter laden/wechseln ────────────────────────────────────────────
   loadCharacter(id) {
     this.currentCharacter = Storage.loadCharacter(id);
     if (!this.currentCharacter) {
       console.error('Charakter nicht gefunden:', id);
       return;
     }
-
     window.currentCharacter = this.currentCharacter;
-    document.getElementById('characterSelect').value = id;
+    this._undoStack = [];
+    this._updateUndoBtn();
+    this._updateHeaderName();
     this.renderCurrentPage();
     this.showStatus(`${this.currentCharacter.metadata.name || 'Charakter'} geladen`, 'success');
   },
 
-  /**
-   * Erstellt direkt einen neuen Traveller-Charakter ohne Modal.
-   */
   createNewCharacter() {
     this.currentCharacter = new Character({ system: 'traveller' });
     Storage.saveCharacter(this.currentCharacter);
-    this.loadCharacters();
-    document.getElementById('characterSelect').value = this.currentCharacter.id;
+    window.currentCharacter = this.currentCharacter;
+    this._undoStack = [];
+    this._updateUndoBtn();
     this.editMode = true;
-    this.renderCurrentPage();
+    this._updateHeaderName();
+    // Direkt zur Charakter-Seite navigieren
+    if (this.currentPage !== 'metadata') {
+      this.switchPage('metadata');
+    } else {
+      this.renderCurrentPage();
+    }
     this.showStatus('Neuer Charakter erstellt', 'success');
   },
 
   deleteCharacter() {
     if (!this.currentCharacter) return;
-
     const name = this.currentCharacter.metadata.name || 'Charakter';
     if (!confirm(`„${name}" wirklich löschen?`)) return;
 
     Storage.deleteCharacter(this.currentCharacter.id);
     this.currentCharacter = null;
-    this.loadCharacters();
+    window.currentCharacter = null;
 
     const characters = Storage.listCharacters();
     if (characters.length > 0) {
@@ -101,41 +117,126 @@ const App = {
     } else {
       this.createNewCharacter();
     }
-
     this.showStatus('Charakter gelöscht', 'success');
   },
 
+  // ── Speichern ───────────────────────────────────────────────────────────
+  _scheduleAutosave() {
+    clearTimeout(this._autosaveTimer);
+    this._autosaveTimer = setTimeout(() => this._doSave(), 1500);
+  },
+
   saveCharacter() {
-    if (!this.currentCharacter) {
-      this.showStatus('Kein Charakter geladen', 'error');
-      return;
-    }
+    this._doSave();
+  },
 
-    // Aktuelle Seite immer speichern
+  _doSave(saveVersion = false) {
+    if (!this.currentCharacter) return;
+
+    // Snapshot vor page.save(), damit undo den Pre-Save-Zustand wiederherstellt
+    this._takeSnapshot();
+
     const page = this.pages[this.currentPage];
-    if (page && page.save) {
-      page.save(this.currentCharacter);
-    }
+    if (page && page.save) page.save(this.currentCharacter);
 
-    const currentId = this.currentCharacter.id;
     if (Storage.saveCharacter(this.currentCharacter)) {
-      this.loadCharacters();
-      document.getElementById('characterSelect').value = currentId;
-      this.showStatus('Gespeichert ✓', 'success');
+      this._updateHeaderName();
+      if (saveVersion) this._saveVersion();
     } else {
-      this.showStatus('Fehler beim Speichern', 'error');
+      const e = Storage.lastError;
+      const isQuota = e instanceof DOMException &&
+        (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED');
+      this.showStatus(
+        isQuota ? 'Speicher voll! Bilder entfernen oder Daten exportieren.' : 'Fehler beim Speichern',
+        'error'
+      );
     }
   },
 
+  _takeSnapshot() {
+    if (!this.currentCharacter) return;
+    this._undoStack.push(this.currentCharacter.toJSON());
+    if (this._undoStack.length > this._MAX_UNDO) this._undoStack.shift();
+    this._updateUndoBtn();
+  },
+
+  _saveVersion() {
+    const now = Date.now();
+    if (now - this._lastVersionSave < 30000) return; // max. eine Version pro 30s
+    this._lastVersionSave = now;
+    Storage.saveVersion(this.currentCharacter.id, this.currentCharacter.toJSON());
+  },
+
+  undo() {
+    if (!this._undoStack.length) return;
+    const json = this._undoStack.pop();
+    this.currentCharacter = Character.fromJSON(json);
+    window.currentCharacter = this.currentCharacter;
+    Storage.saveCharacter(this.currentCharacter);
+    this._updateHeaderName();
+    this.renderCurrentPage();
+    this._updateUndoBtn();
+    this.showStatus('Rückgängig', 'success');
+  },
+
+  _updateUndoBtn() {
+    const btn = document.getElementById('undoBtn');
+    if (btn) btn.disabled = this._undoStack.length === 0;
+  },
+
+  async showVersionHistory() {
+    if (!this.currentCharacter) return;
+    const modal = document.getElementById('versionModal');
+    const list  = document.getElementById('versionList');
+    list.innerHTML = '<p class="vh-loading">Lade …</p>';
+    modal.classList.add('visible');
+
+    const versions = await Storage.listVersions(this.currentCharacter.id);
+    if (!versions.length) {
+      list.innerHTML = '<p class="vh-empty">Noch keine Versionen gespeichert.<br>Versionen werden beim Tab-Wechsel und nach dem Fertigstellen angelegt.</p>';
+      return;
+    }
+    list.innerHTML = versions.map(v => `
+      <button class="vh-item" data-vid="${v.id}">
+        <span class="vh-time">${this._fmtVersionTime(v.timestamp)}</span>
+        <span class="vh-name">${this._esc(v.data?.metadata?.name || 'Namenlos')}</span>
+      </button>`).join('');
+
+    list.querySelectorAll('.vh-item').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Version wirklich wiederherstellen? Der aktuelle Stand wird als Undo-Schritt gespeichert.')) return;
+        const version = await Storage.loadVersion(btn.dataset.vid);
+        if (!version) return;
+        this._takeSnapshot();
+        this.currentCharacter = Character.fromJSON(version.data);
+        window.currentCharacter = this.currentCharacter;
+        Storage.saveCharacter(this.currentCharacter);
+        this._updateHeaderName();
+        this.renderCurrentPage();
+        this._updateUndoBtn();
+        modal.classList.remove('visible');
+        this.showStatus('Version wiederhergestellt', 'success');
+      });
+    });
+  },
+
+  _fmtVersionTime(ts) {
+    return new Date(ts).toLocaleString('de-DE', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+  },
+
+  _esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  },
+
+  // ── Seiten-Navigation ───────────────────────────────────────────────────
   switchPage(pageName) {
     if (!this.pages[pageName]) return;
 
-    // Aktuelle Seite immer speichern (nicht nur im Edit-Modus)
-    const oldPage = this.pages[this.currentPage];
-    if (oldPage && oldPage.save && this.currentCharacter) {
-      oldPage.save(this.currentCharacter);
-      Storage.saveCharacter(this.currentCharacter);
-    }
+    clearTimeout(this._autosaveTimer);
+    this._doSave(true);
 
     this.currentPage = pageName;
 
@@ -154,31 +255,26 @@ const App = {
     const page = this.pages[this.currentPage];
     if (!page) return;
 
-    if (this.currentPage === 'career') {
-      const galaxyMap = this.currentCharacter.career?.galaxyMap || {};
-      window.currentVisitedSystems = galaxyMap.visitedSystems || [];
-    }
-
     const container = document.getElementById(`${this.currentPage}-page`);
     container.innerHTML = page.render(this.currentCharacter);
 
-    if (page.attachListeners) {
-      page.attachListeners();
-    }
+    if (page.attachListeners) page.attachListeners();
 
     document.querySelectorAll('.page-content').forEach(el => el.classList.remove('active'));
     container.classList.add('active');
 
     this.updateEditButton();
+    this._updateUndoBtn();
   },
 
+  // ── Edit-Modus ──────────────────────────────────────────────────────────
   toggleEditMode() {
     const page = this.pages[this.currentPage];
     if (!page) return;
 
-    if (this.editMode && page.save) {
-      page.save(this.currentCharacter);
-      Storage.saveCharacter(this.currentCharacter);
+    if (this.editMode) {
+      clearTimeout(this._autosaveTimer);
+      this._doSave(true);
     }
 
     this.editMode = !this.editMode;
@@ -196,23 +292,43 @@ const App = {
       btn.textContent = '✎ Bearbeiten';
       btn.classList.remove('active');
     }
+  },
 
-    // Notizen-Seite braucht keinen Edit-Modus-Toggle (immer editierbar)
-    btn.style.display = this.currentPage === 'notes' ? 'none' : 'block';
+  // ── Hilfsfunktionen ─────────────────────────────────────────────────────
+  _updateHeaderName() {
+    const el = document.getElementById('charNameDisplay');
+    if (el) el.textContent = this.currentCharacter?.metadata?.name || '';
+  },
+
+  // ── Dark Mode ───────────────────────────────────────────────────────────
+  initDarkMode() {
+    const saved = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+    const dark = saved === 'dark' || (saved === null && prefersDark);
+    document.body.classList.toggle('dark-mode', dark);
+    this._updateDarkModeBtn(dark);
+  },
+
+  toggleDarkMode() {
+    const isDark = document.body.classList.toggle('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    this._updateDarkModeBtn(isDark);
+  },
+
+  _updateDarkModeBtn(isDark) {
+    const btn = document.getElementById('darkModeBtn');
+    if (btn) btn.textContent = isDark ? '☀️' : '🌙';
   },
 
   showStatus(message, type = 'success') {
-    const statusEl = document.getElementById('status-message');
-    statusEl.textContent = message;
-    statusEl.className = `status ${type}`;
-
-    setTimeout(() => {
-      statusEl.textContent = '';
-      statusEl.className = 'status';
-    }, 3000);
+    const el = document.getElementById('status-message');
+    el.textContent = message;
+    el.className = `status ${type}`;
+    setTimeout(() => { el.textContent = ''; el.className = 'status'; }, 3000);
   }
 };
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await Storage.init();
   App.init();
 });

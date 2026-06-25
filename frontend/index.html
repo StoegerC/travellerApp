@@ -7,27 +7,76 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Traveller">
   <meta name="theme-color" content="#667eea">
-  <title>Traveller - Charakterdatenblatt</title>
+  <title>Traveller – Charakterdatenblatt</title>
   <link rel="stylesheet" href="styles.css">
+  <script>
+  (function(){
+    var c=document.createElement('canvas'); c.width=c.height=64;
+    var ctx=c.getContext('2d'), s=64/36;
+
+    // Hintergrund
+    ctx.fillStyle='#1a1a2e'; ctx.fillRect(0,0,64,64);
+
+    ctx.save(); ctx.scale(s,s);
+
+    // Äußerer Ring
+    ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=0.75;
+    ctx.beginPath(); ctx.arc(18,18,16,0,Math.PI*2); ctx.stroke();
+
+    // 8 Strahlen
+    ctx.strokeStyle='rgba(255,255,255,0.92)'; ctx.lineWidth=1.6; ctx.lineCap='round';
+    [[18,4,18,11],[18,25,18,32],[4,18,11,18],[25,18,32,18],
+     [8.1,8.1,13.2,13.2],[22.8,22.8,27.9,27.9],[27.9,8.1,22.8,13.2],[8.1,27.9,13.2,22.8]
+    ].forEach(function(l){ctx.beginPath();ctx.moveTo(l[0],l[1]);ctx.lineTo(l[2],l[3]);ctx.stroke();});
+
+    // Weißer Mittelpunkt
+    ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(18,18,3.8,0,Math.PI*2); ctx.fill();
+    // Lila Punkt oben
+    ctx.fillStyle='#a78bfa'; ctx.beginPath(); ctx.arc(18,2,1.9,0,Math.PI*2); ctx.fill();
+    // Blauer Punkt rechts
+    ctx.fillStyle='#60a5fa'; ctx.beginPath(); ctx.arc(34,18,1.5,0,Math.PI*2); ctx.fill();
+
+    ctx.restore();
+
+    var l=document.createElement('link');
+    l.rel='icon'; l.type='image/png'; l.href=c.toDataURL();
+    document.head.appendChild(l);
+  })();
+  </script>
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
+
+    <!-- Header – nur App-Titel, aktueller Char-Name und globale Aktionen -->
     <header class="header">
       <div class="header-top">
-        <h1>Traveller</h1>
-        <button id="toggleEditBtn" class="btn-edit">✎ Bearbeiten</button>
-      </div>
-      <div class="header-controls">
-        <div class="character-selector">
-          <select id="characterSelect">
-            <option value="">-- Charakter wählen --</option>
-          </select>
-          <button id="newCharBtn" title="Neuer Charakter">+</button>
-          <button id="deleteCharBtn" title="Charakter löschen">✕</button>
+        <div class="header-brand">
+          <svg class="traveller-icon" viewBox="0 0 36 36" width="30" height="30" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="0.75"/>
+            <g stroke="white" stroke-width="1.6" stroke-linecap="round" opacity="0.92">
+              <line x1="18" y1="4"    x2="18" y2="11"/>
+              <line x1="18" y1="25"   x2="18" y2="32"/>
+              <line x1="4"  y1="18"   x2="11" y2="18"/>
+              <line x1="25" y1="18"   x2="32" y2="18"/>
+              <line x1="8.1"  y1="8.1"  x2="13.2" y2="13.2"/>
+              <line x1="22.8" y1="22.8" x2="27.9" y2="27.9"/>
+              <line x1="27.9" y1="8.1"  x2="22.8" y2="13.2"/>
+              <line x1="8.1"  y1="27.9" x2="13.2" y2="22.8"/>
+            </g>
+            <circle cx="18" cy="18" r="3.8" fill="white"/>
+            <circle cx="18" cy="2"  r="1.9" fill="#a78bfa"/>
+            <circle cx="34" cy="18" r="1.5" fill="#60a5fa"/>
+          </svg>
+          <div class="header-title">
+            <h1>Traveller</h1>
+            <span id="charNameDisplay" class="char-name-display"></span>
+          </div>
         </div>
         <div class="header-actions">
-          <button id="saveBtn" class="btn-save">Speichern</button>
+          <button id="darkModeBtn" class="btn-dark-mode" title="Dark Mode umschalten">🌙</button>
+          <button id="undoBtn" class="btn-undo" disabled title="Rückgängig (Cmd/Strg+Z)">↩</button>
+          <button id="historyBtn" class="btn-history" title="Versionsverlauf">⏱ Verlauf</button>
+          <button id="toggleEditBtn" class="btn-edit">✎ Bearbeiten</button>
           <span id="status-message" class="status"></span>
         </div>
       </div>
@@ -44,8 +93,16 @@
         <span class="tab-label">Attribute</span>
       </button>
       <button class="tab-btn" data-page="equipment">
-        <span class="tab-icon">⚔️</span>
+        <span class="tab-icon">🎒</span>
         <span class="tab-label">Ausrüstung</span>
+      </button>
+      <button class="tab-btn" data-page="combat">
+        <span class="tab-icon">⚔️</span>
+        <span class="tab-label">Kampf</span>
+      </button>
+      <button class="tab-btn" data-page="finances">
+        <span class="tab-icon">💳</span>
+        <span class="tab-label">Finanzen</span>
       </button>
       <button class="tab-btn" data-page="career">
         <span class="tab-icon">🗺️</span>
@@ -57,17 +114,32 @@
       </button>
     </nav>
 
-    <!-- Content Bereich -->
+    <!-- Content -->
     <main class="content">
-      <div id="metadata-page" class="page-content active"></div>
+      <div id="metadata-page"   class="page-content active"></div>
       <div id="attributes-page" class="page-content"></div>
-      <div id="equipment-page" class="page-content"></div>
-      <div id="career-page" class="page-content"></div>
-      <div id="notes-page" class="page-content"></div>
+      <div id="equipment-page"  class="page-content"></div>
+      <div id="career-page"     class="page-content"></div>
+      <div id="notes-page"      class="page-content"></div>
+      <div id="combat-page"     class="page-content"></div>
+      <div id="finances-page"   class="page-content"></div>
     </main>
+
   </div>
 
-  <!-- Scripts -->
+  <!-- Versionsverlauf Modal -->
+  <div id="versionModal" class="vh-modal">
+    <div class="vh-panel">
+      <div class="vh-header">
+        <h2 class="vh-title">Versionsverlauf</h2>
+        <button id="closeVersionModal" class="vh-close">✕</button>
+      </div>
+      <p class="vh-hint">Versionen werden beim Tab-Wechsel und nach „✓ Fertig" gespeichert.</p>
+      <div id="versionList" class="vh-list"></div>
+    </div>
+  </div>
+
+  <script src="js/markdown.js"></script>
   <script src="js/data/skills.js"></script>
   <script src="js/models/character.js"></script>
   <script src="js/storage.js"></script>
@@ -76,6 +148,8 @@
   <script src="js/pages/equipment.js"></script>
   <script src="js/pages/career.js"></script>
   <script src="js/pages/notes.js"></script>
+  <script src="js/pages/combat.js"></script>
+  <script src="js/pages/finances.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

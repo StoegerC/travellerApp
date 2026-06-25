@@ -30,7 +30,7 @@ const AttributesPage = {
     const attrs = character.attributes;
     const skills = character.skills;
 
-    let html = '<h2>Attribute & Skills</h2>';
+    let html = `<div class="${App.editMode ? '' : 'view-mode'}"><h2>Attribute & Skills</h2>`;
     
     // Attribute Section
     html += '<h3>Attribute</h3>';
@@ -53,39 +53,55 @@ const AttributesPage = {
     
     for (const [key, label] of Object.entries(this.attributeLabels)) {
       const attrData = attrs[key] || { value: 6, current: 6, dm: 0 };
-      const value = typeof attrData === 'number' ? attrData : (attrData.value || 6);
-      const current = typeof attrData === 'number' ? attrData : (attrData.current || 6);
-      
-      // Bei Psi mit Wert 0 kein DM anzeigen
-      const isPsi = key === 'psi';
-      const dmValue = (isPsi && value === 0) ? '' : this.calculateDM(value);
-      
-      html += `
-        <tr style="border-bottom: 1px solid #eee;">
-          <td style="padding: 12px; vertical-align: middle;">${label}</td>
-          <td style="padding: 12px;">
-            <input type="number" class="attr-value" data-attr="${key}" value="${value}" min="0" max="15" style="width: 100%; padding: 6px; font-weight: 600;">
-          </td>
-          <td style="padding: 12px;">
-            <input type="number" class="attr-current" data-attr="${key}" value="${current}" min="0" max="15" style="width: 100%; padding: 6px;">
-          </td>
-          <td style="padding: 12px;">
-            <input type="number" class="attr-dm" data-attr="${key}" value="${dmValue}" min="-10" max="10" readonly style="width: 100%; padding: 6px; background: #f5f5f5; color: #666;">
-          </td>
-        </tr>
-      `;
+      const value   = typeof attrData === 'number' ? attrData : (attrData.value   ?? 6);
+      const current = typeof attrData === 'number' ? attrData : (attrData.current ?? 6);
+
+      const isPsi       = key === 'psi';
+      const psiInactive = isPsi && current === -1;
+      const dmValue     = (isPsi && current <= 0) ? '' : this.calculateDM(current);
+
+      if (!App.editMode && psiInactive) {
+        html += `
+          <tr style="border-bottom: 1px solid #eee;">
+            <td style="padding: 12px; color: #bbb;">${label}</td>
+            <td style="padding: 12px; color: #bbb; text-align: center;">–</td>
+            <td style="padding: 12px; color: #bbb; text-align: center;">–</td>
+            <td style="padding: 12px; color: #bbb; text-align: center;">–</td>
+          </tr>
+        `;
+      } else {
+        html += `
+          <tr style="border-bottom: 1px solid #eee;">
+            <td style="padding: 12px; vertical-align: middle;">${label}</td>
+            <td style="padding: 12px;">
+              <input type="number" class="attr-value" data-attr="${key}" value="${value}" min="${isPsi ? -1 : 0}" max="15" style="width: 100%; padding: 6px; font-weight: 600;">
+            </td>
+            <td style="padding: 12px;">
+              <input type="number" class="attr-current" data-attr="${key}" value="${current}" min="${isPsi ? -1 : 0}" max="15" style="width: 100%; padding: 6px;">
+            </td>
+            <td style="padding: 12px;">
+              <input type="number" class="attr-dm" data-attr="${key}" value="${dmValue}" min="-10" max="10" readonly style="width: 100%; padding: 6px; background: #f5f5f5; color: #666;">
+            </td>
+          </tr>
+        `;
+      }
     }
     html += '</tbody></table>';
 
     // Skills Section
     html += '<h3>Skills</h3>';
     
-    // Berechne Max. Skill Levels: 3 x (EDU + INT)
-    const eduValue = typeof attrs.education === 'number' ? attrs.education : (attrs.education?.value || 6);
-    const intValue = typeof attrs.intelligence === 'number' ? attrs.intelligence : (attrs.intelligence?.value || 6);
-    const maxSkillLevels = 3 * (eduValue + intValue);
-    
-    html += `<p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">Max. Skill Levels = 3 x (EDU + INT) = 3 x (${eduValue} + ${intValue}) = <strong>${maxSkillLevels}</strong></p>`;
+    // Berechne Max. Skill Levels: 3 x (EDU DM + INT DM), basierend auf aktuellen Werten
+    const eduAttr = attrs.education || { current: 6 };
+    const intAttr = attrs.intelligence || { current: 6 };
+    const eduCurrent = typeof eduAttr === 'number' ? eduAttr : (eduAttr.current || 6);
+    const intCurrent = typeof intAttr === 'number' ? intAttr : (intAttr.current || 6);
+    const eduDM = this.calculateDM(eduCurrent);
+    const intDM = this.calculateDM(intCurrent);
+    const maxSkillLevels = 3 * (eduDM + intDM);
+    const fmt = n => n >= 0 ? `+${n}` : `${n}`;
+
+    html += `<p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">Max. Skill Levels = 3 × (EDU DM + INT DM) = 3 × (${fmt(eduDM)} + ${fmt(intDM)}) = <strong>${maxSkillLevels}</strong></p>`;
     
     // Suchfilter und Add-Button (Add-Button nur im Edit-Modus)
     html += `
@@ -111,12 +127,23 @@ const AttributesPage = {
       
       columnSkills.forEach((skill, index) => {
         const globalIndex = start + index;
-        html += `
-          <div class="skill-item">
-            <label>${skill.name}</label>
-            <input type="number" class="skill-level skill-level-input" data-index="${globalIndex}" value="${skill.level || 0}" min="0" max="9">
-          </div>
-        `;
+        const level = skill.level || 0;
+        if (App.editMode) {
+          html += `
+            <div class="skill-item">
+              <label>${skill.name}</label>
+              <input type="number" class="skill-level skill-level-input" data-index="${globalIndex}" value="${level}" min="-1" max="9">
+            </div>
+          `;
+        } else {
+          const learned = level >= 0;
+          html += `
+            <div class="skill-item ${learned ? 'skill-item--learned' : 'skill-item--unlearned'}">
+              <span class="skill-label">${skill.name}</span>
+              ${learned ? `<span class="skill-badge">${level}</span>` : ''}
+            </div>
+          `;
+        }
       });
       
       html += '</div>';
@@ -124,7 +151,255 @@ const AttributesPage = {
     html += '</div>';
     html += '</div>';
 
+    // ── Weiterbildung ──
+    html += this._renderTraining(character);
+
+    html += '</div>'; // view-mode wrapper
+
     return html;
+  },
+
+  // ─────────────────────── TRAINING RENDER ────────────────────────────────
+
+  _esc(s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  },
+
+  _methodLabel(m) {
+    return { self: 'Selbststudium', teacher: 'Mit Lehrer', course: 'Kurs/Schule' }[m] || m;
+  },
+
+  _methodClass(m) {
+    return { self: 'train-method-self', teacher: 'train-method-teacher', course: 'train-method-course' }[m] || '';
+  },
+
+  _addTrainingMonths(dateStr, months) {
+    if (!dateStr || !months) return '';
+    const parts = String(dateStr).split('-');
+    if (parts.length < 2) return '';
+    let year = parseInt(parts[0]), month = parseInt(parts[1]);
+    if (isNaN(year) || isNaN(month)) return '';
+    month += parseInt(months) || 0;
+    while (month > 12) { month -= 12; year++; }
+    return `${year}-${String(month).padStart(2, '0')}`;
+  },
+
+  _renderTraining(character) {
+    const training = Array.isArray(character.training) ? character.training : [];
+    const active = training.filter(t => !t.completed);
+    const done   = training.filter(t =>  t.completed).reverse();
+    const e = s => this._esc(s);
+
+    let html = `<h3 style="margin-top:28px;">Weiterbildung</h3><div class="training-section">`;
+
+    if (App.editMode) {
+      html += `<button id="addTrainingBtn" class="btn-success training-add-btn">+ Training hinzufügen</button>`;
+    }
+
+    if (active.length === 0) {
+      html += `<p class="training-empty">Kein aktives Training eingetragen.</p>`;
+    }
+
+    active.forEach(t => {
+      const progress = Math.max(0, t.progressMonths || 0);
+      const total    = Math.max(1, t.durationMonths || 1);
+      const pct      = Math.min(100, Math.round((progress / total) * 100));
+      const ready    = progress >= total;
+
+      html += `
+        <div class="training-card${ready ? ' training-card--ready' : ''}">
+          <div class="training-card-top">
+            <span class="training-skill-name">${e(t.skillName)}</span>
+            <span class="training-levels">${t.fromLevel} → ${t.toLevel}</span>
+            <span class="train-method-badge ${this._methodClass(t.method)}">${this._methodLabel(t.method)}</span>
+            ${App.editMode ? `<button class="training-del-btn btn-icon" data-id="${t.id}">🗑</button>` : ''}
+          </div>
+
+          <div class="training-card-counter">
+            <button class="training-pm-btn" data-id="${t.id}" data-delta="-1" aria-label="Weniger">−</button>
+            <span class="training-counter" data-id="${t.id}">${progress} / ${total} Monate</span>
+            <button class="training-pm-btn" data-id="${t.id}" data-delta="1" aria-label="Mehr">+</button>
+            <button class="training-complete-btn${ready ? ' training-complete-ready' : ''}" data-id="${t.id}">
+              ✓ Abschließen
+            </button>
+          </div>
+
+          <div class="training-progress-track">
+            <div class="training-progress-fill${ready ? ' training-progress-fill--done' : ''}"
+                 data-id="${t.id}"
+                 style="width:${pct}%"></div>
+          </div>
+
+          ${t.notes ? `<div class="training-card-notes md-content">${Md.render(t.notes)}</div>` : ''}
+        </div>`;
+    });
+
+    if (done.length > 0) {
+      html += `
+        <details class="training-done-details">
+          <summary class="training-done-summary">✓ Abgeschlossen (${done.length})</summary>
+          <div class="training-done-list">
+            ${done.map(t => `
+              <div class="training-done-item">
+                <span class="training-skill-name">${e(t.skillName)}</span>
+                <span class="training-levels">${t.fromLevel}→${t.toLevel}</span>
+                <span class="train-method-small">${this._methodLabel(t.method)}</span>
+                ${t.completedDate ? `<span class="training-done-date">${e(t.completedDate)}</span>` : ''}
+                ${App.editMode ? `<button class="training-del-btn btn-icon btn-xs" data-id="${t.id}">🗑</button>` : ''}
+              </div>`).join('')}
+          </div>
+        </details>`;
+    }
+
+    html += '</div>';
+    return html;
+  },
+
+  // ─────────────────────── TRAINING MODALS ────────────────────────────────
+
+  _showAddTrainingModal(char) {
+    const skillOpts = (char.skills || []).map(s =>
+      `<option value="${this._esc(s.name)}" data-level="${s.level}">${this._esc(s.name)} (${s.level >= 0 ? s.level : 'ungelernt'})</option>`
+    ).join('');
+
+    const overlay = document.createElement('div');
+    overlay.className = 'fin-settle-overlay';
+    overlay.innerHTML = `
+      <div class="training-modal">
+        <h3>Training hinzufügen</h3>
+        <div class="form-group">
+          <label>Skill</label>
+          <select id="tmSkill">
+            <option value="">– Skill wählen –</option>
+            ${skillOpts}
+            <option value="__custom">Anderer Skill …</option>
+          </select>
+          <input type="text" id="tmSkillCustom" class="training-custom-input" placeholder="Skill-Name" style="display:none;">
+        </div>
+        <div class="training-modal-row">
+          <div class="form-group"><label>Von Level</label>
+            <input type="number" id="tmFrom" value="0" min="-1" max="8">
+          </div>
+          <div class="form-group"><label>Zu Level</label>
+            <input type="number" id="tmTo" value="1" min="0" max="9">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Methode</label>
+          <select id="tmMethod">
+            <option value="self">Selbststudium (4 Monate)</option>
+            <option value="teacher">Mit Lehrer (3 Monate)</option>
+            <option value="course">Kurs / Schule</option>
+          </select>
+        </div>
+        <div class="training-modal-row">
+          <div class="form-group"><label>Dauer (Monate)</label>
+            <input type="number" id="tmDuration" value="4" min="1" max="120">
+          </div>
+          <div class="form-group"><label>Start (In-Game)</label>
+            <input type="text" id="tmStart" placeholder="z.B. 1105-03">
+          </div>
+        </div>
+        <div class="form-group"><label>Notizen</label>
+          <input type="text" id="tmNotes" placeholder="Optional">
+        </div>
+        <div class="training-modal-actions">
+          <button id="tmConfirm" class="btn-success">Hinzufügen</button>
+          <button id="tmCancel"  class="btn-secondary">Abbrechen</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const skillSel    = document.getElementById('tmSkill');
+    const customInput = document.getElementById('tmSkillCustom');
+    const fromInput   = document.getElementById('tmFrom');
+    const toInput     = document.getElementById('tmTo');
+    const methodSel   = document.getElementById('tmMethod');
+    const durInput    = document.getElementById('tmDuration');
+
+    skillSel.addEventListener('change', () => {
+      const sel = skillSel.options[skillSel.selectedIndex];
+      customInput.style.display = sel.value === '__custom' ? '' : 'none';
+      if (sel.value && sel.value !== '__custom') {
+        const lv = parseInt(sel.dataset.level ?? 0);
+        const base = lv < 0 ? 0 : lv;
+        fromInput.value = base;
+        toInput.value   = base + 1;
+      }
+    });
+    methodSel.addEventListener('change', () => {
+      durInput.value = { self: 4, teacher: 3, course: 6 }[methodSel.value] ?? 4;
+    });
+
+    document.getElementById('tmCancel').onclick = () => overlay.remove();
+    document.getElementById('tmConfirm').onclick = () => {
+      const skillName = skillSel.value === '__custom'
+        ? customInput.value.trim()
+        : skillSel.value;
+      if (!skillName) { alert('Bitte einen Skill wählen.'); return; }
+
+      if (!Array.isArray(char.training)) char.training = [];
+      char.training.push({
+        id:             'tr_' + Date.now(),
+        skillName,
+        fromLevel:      parseInt(fromInput.value)  ?? 0,
+        toLevel:        parseInt(toInput.value)    ?? 1,
+        method:         methodSel.value,
+        durationMonths: parseInt(durInput.value)   || 4,
+        progressMonths: 0,
+        startDate:      document.getElementById('tmStart').value.trim(),
+        notes:          document.getElementById('tmNotes').value.trim(),
+        completed:      false,
+        completedDate:  ''
+      });
+      Storage.saveCharacter(char);
+      App.renderCurrentPage();
+      overlay.remove();
+    };
+  },
+
+  _showCompleteTrainingModal(t, char) {
+    const suggestedDate = this._addTrainingMonths(t.startDate, t.durationMonths);
+    const overlay = document.createElement('div');
+    overlay.className = 'fin-settle-overlay';
+    overlay.innerHTML = `
+      <div class="training-modal">
+        <h3>Training abschließen</h3>
+        <p class="training-modal-info">
+          <strong>${this._esc(t.skillName)}</strong>
+          &nbsp; ${t.fromLevel} → ${t.toLevel} &nbsp;·&nbsp; ${this._methodLabel(t.method)}
+        </p>
+        <div class="form-group"><label>Abgeschlossen am (In-Game)</label>
+          <input type="text" id="tcDate" value="${this._esc(suggestedDate)}" placeholder="z.B. 1105-07">
+        </div>
+        <label class="training-modal-check">
+          <input type="checkbox" id="tcUpdateSkill" checked>
+          Skill-Level auf ${t.toLevel} setzen
+        </label>
+        <div class="training-modal-actions" style="margin-top:20px;">
+          <button id="tcConfirm" class="btn-success">Abschließen</button>
+          <button id="tcCancel"  class="btn-secondary">Abbrechen</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    document.getElementById('tcCancel').onclick  = () => overlay.remove();
+    document.getElementById('tcConfirm').onclick = () => {
+      const completedDate  = document.getElementById('tcDate').value.trim();
+      const updateSkill    = document.getElementById('tcUpdateSkill').checked;
+
+      const entry = char.training.find(x => x.id === t.id);
+      if (entry) { entry.completed = true; entry.completedDate = completedDate; }
+
+      if (updateSkill) {
+        const skill = char.skills.find(s => s.name === t.skillName);
+        if (skill) skill.level = t.toLevel;
+      }
+
+      Storage.saveCharacter(char);
+      App.renderCurrentPage();
+      overlay.remove();
+    };
   },
 
   getData() {
@@ -138,16 +413,16 @@ const AttributesPage = {
       }
       
       if (input.classList.contains('attr-value')) {
-        const value = parseInt(input.value) || 6;
-        attributes[attr].value = value;
-        // Berechne DM automatisch (außer bei Psi mit Wert 0)
-        if (attr === 'psi' && value === 0) {
+        attributes[attr].value = parseInt(input.value) || 6;
+      } else if (input.classList.contains('attr-current')) {
+        const current = parseInt(input.value) || 6;
+        attributes[attr].current = current;
+        // DM wird vom aktuellen Wert berechnet
+        if (attr === 'psi' && current === 0) {
           attributes[attr].dm = 0;
         } else {
-          attributes[attr].dm = this.calculateDM(value);
+          attributes[attr].dm = this.calculateDM(current);
         }
-      } else if (input.classList.contains('attr-current')) {
-        attributes[attr].current = parseInt(input.value) || 6;
       }
     });
 
@@ -186,28 +461,80 @@ const AttributesPage = {
       filterInput.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase();
         document.querySelectorAll('.skill-item').forEach(item => {
-          const label = item.querySelector('label');
-          const skillName = label ? label.textContent.toLowerCase() : '';
+          const el = item.querySelector('label, .skill-label');
+          const skillName = el ? el.textContent.toLowerCase() : '';
           item.style.display = skillName.includes(searchTerm) ? 'flex' : 'none';
         });
       });
     }
 
+    // ── Training-Buttons (immer aktiv, auch im View-Modus) ───────────────
+    document.getElementById('addTrainingBtn')?.addEventListener('click', () => {
+      this._showAddTrainingModal(App.currentCharacter);
+    });
+
+    document.querySelectorAll('.training-pm-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id    = btn.dataset.id;
+        const delta = parseInt(btn.dataset.delta);
+        const t     = (App.currentCharacter.training || []).find(x => x.id === id);
+        if (!t) return;
+
+        t.progressMonths = Math.max(0, (t.progressMonths || 0) + delta);
+        Storage.saveCharacter(App.currentCharacter);
+
+        const total = Math.max(1, t.durationMonths || 1);
+        const prog  = t.progressMonths;
+        const pct   = Math.min(100, Math.round((prog / total) * 100));
+        const ready = prog >= total;
+
+        const counter = document.querySelector(`.training-counter[data-id="${id}"]`);
+        if (counter) counter.textContent = `${prog} / ${total} Monate`;
+
+        const fill = document.querySelector(`.training-progress-fill[data-id="${id}"]`);
+        if (fill) {
+          fill.style.width = `${pct}%`;
+          fill.classList.toggle('training-progress-fill--done', ready);
+        }
+
+        const card = btn.closest('.training-card');
+        if (card) card.classList.toggle('training-card--ready', ready);
+
+        const completeBtn = document.querySelector(`.training-complete-btn[data-id="${id}"]`);
+        if (completeBtn) completeBtn.classList.toggle('training-complete-ready', ready);
+      });
+    });
+
+    document.querySelectorAll('.training-complete-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = (App.currentCharacter.training || []).find(x => x.id === btn.dataset.id);
+        if (t) this._showCompleteTrainingModal(t, App.currentCharacter);
+      });
+    });
+
+    document.querySelectorAll('.training-del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (!confirm('Eintrag löschen?')) return;
+        App.currentCharacter.training = (App.currentCharacter.training || []).filter(t => t.id !== btn.dataset.id);
+        Storage.saveCharacter(App.currentCharacter);
+        App.renderCurrentPage();
+      });
+    });
+
     // Restliche Listener nur im Edit-Modus
     if (!App.editMode) return;
 
-    // Attribut-Wert-Änderungen -> DM automatisch berechnen
-    document.querySelectorAll('.attr-value').forEach(input => {
+    // Aktuell-Wert-Änderungen -> DM automatisch berechnen
+    document.querySelectorAll('.attr-current').forEach(input => {
       input.addEventListener('input', (e) => {
         const attr = e.target.getAttribute('data-attr');
-        const newValue = parseInt(e.target.value) || 0;
+        const current = parseInt(e.target.value) || 0;
         const dmInput = document.querySelector(`.attr-dm[data-attr="${attr}"]`);
         if (dmInput) {
-          // Bei Psi mit Wert 0 kein DM anzeigen
-          if (attr === 'psi' && newValue === 0) {
+          if (attr === 'psi' && current === 0) {
             dmInput.value = '';
           } else {
-            dmInput.value = this.calculateDM(newValue);
+            dmInput.value = this.calculateDM(current);
           }
         }
       });
@@ -223,6 +550,7 @@ const AttributesPage = {
         }
       });
     }
+
   },
 
   /**

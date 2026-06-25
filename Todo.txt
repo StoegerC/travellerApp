@@ -1,0 +1,64 @@
+Traveller Charsheet – Offene Punkte
+====================================
+
+DATENHALTUNG & PERSISTENZ
+[x] Autosave (1,5 Sek. Debounce nach jeder Eingabe; Speichern-Button entfernt)
+[ ] Backend-API aktivieren (server.js ist Dummy, keine echte Persistenz)
+[x] localStorage-Limit: auf IndexedDB umgestellt (kein relevantes Limit mehr)
+[ ] Sync zwischen Geräten (SyncProvider-Abstraktion vorbereitet, Cloudflare R2 als nächster Schritt)
+
+CHARAKTERVERWALTUNG
+[ ] Regel-System-Switch (character.system wird gesetzt aber nie ausgewertet)
+[x] Undo / Versionsverlauf: in-memory Undo (↩ Button + Cmd/Strg+Z), persistente Versionen in IndexedDB (gespeichert bei Tab-Wechsel / Fertig), Verlauf-Modal
+[ ] Skill-Level -1 (nicht vorhanden) vs. 0 (Level 0) klar in der UI unterscheiden
+
+NOTIZEN / VERKNÜPFUNGEN
+[x] Kreuzverweise: Session ↔ Person / Ort / Quest (bidirektionale Link-Chips)
+[x] Autosave-Bug: _editTags wurde nach Autosave genullt → Tags gingen verloren
+[x] Person mit Rasse-Feld (Default: Mensch)
+[ ] Person kann mehrere Orte haben (aktuell nur ein locationId)
+[ ] Quest: Ortsverknüpfung hinzufügen
+[ ] Quest: mehrere Auftraggeber ermöglichen
+[ ] Events in Session-Tags auswerten (werden gesammelt aber nirgendwo angezeigt)
+
+NOTIZEN – JOURNAL (SESSIONS)
+[x] Session als "Aktiv" markieren (nur eine gleichzeitig)
+[x] Markdown-Editor statt Rich-Text-Buttons
+[x] Volltext-Suche (Titel + Inhalt)
+[x] Filter: Personen-Dropdown + Orte-Dropdown (gruppiert mit "Filter"-Label)
+[x] Neue Person / Ort beim Anlegen mit aktiver Session verknüpfen (Checkbox)
+[x] + Session Button im Nicht-Bearbeitungsmodus verfügbar
+
+NOTIZEN – ZEITSTEMPEL & SORTIERUNG
+[x] createdAt-Zeitstempel bei Sessions, Personen, Orten, Quests (editierbar im Bearbeitungsmodus)
+[x] createdAt bei Ausrüstungseinträgen (sichtbar im Details-Modal)
+[x] createdAt bei Werdegang-Termen und Ereignissen (sichtbar im Modal)
+[x] Sortierung nach Erstellungsdatum / Name / Besuchsdatum (Orte)
+[x] Imperialkalender einheitlich: Jahr + Tag (YYYY-DDD), bei Session und Ort
+[x] Datumsanzeige überall als YYYY-DDD
+
+NOTIZEN – PERSONEN
+[x] + Person Button im Nicht-Bearbeitungsmodus; Bearbeitungsmodus öffnet sich automatisch
+[x] Neuen Person: Bearbeitungsmodus schließt sich nach "Erstellen"
+[x] Status-Default: Lebend; keine Bulletpoints
+[x] Filter: Beziehungs-Dropdown + Orte-Dropdown (gruppiert mit "Filter"-Label)
+
+NOTIZEN – ORTE
+[x] Travellermap-Integration: Kartenansicht mit Planetensuche (Welten + Sektoren + Teilsektoren)
+[x] UWP-Dekodierung in der Detailansicht (Leseansicht = Erklärungen, Bearbeitungsmodus = Rohcode)
+[x] Imperialkalender-Datumspicker (YYYY-DDD Format, Jahr + Tag)
+[x] Besuchsdatum ersetzt "Besucht"-Badge; besuchte Orte grün
+[x] Travellermap-Suche aus der Ortsliste entfernt
+[x] + Ort Button im Nicht-Bearbeitungsmodus verfügbar
+[x] Filter: Status-Dropdown (gruppiert mit "Filter"-Label)
+
+KAMPF
+[x] Physische Attribute und Aktive Rüstung getrennte Kacheln
+[x] 2×2-Grid-Layout: Initiative | Aktive Bewaffnung / Physische Attribute | Aktive Rüstung / Strahlungsdosis
+
+UI / UX
+[x] Favicon: Traveller-Stern (Canvas-generiert, Safari-kompatibel)
+[ ] Mobile-Optimierung (auf kleinen Smartphones eng)
+[ ] Desktop-Layout verbessern (viel Leerraum)
+[x] Dark Mode: 🌙/☀️ Toggle-Button im Header, automatische Erkennung via prefers-color-scheme, Präferenz in localStorage
+[ ] Weiterbildung: automatisches Datum-Tracking statt manuellem +/- Monatszähler

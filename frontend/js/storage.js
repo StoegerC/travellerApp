@@ -1,122 +1,184 @@
 /**
- * Storage-Interface für localStorage
+ * Storage – IndexedDB-Backend mit synchronem In-Memory-Cache.
+ *
+ * Öffentliche API bleibt vollständig synchron (saveCharacter, loadCharacter,
+ * listCharacters, deleteCharacter). Einzig Storage.init() ist async und muss
+ * einmalig beim App-Start awaited werden.
+ *
+ * Später auf einen Cloud-Provider wechseln:
+ *   1. SyncProvider implementieren (push/pull/list mit gleicher Signatur)
+ *   2. Storage._persist / Storage._delete gegen den Provider tauschen
+ *   → Kein weiterer Code muss angefasst werden.
  */
 const Storage = {
-  STORAGE_KEY: 'traveller_characters',
+  _DB_NAME:        'traveller_charsheet',
+  _DB_VERSION:     2,
+  _STORE:          'characters',
+  _VERSION_STORE:  'character_versions',
+  _LS_KEY:         'traveller_characters', // nur für Migration
+  _MAX_VERSIONS:   30,
+  lastError:       null,
+  _db:             null,
+  _cache:          [], // rohe JSON-Objekte aller Charaktere
 
-  /**
-   * Speichert einen Charakter
-   */
-  saveCharacter(character) {
+  // ── Initialisierung ────────────────────────────────────────────────────
+  async init() {
+    this._db    = await this._openDB();
+    this._cache = await this._loadAllFromDB();
+    await this._migrateFromLocalStorage();
+  },
+
+  _openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(this._DB_NAME, this._DB_VERSION);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        const oldVer = e.oldVersion;
+        if (oldVer < 1) db.createObjectStore(this._STORE, { keyPath: 'id' });
+        if (oldVer < 2) db.createObjectStore(this._VERSION_STORE, { keyPath: 'id' });
+      };
+      req.onsuccess = e => resolve(e.target.result);
+      req.onerror   = e => reject(e.target.error);
+    });
+  },
+
+  _loadAllFromDB() {
+    return new Promise((resolve, reject) => {
+      const req = this._db
+        .transaction(this._STORE)
+        .objectStore(this._STORE)
+        .getAll();
+      req.onsuccess = e => resolve(e.target.result || []);
+      req.onerror   = e => reject(e.target.error);
+    });
+  },
+
+  async _migrateFromLocalStorage() {
+    const raw = localStorage.getItem(this._LS_KEY);
+    if (!raw) return;
     try {
-      const characters = this.getAllCharacters();
-      const index = characters.findIndex(c => c.id === character.id);
-      
-      if (index >= 0) {
-        characters[index] = character.toJSON();
-      } else {
-        characters.push(character.toJSON());
+      const chars = JSON.parse(raw);
+      for (const c of chars) {
+        if (!this._cache.find(x => x.id === c.id)) {
+          this._cache.push(c);
+          await this._writeToDB(c);
+        }
       }
-      
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(characters));
+      localStorage.removeItem(this._LS_KEY);
+      console.info('Migration von localStorage nach IndexedDB abgeschlossen.');
+    } catch (e) {
+      console.error('Migration fehlgeschlagen:', e);
+    }
+  },
+
+  // ── Interne DB-Operationen (async, fire-and-forget von außen) ──────────
+  _writeToDB(json) {
+    return new Promise((resolve, reject) => {
+      const tx = this._db.transaction(this._STORE, 'readwrite');
+      tx.objectStore(this._STORE).put(json);
+      tx.oncomplete = resolve;
+      tx.onerror    = e => reject(e.target.error);
+    });
+  },
+
+  _deleteFromDB(id) {
+    return new Promise((resolve, reject) => {
+      const tx = this._db.transaction(this._STORE, 'readwrite');
+      tx.objectStore(this._STORE).delete(id);
+      tx.oncomplete = resolve;
+      tx.onerror    = e => reject(e.target.error);
+    });
+  },
+
+  // ── Öffentliche API (synchron via Cache) ───────────────────────────────
+  saveCharacter(character) {
+    this.lastError = null;
+    try {
+      const json = character.toJSON();
+      const idx  = this._cache.findIndex(c => c.id === json.id);
+      if (idx >= 0) this._cache[idx] = json;
+      else          this._cache.push(json);
+
+      this._writeToDB(json).catch(e => {
+        console.error('IndexedDB Schreibfehler:', e);
+        this.lastError = e;
+      });
       return true;
     } catch (e) {
       console.error('Fehler beim Speichern:', e);
+      this.lastError = e;
       return false;
     }
   },
 
-  /**
-   * Lädt einen Charakter
-   */
   loadCharacter(id) {
-    try {
-      const characters = this.getAllCharacters();
-      const data = characters.find(c => c.id === id);
-      return data ? Character.fromJSON(data) : null;
-    } catch (e) {
-      console.error('Fehler beim Laden:', e);
-      return null;
-    }
+    const data = this._cache.find(c => c.id === id);
+    return data ? Character.fromJSON(data) : null;
   },
 
-  /**
-   * Gibt alle Charaktere zurück
-   */
   getAllCharacters() {
-    try {
-      const data = localStorage.getItem(this.STORAGE_KEY);
-      return data ? JSON.parse(data) : [];
-    } catch (e) {
-      console.error('Fehler beim Lesen von Storage:', e);
-      return [];
-    }
+    return this._cache.map(c => Character.fromJSON(c));
   },
 
-  /**
-   * Gibt Liste aller Charaktere (ID + Name) zurück
-   */
   listCharacters() {
-    return this.getAllCharacters().map(c => ({
-      id: c.id,
-      name: c.metadata.name || 'Namenlos'
-    }));
+    return this._cache
+      .map(c => ({ id: c.id, name: c.metadata?.name || 'Namenlos' }))
+      .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   },
 
-  /**
-   * Löscht einen Charakter
-   */
   deleteCharacter(id) {
-    try {
-      const characters = this.getAllCharacters();
-      const filtered = characters.filter(c => c.id !== id);
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
-      return true;
-    } catch (e) {
-      console.error('Fehler beim Löschen:', e);
-      return false;
-    }
+    this._cache = this._cache.filter(c => c.id !== id);
+    this._deleteFromDB(id).catch(e => console.error('IndexedDB Löschfehler:', e));
+    this.deleteVersionsForChar(id);
   },
 
-  /**
-   * Initialisiert Storage mit Test-Charakteren
-   */
-  initializeTestData() {
-    const existing = this.getAllCharacters();
-    if (existing.length > 0) return; // Bereits Daten vorhanden
+  // ── Versionsverlauf ────────────────────────────────────────────────────
+  saveVersion(charId, json) {
+    if (!this._db) return;
+    const version = { id: `${charId}_${Date.now()}`, charId, timestamp: Date.now(), data: json };
+    const tx = this._db.transaction(this._VERSION_STORE, 'readwrite');
+    tx.objectStore(this._VERSION_STORE).put(version);
+    tx.oncomplete = () => this._pruneVersions(charId);
+  },
 
-    const testCharacters = [
-      new Character({
-        metadata: { name: 'Captain Zara Vale', title: 'Navy Officer', homeworld: 'Tarsus Prime', age: 42 },
-        attributes: { strength: 8, dexterity: 7, endurance: 9, intelligence: 10, education: 11, socialStatus: 10 },
-        skills: [
-          { name: 'Pilot', level: 2 },
-          { name: 'Navigation', level: 1 }
-        ]
-      }),
-      new Character({
-        metadata: { name: 'Dr. Keth Nomis', title: 'Scientist', homeworld: 'Centauri Station', age: 38 },
-        attributes: { strength: 5, dexterity: 6, endurance: 7, intelligence: 13, education: 14, socialStatus: 8 },
-        skills: [
-          { name: 'Science', level: 3 },
-          { name: 'Research', level: 2 }
-        ]
-      }),
-      new Character({
-        metadata: { name: 'Vex Calloway', title: 'Scout', homeworld: 'Frontier Station', age: 29 },
-        attributes: { strength: 10, dexterity: 9, endurance: 8, intelligence: 8, education: 7, socialStatus: 6 },
-        skills: [
-          { name: 'Survival', level: 2 },
-          { name: 'Gunnery', level: 1 }
-        ]
-      })
-    ];
+  listVersions(charId) {
+    if (!this._db) return Promise.resolve([]);
+    return new Promise((resolve, reject) => {
+      const req = this._db.transaction(this._VERSION_STORE)
+        .objectStore(this._VERSION_STORE).getAll();
+      req.onsuccess = e => resolve(
+        (e.target.result || [])
+          .filter(v => v.charId === charId)
+          .sort((a, b) => b.timestamp - a.timestamp)
+      );
+      req.onerror = e => reject(e.target.error);
+    });
+  },
 
-    testCharacters.forEach(char => this.saveCharacter(char));
-  }
+  loadVersion(versionId) {
+    if (!this._db) return Promise.resolve(null);
+    return new Promise((resolve, reject) => {
+      const req = this._db.transaction(this._VERSION_STORE)
+        .objectStore(this._VERSION_STORE).get(versionId);
+      req.onsuccess = e => resolve(e.target.result || null);
+      req.onerror   = e => reject(e.target.error);
+    });
+  },
+
+  async _pruneVersions(charId) {
+    const versions = await this.listVersions(charId);
+    if (versions.length <= this._MAX_VERSIONS) return;
+    const toDelete = versions.slice(this._MAX_VERSIONS);
+    const tx = this._db.transaction(this._VERSION_STORE, 'readwrite');
+    const store = tx.objectStore(this._VERSION_STORE);
+    toDelete.forEach(v => store.delete(v.id));
+  },
+
+  async deleteVersionsForChar(charId) {
+    const versions = await this.listVersions(charId);
+    if (!versions.length) return;
+    const tx = this._db.transaction(this._VERSION_STORE, 'readwrite');
+    const store = tx.objectStore(this._VERSION_STORE);
+    versions.forEach(v => store.delete(v.id));
+  },
 };
-
-// Initialisiere Test-Charaktere beim Laden
-document.addEventListener('DOMContentLoaded', () => {
-  Storage.initializeTestData();
-});

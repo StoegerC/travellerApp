@@ -1,397 +1,576 @@
 /**
- * Werdegang Seite - mit Galaxienkarte
+ * Werdegang – Karriere-Timeline · Prägende Ereignisse · Hintergrund · Favoriten
  */
 const CareerPage = {
-  GRID_SIZE: 15,
-  CELL_SIZE: 30,  // wird in drawGalaxyMap() dynamisch überschrieben
-  _cellSize: 30,
 
+  // ── State ─────────────────────────────────────────────────────────────────
+  _selectedTermId:  null,
+  _sortImportance:  false,
+  _expandedEventId: null,
+  _editTermId:      undefined,  // undefined=kein Modal, null=neu, string=bearbeiten
+  _editEventId:     undefined,
+  _modalImportance: 2,
+  _secretsRevealed: false,
+
+  // ── Konstanten ────────────────────────────────────────────────────────────
+  BRANCHES: {
+    Navy:     { color: '#1a6ec0', light: '#dce8ff', label: 'Navy'      },
+    Marine:   { color: '#c0392b', light: '#fde8e7', label: 'Marine'    },
+    Scout:    { color: '#c09a00', light: '#fff8dc', label: 'Scout'     },
+    Merchant: { color: '#27ae60', light: '#dcf5e7', label: 'Merchant'  },
+    Army:     { color: '#7d3c98', light: '#f0e6f6', label: 'Armee'     },
+    Agent:    { color: '#2c3e50', light: '#e8ecef', label: 'Agent'     },
+    Rogue:    { color: '#e67e22', light: '#fdebd0', label: 'Schurke'   },
+    Other:    { color: '#95a5a6', light: '#f0f2f3', label: 'Sonstiges' },
+  },
+
+  RELATIONS: {
+    friendly: { dot: '#28a745', label: 'Verbündet'  },
+    neutral:  { dot: '#6c757d', label: 'Neutral'    },
+    hostile:  { dot: '#dc3545', label: 'Feindlich'  },
+  },
+
+  // ── Utilities ─────────────────────────────────────────────────────────────
+  _esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  },
+  _uid() { return 'c' + Date.now() + Math.random().toString(36).slice(2,6); },
+  _career(char) { return char.career || (char.career = { terms:[], keyEvents:[], background:{ appearance:'',personality:'',goals:'',motivation:'',secrets:'',secretsHidden:true,quotes:[] } }); },
+  _branch(service) { return this.BRANCHES[service] || this.BRANCHES.Other; },
+
+  _stars(n, id, editable) {
+    let out = '<span class="cr-stars">';
+    for (let i = 1; i <= 3; i++) {
+      const filled = i <= n;
+      out += editable
+        ? `<button class="cr-star${filled?' filled':''}" data-eventid="${id}" data-val="${i}">${filled?'⭐':'☆'}</button>`
+        : `<span class="cr-star-static">${filled?'⭐':'☆'}</span>`;
+    }
+    return out + '</span>';
+  },
+
+  // ── Haupt-Render ──────────────────────────────────────────────────────────
   render(character) {
-    const career = character.career || {};
-    const history = career.careerHistory || [];
-    const rank = career.rank || 0;
-    const benefits = career.benefits || [];
-    const galaxyMap = career.galaxyMap || { visitedSystems: [] };
-    const visitedSystems = galaxyMap.visitedSystems || [];
-
-    let html = '<h2>Werdegang</h2>';
-
-    html += '<h3>Galaxienkarte</h3>';
-    html += '<p style="color: #666; font-size: 0.9em; margin-bottom: 10px;">Tippen auf eine Zelle, um ein System zu markieren oder deine Geschichte einzutragen</p>';
-    html += '<div id="galaxyMapContainer" style="margin-bottom: 20px; touch-action: none;">';
-    html += `<canvas id="galaxyCanvas" style="display: block; width: 100%; border: 1px solid #444; background: #1a1a2e; cursor: crosshair; border-radius: 6px; touch-action: none;"></canvas>`;
-    html += '</div>';
-
-    html += '<h3>Besuchte Systeme</h3>';
-    html += '<div id="visitedSystemsList" style="margin-bottom: 20px;">';
-    if (visitedSystems.length === 0) {
-      html += '<p style="color: #999;">Noch keine Systeme besucht. Tippe auf die Karte, um Systeme hinzuzufügen!</p>';
-    } else {
-      visitedSystems.forEach((system, index) => {
-        html += `
-          <div class="system-card">
-            <div>
-              <strong>${system.name || 'Unbenanntes System'}</strong> (${system.x}, ${system.y})
-              <p>${system.description || '<em>Keine Beschreibung</em>'}</p>
-            </div>
-            ${App.editMode ? `<button class="btn-danger btn-remove-system" data-index="${index}">Löschen</button>` : ''}
-          </div>
-        `;
-      });
-    }
-    html += '</div>';
-
-    if (App.editMode) {
-      html += '<h3>Karriere-Historie</h3>';
-      html += '<div class="table-container">';
-      html += '<table>';
-      html += '<thead><tr><th>Karriere</th><th>Jahre</th><th>Aktion</th></tr></thead>';
-      html += '<tbody id="careerHistoryTable">';
-
-      history.forEach((entry) => {
-        html += `
-          <tr>
-            <td><input type="text" class="career-name" value="${entry.name || ''}" style="width: 100%;"></td>
-            <td><input type="number" class="career-years" value="${entry.years || 0}" min="0" style="width: 80px;"></td>
-            <td><button class="btn-remove-career" type="button">Entfernen</button></td>
-          </tr>
-        `;
-      });
-
-      html += '</tbody>';
-      html += '</table>';
-      html += '</div>';
-      html += '<button id="addCareerBtn" class="btn-primary" type="button">Karriere hinzufügen</button>';
-
-      html += `
-        <div class="form-group" style="margin-top: 20px;">
-          <label for="careerRank">Rang:</label>
-          <input type="number" id="careerRank" value="${rank}" min="0" max="6">
-        </div>
-      `;
-
-      html += '<h3>Vorteile</h3>';
-      html += '<div class="form-group form-grid-full">';
-      html += '<textarea id="benefitsText" placeholder="Vorteile (kommasepariert oder zeilenweise)" style="min-height: 100px; width: 100%;">';
-      html += (Array.isArray(benefits) ? benefits.join(', ') : benefits);
-      html += '</textarea>';
-      html += '</div>';
-    } else {
-      html += '<h3>Karriere-Historie</h3>';
-      if (history.length === 0) {
-        html += '<p style="color: #999;">Noch keine Karriere-Einträge.</p>';
-      } else {
-        html += '<div class="table-container">';
-        html += '<table>';
-        html += '<thead><tr><th>Karriere</th><th>Jahre</th></tr></thead>';
-        html += '<tbody>';
-
-        history.forEach((entry) => {
-          html += `
-            <tr>
-              <td>${entry.name || '-'}</td>
-              <td>${entry.years || 0}</td>
-            </tr>
-          `;
-        });
-
-        html += '</tbody>';
-        html += '</table>';
-        html += '</div>';
-      }
-
-      html += `
-        <div style="margin-top: 20px;">
-          <strong>Rang:</strong> ${rank}
-        </div>
-      `;
-
-      html += '<h3>Vorteile</h3>';
-      if (!benefits || benefits.length === 0) {
-        html += '<p style="color: #999;">Keine Vorteile.</p>';
-      } else {
-        html += '<ul>';
-        benefits.forEach(benefit => {
-          html += `<li>${benefit}</li>`;
-        });
-        html += '</ul>';
-      }
-    }
-
-    html += `
-      <div id="systemModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; padding-top: 60px;">
-        <div style="background: white; width: 90%; max-width: 500px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-          <h3>System Details</h3>
-          <div class="form-group">
-            <label for="systemNameInput">Systemname:</label>
-            <input type="text" id="systemNameInput" placeholder="z.B. Sol, Proxima Centauri" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-          </div>
-          <div class="form-group">
-            <label for="systemDescInput">Deine Geschichte an diesem Ort:</label>
-            <textarea id="systemDescInput" placeholder="Was hast du hier erlebt?" style="width: 100%; min-height: 100px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
-          </div>
-          <div style="text-align: right; margin-top: 15px;">
-            <button id="cancelSystemBtn" type="button" style="padding: 8px 15px; margin-right: 10px; background: #ccc; border: none; border-radius: 4px; cursor: pointer;">Abbrechen</button>
-            <button id="saveSystemBtn" type="button" style="padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Speichern</button>
-          </div>
-        </div>
-      </div>
-    `;
-
+    const career = this._career(character);
+    let html = `<div class="cr-page">
+      ${this._block1(career)}
+      ${this._block2(career, character)}
+      ${this._block3(career)}
+      ${this._block4(character)}
+    </div>
+    ${this._editTermId !== undefined ? this._termModal(career, character) : ''}
+    ${this._editEventId !== undefined ? this._eventModal(career, character) : ''}`;
     return html;
   },
 
-  getData() {
-    const history = [];
-    document.querySelectorAll('#careerHistoryTable tr').forEach(row => {
-      const name = row.querySelector('.career-name')?.value || '';
-      const years = parseInt(row.querySelector('.career-years')?.value) || 0;
-      if (name) {
-        history.push({ name, years });
-      }
+  // ── Block 1: Karriere-Timeline ────────────────────────────────────────────
+  _block1(career) {
+    const terms = career.terms;
+
+    let dots = '';
+    terms.forEach((t, i) => {
+      const br    = this._branch(t.service);
+      const last  = i === terms.length - 1;
+      const sel   = this._selectedTermId === t.id;
+      dots += `<div class="cr-term-dot-wrap${sel?' selected':''}">
+        <button class="cr-term-dot${last?' last':''}${sel?' sel':''}"
+          data-termid="${t.id}"
+          style="background:${br.color};${sel?'box-shadow:0 0 0 4px '+br.color+'44;':''}">
+          ${i + 1}
+        </button>
+        <div class="cr-term-label">
+          <span class="cr-term-svc" style="color:${br.color}">${this._esc(br.label)}</span>
+          ${t.rank ? `<span class="cr-term-rank">${this._esc(t.rank)}</span>` : ''}
+        </div>
+      </div>`;
     });
 
-    const benefitsText = document.getElementById('benefitsText')?.value || '';
-    const benefits = benefitsText
-      .split(',')
-      .map(b => b.trim())
-      .filter(b => b.length > 0);
+    // Detail-Karte
+    let detail = '';
+    if (this._selectedTermId) {
+      const t = terms.find(x => x.id === this._selectedTermId);
+      if (t) detail = this._termDetail(t);
+    }
 
-    return {
-      careerHistory: history,
-      rank: parseInt(document.getElementById('careerRank')?.value) || 0,
-      benefits,
-      galaxyMap: {
-        visitedSystems: window.currentVisitedSystems || []
-      }
-    };
+    return `<div class="cr-block cr-block-full">
+      <h3 class="cr-block-title">Karriere-Timeline</h3>
+      <div class="cr-timeline-scroll">
+        <div class="cr-timeline">
+          ${dots || '<span class="cr-empty-inline">Noch keine Terms.</span>'}
+          <button class="cr-add-term-btn" id="addTermBtn">+ Term</button>
+        </div>
+      </div>
+      ${detail}
+    </div>`;
   },
 
-  save(character) {
-    // Sichere nur, wenn Eingabefelder existieren (Edit-Modus ist aktiv)
-    const careerInputs = document.querySelectorAll('.career-name');
-    if (careerInputs.length === 0 && character.career.careerHistory.length > 0) return; // Keine Eingabefelder, aber Karriere existiert
-    
-    character.career = this.getData();
+  _termDetail(t) {
+    const br = this._branch(t.service);
+    const skills = (t.skills || []).map(s => `<span class="cr-skill-tag">${this._esc(s)}</span>`).join('');
+    return `<div class="cr-term-detail" style="border-color:${br.color}">
+      <div class="cr-term-detail-header">
+        <span class="cr-detail-svc" style="background:${br.color}">${this._esc(br.label)}</span>
+        ${t.rank ? `<span class="cr-detail-rank">${this._esc(t.rank)}</span>` : ''}
+        ${t.musteredOut ? `<span class="cr-detail-muster">Ausgemustert${t.musterOutReason ? ': '+this._esc(t.musterOutReason) : ''}</span>` : ''}
+        <div class="cr-detail-actions">
+          <button class="cr-detail-edit" data-termid="${t.id}">✎ Bearbeiten</button>
+          <button class="cr-detail-del"  data-termid="${t.id}">🗑</button>
+        </div>
+      </div>
+      ${t.events    ? `<div class="cr-detail-section"><strong>Ereignisse</strong><p>${this._esc(t.events)}</p></div>` : ''}
+      ${skills      ? `<div class="cr-detail-section"><strong>Skills</strong><div class="cr-skill-tags">${skills}</div></div>` : ''}
+      ${t.benefits  ? `<div class="cr-detail-section"><strong>Benefits</strong><p>${this._esc(t.benefits)}</p></div>` : ''}
+    </div>`;
   },
 
-  reset() {
-    document.getElementById('career-page').innerHTML = '';
+  // ── Block 2: Prägende Ereignisse ──────────────────────────────────────────
+  _block2(career, character) {
+    const events = [...career.keyEvents].sort((a, b) =>
+      this._sortImportance
+        ? (b.importance || 1) - (a.importance || 1)
+        : 0
+    );
+
+    const persons   = character.notes?.persons   || [];
+    const locations = character.notes?.locations || [];
+
+    const sortBtn = `<button class="cr-sort-btn${this._sortImportance?' active':''}" id="toggleSortBtn">
+      ${this._sortImportance ? '★ Nach Wichtigkeit' : '# Chronologisch'}
+    </button>`;
+
+    let rows = '';
+    events.forEach(ev => {
+      const realIdx  = career.keyEvents.indexOf(ev);
+      const expanded = this._expandedEventId === ev.id;
+      const linkedP  = (ev.linkedPersonIds  || []).map(id => persons.find(p => p.id===id)?.name).filter(Boolean);
+      const linkedL  = (ev.linkedLocationIds|| []).map(id => locations.find(l => l.id===id)?.name).filter(Boolean);
+
+      rows += `<div class="cr-event-row${expanded?' expanded':''}">
+        <div class="cr-event-header" data-eventid="${ev.id}">
+          <div class="cr-event-main">
+            ${this._stars(ev.importance || 1, ev.id, true)}
+            <span class="cr-event-title">${this._esc(ev.title)}</span>
+            ${ev.termReference ? `<span class="cr-event-term">${this._esc(ev.termReference)}</span>` : ''}
+          </div>
+          <div class="cr-event-actions">
+            <button class="cr-event-edit" data-idx="${realIdx}">✎</button>
+            <button class="cr-event-del"  data-idx="${realIdx}">🗑</button>
+            <span class="cr-expand-arrow">${expanded?'▲':'▼'}</span>
+          </div>
+        </div>
+        ${expanded ? `<div class="cr-event-body">
+          ${ev.description ? `<div class="md-content">${Md.render(ev.description)}</div>` : ''}
+          ${linkedP.length ? `<div class="cr-event-links">${linkedP.map(n=>`<span class="cr-link-tag cr-link-person">${this._esc(n)}</span>`).join('')}</div>` : ''}
+          ${linkedL.length ? `<div class="cr-event-links">${linkedL.map(n=>`<span class="cr-link-tag cr-link-loc">${this._esc(n)}</span>`).join('')}</div>` : ''}
+        </div>` : ''}
+      </div>`;
+    });
+
+    return `<div class="cr-block">
+      <div class="cr-block-header">
+        <h3 class="cr-block-title">Prägende Ereignisse</h3>
+        <div class="cr-block-actions">
+          ${sortBtn}
+          <button class="cr-btn-add" id="addEventBtn">+ Ereignis</button>
+        </div>
+      </div>
+      <div class="cr-event-list">
+        ${rows || '<p class="cr-empty">Noch keine Ereignisse eingetragen.</p>'}
+      </div>
+    </div>`;
   },
 
+  // ── Block 3: Hintergrund & Persönlichkeit ─────────────────────────────────
+  _block3(career) {
+    const bg = career.background || {};
+    const secretsBlurred = bg.secretsHidden && !this._secretsRevealed;
+
+    const field = (key, label, placeholder) => `
+      <div class="cr-bg-group">
+        <label class="cr-bg-label">${label} <span class="cr-save-feedback" data-field="${key}">✓</span></label>
+        <textarea class="cr-bg-field" data-field="${key}" placeholder="${placeholder}" rows="3">${this._esc(bg[key] || '')}</textarea>
+      </div>`;
+
+    const quotes = (bg.quotes || []).map((q, i) => `
+      <div class="cr-quote-row">
+        <span class="cr-quote-text">${this._esc(q)}</span>
+        <button class="cr-quote-del" data-idx="${i}">✕</button>
+      </div>`).join('');
+
+    return `<div class="cr-block">
+      <h3 class="cr-block-title">Hintergrund & Persönlichkeit</h3>
+      ${field('appearance',  'Aussehen',       'Körperbeschreibung, Kleidungsstil …')}
+      ${field('personality', 'Persönlichkeit', 'Wie verhält sich der Charakter?')}
+      ${field('goals',       'Ziele',          'Kurzfristige und langfristige Ziele …')}
+      ${field('motivation',  'Motivation',     'Was treibt den Charakter an?')}
+      <div class="cr-bg-group">
+        <div class="cr-secrets-header">
+          <label class="cr-bg-label">Geheimnisse <span class="cr-save-feedback" data-field="secrets">✓</span></label>
+          <label class="cr-secrets-toggle">
+            <input type="checkbox" id="secretsHiddenCb" ${bg.secretsHidden ? 'checked' : ''}>
+            <span>Verdecken</span>
+          </label>
+        </div>
+        <div class="cr-secrets-wrap${secretsBlurred ? ' blurred' : ''}" id="secretsWrap">
+          <textarea class="cr-bg-field" data-field="secrets" placeholder="Verdeckte Informationen …" rows="3">${this._esc(bg.secrets || '')}</textarea>
+          ${secretsBlurred ? '<div class="cr-secrets-reveal" id="revealSecrets">Tippen zum Aufdecken</div>' : ''}
+        </div>
+      </div>
+      <div class="cr-bg-group">
+        <label class="cr-bg-label">Zitate & Phrasen</label>
+        <div class="cr-quote-list">${quotes || '<p class="cr-empty">Keine Zitate.</p>'}</div>
+        <div class="cr-quote-add">
+          <input type="text" id="newQuoteInput" class="cr-quote-input" placeholder="Neues Zitat …">
+          <button id="addQuoteBtn" class="cr-btn-add">+</button>
+        </div>
+      </div>
+    </div>`;
+  },
+
+  // ── Block 4: Favoriten-Kontakte ───────────────────────────────────────────
+  _block4(character) {
+    const persons  = character.notes?.persons || [];
+    const favs     = persons.filter(p => p.isFavorite).slice(-4).reverse();
+    const rel      = this.RELATIONS;
+
+    let rows = '';
+    if (!favs.length) {
+      rows = `<p class="cr-empty">Noch keine Favoriten. Markiere Kontakte in der Personen-Datenbank als Favorit.</p>`;
+    } else {
+      favs.forEach(p => {
+        const r   = rel[p.relation] || rel.neutral;
+        rows += `<div class="cr-fav-row" data-personid="${p.id}">
+          <span class="cr-fav-dot" style="background:${r.dot}"></span>
+          <span class="cr-fav-name">${this._esc(p.name)}</span>
+          <span class="cr-fav-role">${this._esc(p.role || '')}</span>
+          <span class="cr-fav-desc">${this._esc((p.description||'').slice(0,80))}${(p.description||'').length>80?'…':''}</span>
+        </div>`;
+      });
+    }
+
+    return `<div class="cr-block cr-block-full">
+      <div class="cr-block-header">
+        <h3 class="cr-block-title">Favoriten-Kontakte</h3>
+        <button class="cr-btn-secondary" id="allContactsBtn">Alle Kontakte →</button>
+      </div>
+      <div class="cr-fav-list">${rows}</div>
+    </div>`;
+  },
+
+  // ── Term Modal ────────────────────────────────────────────────────────────
+  _termModal(career, character) {
+    const isNew = this._editTermId === null;
+    const t     = isNew ? {} : (career.terms.find(x => x.id === this._editTermId) || {});
+    const branchOpts = Object.entries(this.BRANCHES).map(([k, v]) =>
+      `<option value="${k}"${(t.service||'Other')===k?' selected':''}>${v.label}</option>`).join('');
+
+    return `<div class="cr-modal-overlay open" id="termModal">
+      <div class="cr-modal">
+        <h3>${isNew ? 'Neuer Term' : 'Term bearbeiten'}</h3>
+        <div class="cr-modal-row">
+          <label>Dienst</label>
+          <select id="tmService" class="cr-modal-field">${branchOpts}</select>
+        </div>
+        <div class="cr-modal-row">
+          <label>Rang / Titel</label>
+          <input id="tmRank"     type="text" class="cr-modal-field" value="${this._esc(t.rank||'')}" placeholder="z.B. Leutnant">
+        </div>
+        <div class="cr-modal-row">
+          <label>Ereignisse</label>
+          <textarea id="tmEvents" class="cr-modal-field" rows="3" placeholder="Was geschah in diesem Term?">${this._esc(t.events||'')}</textarea>
+        </div>
+        <div class="cr-modal-row">
+          <label>Skills <small>(kommasepariert)</small></label>
+          <input id="tmSkills"   type="text" class="cr-modal-field" value="${this._esc((t.skills||[]).join(', '))}" placeholder="z.B. Pilot, Waffen, Taktik">
+        </div>
+        <div class="cr-modal-row">
+          <label>Benefits</label>
+          <input id="tmBenefits" type="text" class="cr-modal-field" value="${this._esc(t.benefits||'')}" placeholder="z.B. +1 EDU, Cr 10.000">
+        </div>
+        <div class="cr-modal-row cr-modal-check">
+          <label><input type="checkbox" id="tmMusteredOut" ${t.musteredOut?'checked':''}> Ausgemustert</label>
+        </div>
+        <div class="cr-modal-row" id="musterReasonRow" style="${t.musteredOut?'':'display:none'}">
+          <label>Grund</label>
+          <input id="tmMusterReason" type="text" class="cr-modal-field" value="${this._esc(t.musterOutReason||'')}" placeholder="Grund der Ausmusterung">
+        </div>
+        ${!isNew && t.createdAt ? `<div class="cr-modal-row"><label>Erstellt am</label><span class="ts-display">${new Date(t.createdAt).toLocaleString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span></div>` : ''}
+        <div class="cr-modal-actions">
+          <button id="tmSaveBtn"   class="cr-btn-save">Speichern</button>
+          <button id="tmCancelBtn" class="cr-btn-cancel">Abbrechen</button>
+        </div>
+      </div>
+    </div>`;
+  },
+
+  // ── Event Modal ───────────────────────────────────────────────────────────
+  _eventModal(career, character) {
+    const isNew    = this._editEventId === null;
+    const ev       = isNew ? {} : (career.keyEvents[this._editEventId] || {});
+    const persons  = character.notes?.persons   || [];
+    const locs     = character.notes?.locations || [];
+    const linkedP  = ev.linkedPersonIds  || [];
+    const linkedL  = ev.linkedLocationIds|| [];
+
+    const personChecks = persons.map(p =>
+      `<label class="cr-check-row"><input type="checkbox" class="ev-person-cb" value="${p.id}" ${linkedP.includes(p.id)?'checked':''}> ${this._esc(p.name)}</label>`).join('');
+    const locChecks = locs.map(l =>
+      `<label class="cr-check-row"><input type="checkbox" class="ev-loc-cb" value="${l.id}" ${linkedL.includes(l.id)?'checked':''}> ${this._esc(l.name)}</label>`).join('');
+
+    return `<div class="cr-modal-overlay open" id="eventModal">
+      <div class="cr-modal">
+        <h3>${isNew ? 'Neues Ereignis' : 'Ereignis bearbeiten'}</h3>
+        <div class="cr-modal-row">
+          <label>Titel</label>
+          <input id="evTitle" type="text" class="cr-modal-field" value="${this._esc(ev.title||'')}" placeholder="Kurztitel des Ereignisses">
+        </div>
+        <div class="cr-modal-row">
+          <label>Term-Referenz</label>
+          <input id="evTermRef" type="text" class="cr-modal-field" value="${this._esc(ev.termReference||'')}" placeholder="z.B. Term 2">
+        </div>
+        <div class="cr-modal-row">
+          <label>Wichtigkeit</label>
+          <div class="cr-modal-stars">
+            ${[1,2,3].map(i => `<button class="cr-modal-star${(this._modalImportance>=i)?' filled':''}" data-val="${i}">${this._modalImportance>=i?'⭐':'☆'}</button>`).join('')}
+          </div>
+        </div>
+        <div class="cr-modal-row">
+          <label>Beschreibung</label>
+          <textarea id="evDesc" class="cr-modal-field" rows="4" placeholder="Beschreibung des Ereignisses …">${this._esc(ev.description||'')}</textarea>
+        </div>
+        ${persons.length ? `<div class="cr-modal-row"><label>Verknüpfte Personen</label><div class="cr-check-list">${personChecks}</div></div>` : ''}
+        ${locs.length    ? `<div class="cr-modal-row"><label>Verknüpfte Orte</label><div class="cr-check-list">${locChecks}</div></div>` : ''}
+        ${!isNew && ev.createdAt ? `<div class="cr-modal-row"><label>Erstellt am</label><span class="ts-display">${new Date(ev.createdAt).toLocaleString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span></div>` : ''}
+        <div class="cr-modal-actions">
+          <button id="evSaveBtn"   class="cr-btn-save">Speichern</button>
+          <button id="evCancelBtn" class="cr-btn-cancel">Abbrechen</button>
+        </div>
+      </div>
+    </div>`;
+  },
+
+  // ── Save ──────────────────────────────────────────────────────────────────
+  save(character) { /* alles wird sofort gespeichert */ },
+
+  // ── Listener ──────────────────────────────────────────────────────────────
   attachListeners() {
-    this.drawGalaxyMap();
+    const char    = window.currentCharacter;
+    const career  = this._career(char);
+    const rerender = () => {
+      document.getElementById('career-page').innerHTML = this.render(char);
+      this.attachListeners();
+    };
 
-    const canvas = document.getElementById('galaxyCanvas');
-    if (canvas) {
-      canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
-      // Touch-Support für Tablets
-      canvas.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        if (e.changedTouches && e.changedTouches.length > 0) {
-          const touch = e.changedTouches[0];
-          this.handleCanvasClick({ clientX: touch.clientX, clientY: touch.clientY });
-        }
-      }, { passive: false });
-    }
-
-    document.getElementById('cancelSystemBtn')?.addEventListener('click', () => {
-      document.getElementById('systemModal').style.display = 'none';
-    });
-
-    document.getElementById('saveSystemBtn')?.addEventListener('click', () => {
-      this.saveSystemModal();
-    });
-
-    if (!App.editMode) {
-      return;
-    }
-
-    document.getElementById('addCareerBtn')?.addEventListener('click', () => {
-      const table = document.getElementById('careerHistoryTable');
-      const newRow = `
-        <tr>
-          <td><input type="text" class="career-name" placeholder="Karriere-Name" style="width: 100%;"></td>
-          <td><input type="number" class="career-years" value="0" min="0" style="width: 80px;"></td>
-          <td><button class="btn-remove-career" type="button">Entfernen</button></td>
-        </tr>
-      `;
-      table.insertAdjacentHTML('beforeend', newRow);
-      this.attachRemoveListeners();
-    });
-
-    this.attachRemoveListeners();
-
-    document.querySelectorAll('.btn-remove-system').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const index = parseInt(e.target.getAttribute('data-index'));
-        if (window.currentVisitedSystems) {
-          window.currentVisitedSystems.splice(index, 1);
-          this.redraw();
-        }
+    // ── Timeline: Term-Punkt anklicken ───────────────────────────────────
+    document.querySelectorAll('.cr-term-dot').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.termid;
+        this._selectedTermId = (this._selectedTermId === id) ? null : id;
+        rerender();
       });
     });
-  },
 
-  attachRemoveListeners() {
-    document.querySelectorAll('.btn-remove-career').forEach(btn => {
-      btn.onclick = (e) => {
-        e.target.closest('tr').remove();
-      };
+    // ── Term Detail: Bearbeiten / Löschen ────────────────────────────────
+    document.querySelector('.cr-detail-edit')?.addEventListener('click', function() {
+      CareerPage._editTermId = this.dataset.termid;
+      CareerPage._modalImportance = 2;
+      rerender();
     });
-  },
+    document.querySelector('.cr-detail-del')?.addEventListener('click', function() {
+      if (!window.confirm('Term löschen?')) return;
+      const idx = career.terms.findIndex(t => t.id === this.dataset.termid);
+      if (idx >= 0) career.terms.splice(idx, 1);
+      CareerPage._selectedTermId = null;
+      Storage.saveCharacter(char);
+      rerender();
+    });
 
-  drawGalaxyMap() {
-    const canvas = document.getElementById('galaxyCanvas');
-    if (!canvas) return;
+    // ── Term hinzufügen ──────────────────────────────────────────────────
+    document.getElementById('addTermBtn')?.addEventListener('click', () => {
+      this._editTermId = null;
+      this._modalImportance = 2;
+      rerender();
+    });
 
-    const container = document.getElementById('galaxyMapContainer');
-    const containerWidth = container ? container.clientWidth : 450;
-    const dpr = window.devicePixelRatio || 1;
-    const cssSize = Math.min(containerWidth, 600);
-    const cellSize = Math.floor(cssSize / this.GRID_SIZE);
-    const canvasSize = cellSize * this.GRID_SIZE;
+    // ── Term Modal ───────────────────────────────────────────────────────
+    document.getElementById('tmMusteredOut')?.addEventListener('change', function() {
+      document.getElementById('musterReasonRow').style.display = this.checked ? '' : 'none';
+    });
+    document.getElementById('tmCancelBtn')?.addEventListener('click', () => {
+      this._editTermId = undefined;
+      rerender();
+    });
+    document.getElementById('tmSaveBtn')?.addEventListener('click', () => {
+      const service = document.getElementById('tmService').value;
+      const rank    = document.getElementById('tmRank').value.trim();
+      const events  = document.getElementById('tmEvents').value.trim();
+      const skills  = document.getElementById('tmSkills').value.split(',').map(s=>s.trim()).filter(Boolean);
+      const benefits= document.getElementById('tmBenefits').value.trim();
+      const mo      = document.getElementById('tmMusteredOut').checked;
+      const moR     = document.getElementById('tmMusterReason').value.trim();
 
-    // Setze Canvas-Pixelgröße (HiDPI-Unterstützung)
-    canvas.width = canvasSize * dpr;
-    canvas.height = canvasSize * dpr;
-    canvas.style.width = canvasSize + 'px';
-    canvas.style.height = canvasSize + 'px';
-    this._cellSize = cellSize;
-
-    const ctx = canvas.getContext('2d');
-    ctx.scale(dpr, dpr);
-
-    ctx.fillStyle = '#1a1a2e';
-    ctx.fillRect(0, 0, canvasSize, canvasSize);
-
-    // Gitterlinien
-    ctx.strokeStyle = '#2a2a4e';
-    ctx.lineWidth = 0.5;
-    for (let i = 0; i <= this.GRID_SIZE; i++) {
-      const pos = i * cellSize;
-      ctx.beginPath();
-      ctx.moveTo(pos, 0);
-      ctx.lineTo(pos, canvasSize);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(0, pos);
-      ctx.lineTo(canvasSize, pos);
-      ctx.stroke();
-    }
-
-    if (window.currentVisitedSystems) {
-      const radius = Math.max(8, Math.floor(cellSize * 0.32));
-      window.currentVisitedSystems.forEach((system, index) => {
-        const x = system.x * cellSize + cellSize / 2;
-        const y = system.y * cellSize + cellSize / 2;
-
-        ctx.fillStyle = '#00d4ff';
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        ctx.fillStyle = '#1a1a2e';
-        ctx.font = `bold ${Math.max(9, radius - 2)}px Arial`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(index + 1, x, y);
-      });
-    }
-  },
-
-  _getGridCoords(e) {
-    const canvas = document.getElementById('galaxyCanvas');
-    if (!canvas) return null;
-
-    const rect = canvas.getBoundingClientRect();
-    let clientX, clientY;
-
-    if (e.touches && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-
-    // CSS-Pixel relativ zum Canvas
-    const scaleX = canvas.offsetWidth / (this._cellSize * this.GRID_SIZE);
-    const x = (clientX - rect.left) / scaleX;
-    const y = (clientY - rect.top) / scaleX;
-
-    const gridX = Math.floor(x / this._cellSize);
-    const gridY = Math.floor(y / this._cellSize);
-
-    if (gridX < 0 || gridX >= this.GRID_SIZE || gridY < 0 || gridY >= this.GRID_SIZE) {
-      return null;
-    }
-    return { x: gridX, y: gridY };
-  },
-
-  handleCanvasClick(e) {
-    const coords = this._getGridCoords(e);
-    if (!coords) return;
-
-    if (!window.currentVisitedSystems) {
-      window.currentVisitedSystems = [];
-    }
-
-    const existingSystem = window.currentVisitedSystems.find(s => s.x === coords.x && s.y === coords.y);
-    if (existingSystem) {
-      this.showSystemModal(existingSystem);
-    } else {
-      this.showSystemModal({ x: coords.x, y: coords.y, name: '', description: '' }, true);
-    }
-  },
-
-  showSystemModal(system, isNew = false) {
-    window.currentEditingSystem = system;
-    window.isNewSystem = isNew;
-
-    document.getElementById('systemNameInput').value = system.name || '';
-    document.getElementById('systemDescInput').value = system.description || '';
-    document.getElementById('systemModal').style.display = 'block';
-  },
-
-  saveSystemModal() {
-    const name = document.getElementById('systemNameInput').value.trim();
-    const description = document.getElementById('systemDescInput').value.trim();
-    const system = window.currentEditingSystem;
-
-    if (!name) {
-      alert('Bitte gib einen Systemnamen ein!');
-      return;
-    }
-
-    if (window.isNewSystem) {
-      system.name = name;
-      system.description = description;
-      if (!window.currentVisitedSystems) {
-        window.currentVisitedSystems = [];
+      const isNew = this._editTermId === null;
+      if (isNew) {
+        career.terms.push({ id: this._uid(), createdAt: new Date().toISOString(), service, rank, events, skills, benefits, musteredOut: mo, musterOutReason: moR });
+        this._selectedTermId = career.terms[career.terms.length-1].id;
+      } else {
+        const t = career.terms.find(x => x.id === this._editTermId);
+        if (t) Object.assign(t, { service, rank, events, skills, benefits, musteredOut: mo, musterOutReason: moR });
       }
-      window.currentVisitedSystems.push(system);
-    } else {
-      system.name = name;
-      system.description = description;
-    }
+      this._editTermId = undefined;
+      Storage.saveCharacter(char);
+      rerender();
+    });
 
-    document.getElementById('systemModal').style.display = 'none';
-    this.redraw();
+    // ── Ereignisse: Expand / Sort / Edit / Delete ────────────────────────
+    document.querySelectorAll('.cr-event-header').forEach(h => {
+      h.addEventListener('click', e => {
+        if (e.target.closest('.cr-event-actions')) return;
+        const id = h.dataset.eventid;
+        this._expandedEventId = (this._expandedEventId === id) ? null : id;
+        rerender();
+      });
+    });
+
+    document.querySelectorAll('.cr-star').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const ev = career.keyEvents.find(x => x.id === btn.dataset.eventid);
+        if (ev) { ev.importance = parseInt(btn.dataset.val); Storage.saveCharacter(char); rerender(); }
+      });
+    });
+
+    document.getElementById('toggleSortBtn')?.addEventListener('click', () => {
+      this._sortImportance = !this._sortImportance;
+      rerender();
+    });
+
+    document.querySelectorAll('.cr-event-edit').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.idx);
+        this._editEventId = idx;
+        this._modalImportance = career.keyEvents[idx]?.importance || 2;
+        rerender();
+      });
+    });
+
+    document.querySelectorAll('.cr-event-del').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        if (!window.confirm('Ereignis löschen?')) return;
+        career.keyEvents.splice(parseInt(btn.dataset.idx), 1);
+        this._expandedEventId = null;
+        Storage.saveCharacter(char);
+        rerender();
+      });
+    });
+
+    document.getElementById('addEventBtn')?.addEventListener('click', () => {
+      this._editEventId = null;
+      this._modalImportance = 2;
+      rerender();
+    });
+
+    // ── Event Modal ──────────────────────────────────────────────────────
+    document.querySelectorAll('.cr-modal-star').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this._modalImportance = parseInt(btn.dataset.val);
+        document.querySelectorAll('.cr-modal-star').forEach((b, i) => {
+          const filled = i < this._modalImportance;
+          b.classList.toggle('filled', filled);
+          b.textContent = filled ? '⭐' : '☆';
+        });
+      });
+    });
+
+    document.getElementById('evCancelBtn')?.addEventListener('click', () => {
+      this._editEventId = undefined;
+      rerender();
+    });
+    document.getElementById('evSaveBtn')?.addEventListener('click', () => {
+      const title   = document.getElementById('evTitle').value.trim();
+      if (!title) return;
+      const linkedP = [...document.querySelectorAll('.ev-person-cb:checked')].map(c=>c.value);
+      const linkedL = [...document.querySelectorAll('.ev-loc-cb:checked')].map(c=>c.value);
+      const existingEv = this._editEventId !== null ? career.keyEvents[this._editEventId] : null;
+      const entry   = {
+        id:                this._editEventId === null ? this._uid() : (existingEv?.id || this._uid()),
+        createdAt:         existingEv?.createdAt || new Date().toISOString(),
+        title,
+        termReference:     document.getElementById('evTermRef').value.trim(),
+        description:       document.getElementById('evDesc').value.trim(),
+        importance:        this._modalImportance,
+        linkedPersonIds:   linkedP,
+        linkedLocationIds: linkedL,
+      };
+      if (this._editEventId === null) {
+        career.keyEvents.push(entry);
+      } else {
+        career.keyEvents[this._editEventId] = entry;
+      }
+      this._editEventId = undefined;
+      Storage.saveCharacter(char);
+      rerender();
+    });
+
+    // ── Hintergrund: Auto-Save on Blur ───────────────────────────────────
+    document.querySelectorAll('.cr-bg-field').forEach(field => {
+      field.addEventListener('blur', () => {
+        career.background[field.dataset.field] = field.value;
+        Storage.saveCharacter(char);
+        const fb = document.querySelector(`.cr-save-feedback[data-field="${field.dataset.field}"]`);
+        if (fb) { fb.style.opacity = '1'; setTimeout(() => fb.style.opacity = '0', 1200); }
+      });
+    });
+
+    document.getElementById('secretsHiddenCb')?.addEventListener('change', function() {
+      career.background.secretsHidden = this.checked;
+      CareerPage._secretsRevealed = false;
+      Storage.saveCharacter(char);
+      rerender();
+    });
+
+    document.getElementById('revealSecrets')?.addEventListener('click', () => {
+      this._secretsRevealed = true;
+      document.getElementById('secretsWrap')?.classList.remove('blurred');
+      document.getElementById('revealSecrets')?.remove();
+    });
+
+    document.querySelectorAll('.cr-quote-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        career.background.quotes.splice(parseInt(btn.dataset.idx), 1);
+        Storage.saveCharacter(char);
+        rerender();
+      });
+    });
+
+    document.getElementById('addQuoteBtn')?.addEventListener('click', () => {
+      const input = document.getElementById('newQuoteInput');
+      const val   = input?.value.trim();
+      if (!val) return;
+      career.background.quotes.push(val);
+      Storage.saveCharacter(char);
+      rerender();
+    });
+
+    document.getElementById('newQuoteInput')?.addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('addQuoteBtn')?.click();
+    });
+
+    // ── Favoriten: Kontakte anklicken ────────────────────────────────────
+    document.querySelectorAll('.cr-fav-row').forEach(row => {
+      row.addEventListener('click', () => {
+        NotesPage._activeTab  = 'persons';
+        NotesPage._detailId   = row.dataset.personid;
+        App.switchPage('notes');
+      });
+    });
+
+    document.getElementById('allContactsBtn')?.addEventListener('click', () => {
+      NotesPage._activeTab = 'persons';
+      NotesPage._detailId  = null;
+      App.switchPage('notes');
+    });
   },
-
-  redraw() {
-    const careerPageContent = document.getElementById('career-page');
-    if (!careerPageContent) {
-      return;
-    }
-    const backup = window.currentVisitedSystems;
-    careerPageContent.innerHTML = this.render(window.currentCharacter);
-    window.currentVisitedSystems = backup;
-    this.attachListeners();
-  }
 };
