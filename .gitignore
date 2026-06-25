@@ -10,3 +10,9 @@
 
 # Claude Code
 .claude/settings.json
+
+# Medien-Ordner (lokale Bilder, nicht ins Repo)
+Medien/
+
+# Charakter-Backups (JSON-Exporte)
+traveller_*.json
