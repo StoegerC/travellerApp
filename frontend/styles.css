@@ -6048,14 +6048,52 @@ body.dark-mode .link-session-name {
   color: #8890b0;
 }
 
-/* ── Attribute Boxes ── */
+/* ── Attribute Boxes & DM-Felder ── */
 body.dark-mode .attribute-box input {
   background: #1d2035;
   color: #dde0f5;
   border-color: #2c3050;
 }
 body.dark-mode .attribute-label {
-  color: #6068a0;
+  color: #8890b0;
+}
+body.dark-mode .attr-dm {
+  background: #1d2035;
+  color: #a0a8d0;
+  border-color: #2c3050;
+}
+body.dark-mode .dm-info-box {
+  background: #161929;
+  border-color: #2c3050;
+  color: #8890b0;
+}
+body.dark-mode .system-card {
+  background: #161929;
+  border-left-color: #667eea;
+}
+body.dark-mode .system-card p {
+  color: #8890b0;
+}
+
+/* ── Skills ── */
+body.dark-mode .skill-item label {
+  color: #c8cce8;
+}
+body.dark-mode .skill-item--learned .skill-label {
+  color: #dde0f5;
+}
+body.dark-mode .skill-item--unlearned .skill-label {
+  color: #4a5070;
+}
+body.dark-mode .skill-level-input {
+  background: #1d2035;
+  color: #dde0f5;
+  border-color: #2c3050;
+}
+body.dark-mode .view-mode .skill-level-input {
+  background: #252840;
+  border-color: #2c3050;
+  color: #9095b8;
 }
 
 /* ── Ausrüstungs-Seite ── */
