@@ -1,0 +1,7 @@
+name             = "traveller-sync"
+main             = "worker.js"
+compatibility_date = "2025-01-01"
+
+[[kv_namespaces]]
+binding = "KV"
+id      = "HIER_KV_ID_EINTRAGEN"
