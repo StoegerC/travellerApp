@@ -43,8 +43,19 @@ UI / UX
 BACKLOG
 ════════════════════════════
 
+CLOUD-SYNC & KAMPAGNE  (geplant für v1.1)
+[ ] Cloudflare Worker + KV: GET/PUT für char:{id} und campaign:{id}, Auth via Bearer-Key
+[ ] cloudsync.js: push/pull/merge (Per-Item updatedAt), API-Key in localStorage
+[ ] Charakter-Typ: syncMode local|cloud + campaignId; Dialog bei „+ Neu"
+[ ] Kampagne erstellen / beitreten (selbstgewählte kurze ID, z.B. spinward26)
+[ ] Kampagnen-Log: Log-Tab zeigt geteilte Kampagnendaten wenn campaignId gesetzt
+[ ] Soft-Delete (_deleted + deletedAt) für Sync-sichere Löschungen
+[ ] Export: Cloud-Charaktere vollständig exportierbar (Snapshot)
+[ ] Import: bei Cloud-Charakter mit Kampagne abfragen ob Log aus Datei oder Cloud
+[ ] Sync-Badge in Metadaten-Tab (letzter Sync, Status)
+[ ] Background-Poll alle 15s wenn Cloud-Charakter aktiv
+
 DATENHALTUNG
-[ ] Sync zwischen Geräten (Cloudflare Workers + KV)
 [ ] Charakter per QR-Code oder Link teilen (Base64-JSON)
 [c] Backend-API (server.js Dummy) – durch PWA + IndexedDB ersetzt
 
