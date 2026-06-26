@@ -27,6 +27,7 @@ const App = {
   init() {
     this.initDarkMode();
     this.setupEventListeners();
+    this._initPullToRefresh();
 
     const characters = Storage.listCharacters();
     if (characters.length > 0) {
@@ -486,6 +487,64 @@ const App = {
 
   _stopCloudPoll() {
     if (this._syncTimer) { clearInterval(this._syncTimer); this._syncTimer = null; }
+  },
+
+  _initPullToRefresh() {
+    const content   = document.querySelector('.content');
+    const indicator = document.getElementById('ptrIndicator');
+    if (!content || !indicator) return;
+
+    const THRESHOLD = 80;
+    let startY   = 0;
+    let lastY    = 0;
+    let pulling  = false;
+
+    const textEl = indicator.querySelector('.ptr-text');
+
+    const reset = () => {
+      indicator.style.height = '0';
+      indicator.classList.remove('ptr-loading', 'ptr-ready');
+      pulling = false;
+      startY = lastY = 0;
+    };
+
+    content.addEventListener('touchstart', e => {
+      if (content.scrollTop > 0) return;
+      startY  = e.touches[0].pageY;
+      lastY   = startY;
+      pulling = true;
+    }, { passive: true });
+
+    content.addEventListener('touchmove', e => {
+      if (!pulling) return;
+      lastY = e.touches[0].pageY;
+      const delta = lastY - startY;
+      if (delta <= 0) return;
+
+      const h        = Math.min(delta * 0.45, 52);
+      const progress = delta / THRESHOLD;
+      indicator.style.height = `${h}px`;
+      indicator.classList.toggle('ptr-ready', progress >= 1);
+      textEl.textContent = progress >= 1
+        ? 'Loslassen zum Aktualisieren'
+        : 'Zum Aktualisieren ziehen';
+    }, { passive: true });
+
+    content.addEventListener('touchend', async () => {
+      if (!pulling) return;
+      const delta = lastY - startY;
+
+      if (delta >= THRESHOLD && this.currentCharacter?.syncMode === 'cloud' && !this.editMode) {
+        indicator.style.height = '50px';
+        indicator.classList.add('ptr-loading');
+        indicator.classList.remove('ptr-ready');
+        textEl.textContent = 'Aktualisiere …';
+        await this._syncCloud();
+      }
+      reset();
+    }, { passive: true });
+
+    content.addEventListener('touchcancel', reset, { passive: true });
   },
 
   async showCloudCharList() {
