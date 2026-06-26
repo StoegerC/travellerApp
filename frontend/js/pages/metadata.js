@@ -30,9 +30,7 @@ const MetadataPage = {
             ).join('')}
           </select>
           <button id="newCharBtn"    class="btn-success char-btn">+ Neu</button>
-          ${typeof CloudSync !== 'undefined' && CloudSync.isConfigured()
-            ? `<button id="loadCloudCharBtn" class="btn-secondary char-btn">☁ Laden</button>`
-            : ''}
+          <button id="loadCharBtn"   class="btn-secondary char-btn">⬇ Laden</button>
           <button id="deleteCharBtn" class="btn-danger  char-btn">Löschen</button>
         </div>
       </div>
@@ -138,9 +136,6 @@ const MetadataPage = {
       <div class="export-section">
         <div class="export-btn-row">
           <button id="exportCharBtn" class="btn-secondary export-btn">⬇ Export (JSON)</button>
-          <label class="btn-secondary export-btn export-label">⬆ Import (JSON)
-            <input type="file" id="importCharFile" accept=".json,application/json" style="display:none;">
-          </label>
         </div>
         <p class="export-hint">Sichert alle Charakterdaten inkl. Log, Journal und Quests.</p>
       </div>
@@ -166,7 +161,7 @@ const MetadataPage = {
       if (e.target.value) App.loadCharacter(e.target.value);
     });
     document.getElementById('newCharBtn')?.addEventListener('click', () => App.createNewCharacter());
-    document.getElementById('loadCloudCharBtn')?.addEventListener('click', () => App.showCloudCharList());
+    document.getElementById('loadCharBtn')?.addEventListener('click', () => App.showLoadCharDialog());
     document.getElementById('cloudConfigBtn')?.addEventListener('click', () => App.showCloudConfig());
     document.getElementById('deleteCharBtn')?.addEventListener('click', () => App.deleteCharacter());
 
@@ -232,7 +227,6 @@ const MetadataPage = {
 
     // Export / Import
     document.getElementById('exportCharBtn')?.addEventListener('click', () => this._exportJSON());
-    document.getElementById('importCharFile')?.addEventListener('change', (e) => this._importJSON(e));
   },
 
   _exportJSON() {
@@ -254,29 +248,4 @@ const MetadataPage = {
     App.showStatus('Export heruntergeladen ✓', 'success');
   },
 
-  _importJSON(e) {
-    const file = e.target.files[0];
-    e.target.value = '';
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      let data;
-      try { data = JSON.parse(event.target.result); }
-      catch { App.showStatus('Ungültige JSON-Datei', 'error'); return; }
-      if (!data.id || !data.metadata) { App.showStatus('Kein gültiger Traveller-Charakter', 'error'); return; }
-
-      const existing = Storage.listCharacters();
-      const conflict = existing.find(c => c.id === data.id);
-      if (conflict) {
-        const overwrite = confirm(`„${conflict.name}" existiert bereits.\n\nÜberschreiben? (Abbrechen = als Kopie importieren)`);
-        if (!overwrite) { data.id = 'char-' + Date.now(); data.metadata.name = (data.metadata.name || 'Charakter') + ' (Kopie)'; }
-      }
-      const character = Character.fromJSON(data);
-      Storage.saveCharacter(character);
-      App.loadCharacter(character.id);
-      App.showStatus(`„${character.metadata.name || 'Charakter'}" importiert ✓`, 'success');
-    };
-    reader.onerror = () => App.showStatus('Datei konnte nicht gelesen werden', 'error');
-    reader.readAsText(file);
-  }
 };

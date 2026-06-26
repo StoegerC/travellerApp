@@ -229,6 +229,30 @@
     </div>
   </div>
 
+  <!-- Charakter laden -->
+  <div id="loadCharModal" class="vh-modal">
+    <div class="vh-panel nc-panel">
+      <div class="vh-header">
+        <h2 class="vh-title">Charakter laden</h2>
+        <button id="loadCharClose" class="vh-close">✕</button>
+      </div>
+      <p class="vh-hint">Wie soll der Charakter geladen werden?</p>
+      <div class="nc-choice-row">
+        <button id="lcJsonBtn" class="nc-choice-btn">
+          <span class="nc-choice-icon">📂</span>
+          <span class="nc-choice-label">Aus JSON</span>
+          <span class="nc-choice-desc">Exportierte Datei importieren</span>
+        </button>
+        <button id="lcCloudBtn" class="nc-choice-btn nc-choice-btn--cloud">
+          <span class="nc-choice-icon">☁️</span>
+          <span class="nc-choice-label">Aus Cloud</span>
+          <span class="nc-choice-desc">Geräteübergreifend synchronisiert</span>
+        </button>
+      </div>
+      <input type="file" id="importCharFile" accept=".json,application/json" style="display:none;">
+    </div>
+  </div>
+
   <!-- Versionsverlauf Modal -->
   <div id="versionModal" class="vh-modal">
     <div class="vh-panel">

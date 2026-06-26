@@ -72,6 +72,30 @@ const App = {
       }
     });
 
+    // Laden-Modal schließen
+    document.getElementById('loadCharClose').addEventListener('click', () => {
+      document.getElementById('loadCharModal').classList.remove('visible');
+    });
+
+    // Laden aus JSON
+    document.getElementById('lcJsonBtn').addEventListener('click', () => {
+      document.getElementById('loadCharModal').classList.remove('visible');
+      document.getElementById('importCharFile').click();
+    });
+
+    // Laden aus Cloud
+    document.getElementById('lcCloudBtn').addEventListener('click', () => {
+      document.getElementById('loadCharModal').classList.remove('visible');
+      if (CloudSync.isConfigured()) {
+        this.showCloudCharList();
+      } else {
+        this.showCloudConfig();
+      }
+    });
+
+    // JSON-Datei eingelesen
+    document.getElementById('importCharFile').addEventListener('change', (e) => this._importJSON(e));
+
     // Cloud-Charakter-Modal schließen
     document.getElementById('cloudCharClose').addEventListener('click', () => {
       document.getElementById('cloudCharModal').classList.remove('visible');
@@ -590,6 +614,35 @@ const App = {
       this.showStatus('Cloud-Einstellungen gespeichert ✓', 'success');
       if (this.currentCharacter?.syncMode === 'cloud') this._pushToCloud();
     };
+  },
+
+  showLoadCharDialog() {
+    document.getElementById('loadCharModal').classList.add('visible');
+  },
+
+  _importJSON(e) {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      let data;
+      try { data = JSON.parse(event.target.result); }
+      catch { this.showStatus('Ungültige JSON-Datei', 'error'); return; }
+      if (!data.id || !data.metadata) { this.showStatus('Kein gültiger Traveller-Charakter', 'error'); return; }
+      const existing = Storage.listCharacters();
+      const conflict = existing.find(c => c.id === data.id);
+      if (conflict) {
+        const overwrite = confirm(`„${conflict.name}" existiert bereits.\n\nÜberschreiben? (Abbrechen = als Kopie importieren)`);
+        if (!overwrite) { data.id = 'char-' + Date.now(); data.metadata.name = (data.metadata.name || 'Charakter') + ' (Kopie)'; }
+      }
+      const character = Character.fromJSON(data);
+      Storage.saveCharacter(character);
+      this.loadCharacter(character.id);
+      this.showStatus(`„${character.metadata.name || 'Charakter'}" importiert ✓`, 'success');
+    };
+    reader.onerror = () => this.showStatus('Datei konnte nicht gelesen werden', 'error');
+    reader.readAsText(file);
   },
 
   async showCloudCharList() {
