@@ -49,7 +49,8 @@ const CloudSync = {
         headers: this._headers(),
         body:    JSON.stringify(character.toJSON()),
       });
-      return { ok: res.ok, status: res.status };
+      if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
+      return { ok: true };
     } catch (e) {
       return { ok: false, error: e.message };
     }
