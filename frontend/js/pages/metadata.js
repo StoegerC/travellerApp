@@ -127,7 +127,10 @@ const MetadataPage = {
                  : status === 'error'   ? '☁ Sync-Fehler'
                  : status === 'ok'      ? `☁ Zuletzt: ${t}`
                  : '☁ Cloud';
-      html += `<div id="syncBadge" class="sync-badge sync-badge--${status || 'idle'}">${text}</div>`;
+      html += `<div class="sync-badge-row">
+        <div id="syncBadge" class="sync-badge sync-badge--${status || 'idle'}">${text}</div>
+        <button id="cloudConfigBtn" class="sync-config-btn" title="Cloud-Einstellungen">⚙</button>
+      </div>`;
     }
 
     // ── Export / Import ─────────────────────────────────────────────────
@@ -164,6 +167,7 @@ const MetadataPage = {
     });
     document.getElementById('newCharBtn')?.addEventListener('click', () => App.createNewCharacter());
     document.getElementById('loadCloudCharBtn')?.addEventListener('click', () => App.showCloudCharList());
+    document.getElementById('cloudConfigBtn')?.addEventListener('click', () => App.showCloudConfig());
     document.getElementById('deleteCharBtn')?.addEventListener('click', () => App.deleteCharacter());
 
     // Portrait-Navigation

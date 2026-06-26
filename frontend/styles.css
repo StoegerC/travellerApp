@@ -6832,6 +6832,26 @@ body.dark-mode .ptr-spinner             { border-color: #2c3050; border-top-colo
 
 /* ===== CLOUD SYNC ===== */
 
+.sync-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.sync-badge-row .sync-badge { margin-bottom: 0; }
+
+.sync-config-btn {
+  background: none;
+  border: none;
+  font-size: 1em;
+  cursor: pointer;
+  opacity: 0.5;
+  padding: 4px;
+  border-radius: 4px;
+  transition: opacity 0.15s;
+}
+.sync-config-btn:hover { opacity: 1; }
+
 .sync-badge {
   display: inline-flex;
   align-items: center;

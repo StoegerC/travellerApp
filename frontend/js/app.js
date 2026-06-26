@@ -77,6 +77,11 @@ const App = {
       document.getElementById('cloudCharModal').classList.remove('visible');
     });
 
+    // Cloud-Einstellungen-Modal schließen
+    document.getElementById('cloudConfigClose').addEventListener('click', () => {
+      document.getElementById('cloudConfigModal').classList.remove('visible');
+    });
+
     // Charakter-Selector-Buttons leben jetzt in MetadataPage.attachListeners()
   },
 
@@ -545,6 +550,46 @@ const App = {
     }, { passive: true });
 
     content.addEventListener('touchcancel', reset, { passive: true });
+  },
+
+  showCloudConfig() {
+    const modal    = document.getElementById('cloudConfigModal');
+    const testEl   = document.getElementById('cfgTestResult');
+    const urlInput = document.getElementById('cfgWorkerUrl');
+    const keyInput = document.getElementById('cfgApiKey');
+
+    urlInput.value     = CloudSync.getWorkerUrl();
+    keyInput.value     = CloudSync.getApiKey();
+    testEl.textContent = '';
+    testEl.className   = 'nc-test-result';
+    modal.classList.add('visible');
+
+    document.getElementById('cfgTestBtn').onclick = async () => {
+      const url = urlInput.value.trim();
+      const key = keyInput.value.trim();
+      if (!url || !key) { testEl.textContent = '⚠ URL und Key angeben'; return; }
+      const btn = document.getElementById('cfgTestBtn');
+      btn.disabled = true;
+      testEl.textContent = '⏳ Teste …';
+      testEl.className   = 'nc-test-result';
+      const r = await CloudSync.test(url, key);
+      btn.disabled = false;
+      if (r.ok) {
+        testEl.textContent = '✓ Verbindung OK';
+        testEl.className   = 'nc-test-result nc-test-ok';
+      } else {
+        testEl.textContent = `✗ Fehler (${r.status || r.error || 'Timeout'})`;
+        testEl.className   = 'nc-test-result nc-test-error';
+      }
+    };
+
+    document.getElementById('cfgSaveBtn').onclick = () => {
+      CloudSync.setWorkerUrl(urlInput.value.trim());
+      CloudSync.setApiKey(keyInput.value.trim());
+      modal.classList.remove('visible');
+      this.showStatus('Cloud-Einstellungen gespeichert ✓', 'success');
+      if (this.currentCharacter?.syncMode === 'cloud') this._pushToCloud();
+    };
   },
 
   async showCloudCharList() {

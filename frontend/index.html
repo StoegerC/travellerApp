@@ -192,6 +192,31 @@
     </div>
   </div>
 
+  <!-- Cloud-Einstellungen -->
+  <div id="cloudConfigModal" class="vh-modal">
+    <div class="vh-panel nc-panel">
+      <div class="vh-header">
+        <h2 class="vh-title">Cloud-Einstellungen</h2>
+        <button id="cloudConfigClose" class="vh-close">✕</button>
+      </div>
+      <div class="form-group">
+        <label>Worker-URL</label>
+        <input type="url" id="cfgWorkerUrl" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>API-Key</label>
+        <input type="password" id="cfgApiKey" autocomplete="off">
+      </div>
+      <div class="nc-action-row">
+        <button id="cfgTestBtn" class="btn-secondary">Verbindung testen</button>
+        <span id="cfgTestResult" class="nc-test-result"></span>
+      </div>
+      <div class="nc-action-row nc-btn-row">
+        <button id="cfgSaveBtn" class="btn-success">Speichern</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Cloud-Charaktere laden -->
   <div id="cloudCharModal" class="vh-modal">
     <div class="vh-panel">
