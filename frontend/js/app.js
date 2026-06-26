@@ -613,11 +613,52 @@ const App = {
       modal.classList.remove('visible');
       this.showStatus('Cloud-Einstellungen gespeichert ✓', 'success');
       if (this.currentCharacter?.syncMode === 'cloud') this._pushToCloud();
+      modal.dispatchEvent(new CustomEvent('configSaved'));
     };
   },
 
   showLoadCharDialog() {
     document.getElementById('loadCharModal').classList.add('visible');
+  },
+
+  async activateCloudSync() {
+    if (!this.currentCharacter) return;
+    if (!CloudSync.isConfigured()) {
+      await this._awaitCloudConfig();
+      if (!CloudSync.isConfigured()) return;
+    }
+    this.currentCharacter.syncMode = 'cloud';
+    Storage.saveCharacter(this.currentCharacter);
+    this._syncState = { status: 'idle', lastSync: null, error: null };
+    this._startCloudPoll();
+    this._pushToCloud();
+    this.renderCurrentPage();
+    this.showStatus('Cloud-Sync aktiviert ✓', 'success');
+  },
+
+  deactivateCloudSync() {
+    if (!this.currentCharacter) return;
+    if (!confirm('Cloud-Sync deaktivieren? Der Charakter bleibt in der Cloud gespeichert.')) return;
+    this.currentCharacter.syncMode = 'local';
+    Storage.saveCharacter(this.currentCharacter);
+    this._stopCloudPoll();
+    this._syncState = { status: 'idle', lastSync: null, error: null };
+    this.renderCurrentPage();
+    this.showStatus('Cloud-Sync deaktiviert', 'success');
+  },
+
+  _awaitCloudConfig() {
+    return new Promise(resolve => {
+      this.showCloudConfig();
+      const modal = document.getElementById('cloudConfigModal');
+      const onSave = () => {
+        modal.removeEventListener('configSaved', onSave);
+        modal.removeEventListener('close',       onSave);
+        resolve();
+      };
+      modal.addEventListener('configSaved', onSave, { once: true });
+      document.getElementById('cloudConfigClose').addEventListener('click', resolve, { once: true });
+    });
   },
 
   _importJSON(e) {

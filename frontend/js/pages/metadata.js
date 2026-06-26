@@ -115,7 +115,7 @@ const MetadataPage = {
       `;
     }
 
-    // ── Sync-Badge (nur Cloud-Charaktere) ───────────────────────────────
+    // ── Sync-Zeile ───────────────────────────────────────────────────────
     if (character.syncMode === 'cloud') {
       const { status, lastSync } = App._syncState || {};
       const t = lastSync
@@ -127,7 +127,12 @@ const MetadataPage = {
                  : '☁ Cloud';
       html += `<div class="sync-badge-row">
         <div id="syncBadge" class="sync-badge sync-badge--${status || 'idle'}">${text}</div>
-        <button id="cloudConfigBtn" class="sync-config-btn" title="Cloud-Einstellungen">⚙</button>
+        <button id="cloudConfigBtn"    class="sync-config-btn" title="Cloud-Einstellungen">⚙</button>
+        <button id="syncDeactivateBtn" class="sync-config-btn sync-deactivate-btn" title="Cloud-Sync deaktivieren">✕</button>
+      </div>`;
+    } else {
+      html += `<div class="sync-badge-row">
+        <button id="syncActivateBtn" class="btn-secondary sync-activate-btn">☁ Cloud-Sync aktivieren</button>
       </div>`;
     }
 
@@ -225,7 +230,11 @@ const MetadataPage = {
       });
     }
 
-    // Export / Import
+    // Cloud-Sync aktivieren / deaktivieren
+    document.getElementById('syncActivateBtn')?.addEventListener('click',   () => App.activateCloudSync());
+    document.getElementById('syncDeactivateBtn')?.addEventListener('click', () => App.deactivateCloudSync());
+
+    // Export
     document.getElementById('exportCharBtn')?.addEventListener('click', () => this._exportJSON());
   },
 

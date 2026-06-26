@@ -6860,6 +6860,15 @@ body.dark-mode .ptr-spinner             { border-color: #2c3050; border-top-colo
 }
 .sync-config-btn:hover { opacity: 1; }
 
+.sync-activate-btn {
+  font-size: 0.85em;
+}
+.sync-deactivate-btn {
+  color: #ef4444;
+  opacity: 0.4;
+}
+.sync-deactivate-btn:hover { opacity: 0.9; }
+
 .sync-badge {
   display: inline-flex;
   align-items: center;
@@ -6939,6 +6948,7 @@ body.dark-mode .cloud-char-item         { background: #1a1d2e; border-color: #2c
 body.dark-mode .cloud-char-item:hover   { background: #1e2448; border-color: #667eea; }
 body.dark-mode .cloud-char-status       { color: #6068a0; }
 
+body.dark-mode .sync-deactivate-btn { color: #f87171; }
 body.dark-mode .sync-badge--idle    { background: #161d40; color: #818cf8; border-color: #2c3050; }
 body.dark-mode .sync-badge--syncing { background: #1e1a08; color: #fbbf24; border-color: #4a3800; }
 body.dark-mode .sync-badge--ok      { background: #0d2218; color: #4ade80; border-color: #1a4a30; }
