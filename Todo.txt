@@ -48,6 +48,10 @@ CLOUD-SYNC & KAMPAGNE  (geplant für v1.1)
 [ ] cloudsync.js: push/pull/merge (Per-Item updatedAt), API-Key in localStorage
 [ ] Charakter-Typ: syncMode local|cloud + campaignId; Dialog bei „+ Neu"
 [ ] Kampagne erstellen / beitreten (selbstgewählte kurze ID, z.B. spinward26)
+[ ] Kampagne: ownerId – nur Ersteller kann Mitglieder entfernen
+[ ] Kampagne: Entfernen propagiert via Sync (entferntes Gerät erkennt Ausschluss beim Poll)
+[ ] Kampagne: GET /campaigns Endpunkt – listet alle Kampagnen (ID, Name, Mitgliederzahl)
+[ ] Kampagne beitreten: verfügbare Kampagnen als auswählbare Liste anzeigen + manuelle ID-Eingabe
 [ ] Kampagnen-Log: Log-Tab zeigt geteilte Kampagnendaten wenn campaignId gesetzt
 [ ] Soft-Delete (_deleted + deletedAt) für Sync-sichere Löschungen
 [ ] Export: Cloud-Charaktere vollständig exportierbar (Snapshot)
