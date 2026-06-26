@@ -3,8 +3,10 @@
  */
 class Character {
   constructor(data = {}) {
-    this.id = data.id || 'char-' + Date.now();
-    this.system = data.system || 'traveller'; // Rollenspielsystem
+    this.id         = data.id         || 'char-' + Date.now();
+    this.system     = data.system     || 'traveller';
+    this.syncMode   = data.syncMode   || 'local';
+    this.campaignId = data.campaignId || null;
     this.metadata = {
       name: data.metadata?.name || '',
       title: data.metadata?.title || '',
@@ -209,8 +211,10 @@ class Character {
    */
   toJSON() {
     return {
-      id: this.id,
-      system: this.system,
+      id:         this.id,
+      system:     this.system,
+      syncMode:   this.syncMode,
+      campaignId: this.campaignId,
       metadata: this.metadata,
       attributes: this.attributes,
       skills: this.skills,
