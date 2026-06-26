@@ -114,6 +114,19 @@ const MetadataPage = {
       `;
     }
 
+    // ── Sync-Badge (nur Cloud-Charaktere) ───────────────────────────────
+    if (character.syncMode === 'cloud') {
+      const { status, lastSync } = App._syncState || {};
+      const t = lastSync
+        ? lastSync.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+        : '–';
+      const text = status === 'syncing' ? '☁ Synchronisiere …'
+                 : status === 'error'   ? '☁ Sync-Fehler'
+                 : status === 'ok'      ? `☁ Zuletzt: ${t}`
+                 : '☁ Cloud';
+      html += `<div id="syncBadge" class="sync-badge sync-badge--${status || 'idle'}">${text}</div>`;
+    }
+
     // ── Export / Import ─────────────────────────────────────────────────
     html += `
       <div class="export-section">

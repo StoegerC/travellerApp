@@ -142,6 +142,52 @@
             style="width:100%;height:100%;border:none;display:block;"></iframe>
   </div>
 
+  <!-- Neuer Charakter: Lokal oder Cloud -->
+  <div id="newCharModal" class="vh-modal">
+    <div class="vh-panel nc-panel">
+      <div class="vh-header">
+        <h2 class="vh-title">Neuer Charakter</h2>
+        <button id="ncCancelBtn" class="vh-close">✕</button>
+      </div>
+
+      <div id="ncStep1">
+        <p class="vh-hint">Wo soll der Charakter gespeichert werden?</p>
+        <div class="nc-choice-row">
+          <button id="ncLocalBtn" class="nc-choice-btn">
+            <span class="nc-choice-icon">📱</span>
+            <span class="nc-choice-label">Lokal</span>
+            <span class="nc-choice-desc">Nur auf diesem Gerät</span>
+          </button>
+          <button id="ncCloudBtn" class="nc-choice-btn nc-choice-btn--cloud">
+            <span class="nc-choice-icon">☁️</span>
+            <span class="nc-choice-label">Cloud</span>
+            <span class="nc-choice-desc">Geräteübergreifend synchronisiert</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="ncStep2" style="display:none">
+        <p class="vh-hint">Cloudflare-Zugangsdaten</p>
+        <div class="form-group">
+          <label>Worker-URL</label>
+          <input type="url" id="ncWorkerUrl" placeholder="https://traveller-sync.name.workers.dev" autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label>API-Key</label>
+          <input type="password" id="ncApiKey" placeholder="Bearer Token" autocomplete="off">
+        </div>
+        <div class="nc-action-row">
+          <button id="ncTestBtn" class="btn-secondary">Verbindung testen</button>
+          <span id="ncTestResult" class="nc-test-result"></span>
+        </div>
+        <div class="nc-action-row nc-btn-row">
+          <button id="ncBackBtn" class="btn-secondary">← Zurück</button>
+          <button id="ncCreateBtn" class="btn-success" disabled>Erstellen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Versionsverlauf Modal -->
   <div id="versionModal" class="vh-modal">
     <div class="vh-panel">

@@ -6796,3 +6796,70 @@ body.dark-mode ::-webkit-scrollbar-thumb {
 body.dark-mode ::-webkit-scrollbar-thumb:hover {
   background: #3a4070;
 }
+
+/* ===== CLOUD SYNC ===== */
+
+.sync-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.82em;
+  font-weight: 500;
+  margin-bottom: 14px;
+  border: 1px solid transparent;
+}
+.sync-badge--idle    { background: #eef0ff; color: #3a3fa0; border-color: #c5c8f0; }
+.sync-badge--syncing { background: #fff8e1; color: #7a6000; border-color: #ffe082; }
+.sync-badge--ok      { background: #e8f5e9; color: #1b5e20; border-color: #a5d6a7; }
+.sync-badge--error   { background: #fdecea; color: #b71c1c; border-color: #ef9a9a; }
+
+/* Neuer-Charakter-Modal */
+.nc-panel { max-width: 420px; }
+
+.nc-choice-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 20px 0;
+}
+.nc-choice-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.nc-choice-btn:hover        { border-color: #667eea; background: #f0f2ff; }
+.nc-choice-btn--cloud:hover { border-color: #28a745; background: #f0fff4; }
+.nc-choice-icon  { font-size: 2em; }
+.nc-choice-label { font-weight: 600; font-size: 1em; }
+.nc-choice-desc  { font-size: 0.78em; color: #666; text-align: center; }
+
+.nc-action-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+.nc-btn-row { justify-content: space-between; margin-top: 18px; }
+.nc-test-result { font-size: 0.85em; }
+.nc-test-ok    { color: #1b5e20; }
+.nc-test-error { color: #b71c1c; }
+
+/* Dark Mode – Cloud Sync */
+body.dark-mode .sync-badge--idle    { background: #161d40; color: #818cf8; border-color: #2c3050; }
+body.dark-mode .sync-badge--syncing { background: #1e1a08; color: #fbbf24; border-color: #4a3800; }
+body.dark-mode .sync-badge--ok      { background: #0d2218; color: #4ade80; border-color: #1a4a30; }
+body.dark-mode .sync-badge--error   { background: #220d10; color: #f87171; border-color: #4a1520; }
+
+body.dark-mode .nc-choice-btn       { background: #1a1d2e; border-color: #2c3050; color: #dde0f5; }
+body.dark-mode .nc-choice-btn:hover { border-color: #667eea; background: #1e2448; }
+body.dark-mode .nc-choice-btn--cloud:hover { border-color: #28a745; background: #0d2218; }
+body.dark-mode .nc-choice-desc      { color: #6068a0; }

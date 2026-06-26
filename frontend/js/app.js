@@ -6,9 +6,12 @@ const App = {
   currentPage: 'metadata',
   editMode: false,
   _autosaveTimer: null,
-  _undoStack: [],      // in-memory snapshots (JSON objects)
+  _undoStack: [],
   _MAX_UNDO: 50,
-  _lastVersionSave: 0, // throttle persistent version saves
+  _lastVersionSave: 0,
+  _syncState: { status: 'idle', lastSync: null, error: null },
+  _syncTimer: null,
+  _POLL_INTERVAL: 15000,
 
   pages: {
     metadata:   MetadataPage,
@@ -74,27 +77,45 @@ const App = {
   // ── Charakter laden/wechseln ────────────────────────────────────────────
   loadCharacter(id) {
     this.currentCharacter = Storage.loadCharacter(id);
-    if (!this.currentCharacter) {
-      console.error('Charakter nicht gefunden:', id);
-      return;
-    }
+    if (!this.currentCharacter) { console.error('Charakter nicht gefunden:', id); return; }
     window.currentCharacter = this.currentCharacter;
     this._undoStack = [];
     this._updateUndoBtn();
     this._updateHeaderName();
+    this._syncState = { status: 'idle', lastSync: null, error: null };
+
+    if (this.currentCharacter.syncMode === 'cloud') {
+      this._startCloudPoll();
+      this._syncCloud();
+    } else {
+      this._stopCloudPoll();
+    }
+
     this.renderCurrentPage();
     this.showStatus(`${this.currentCharacter.metadata.name || 'Charakter'} geladen`, 'success');
   },
 
-  createNewCharacter() {
-    this.currentCharacter = new Character({ system: 'traveller' });
-    Storage.saveCharacter(this.currentCharacter);
-    window.currentCharacter = this.currentCharacter;
+  async createNewCharacter() {
+    const syncMode = await this._showNewCharDialog();
+    if (syncMode === null) return;
+
+    const char = new Character({ system: 'traveller', syncMode });
+    Storage.saveCharacter(char);
+    this.currentCharacter = char;
+    window.currentCharacter = char;
     this._undoStack = [];
     this._updateUndoBtn();
     this.editMode = true;
+    this._syncState = { status: 'idle', lastSync: null, error: null };
     this._updateHeaderName();
-    // Direkt zur Charakter-Seite navigieren
+
+    if (syncMode === 'cloud') {
+      this._startCloudPoll();
+      this._pushToCloud();
+    } else {
+      this._stopCloudPoll();
+    }
+
     if (this.currentPage !== 'metadata') {
       this.switchPage('metadata');
     } else {
@@ -103,12 +124,72 @@ const App = {
     this.showStatus('Neuer Charakter erstellt', 'success');
   },
 
+  _showNewCharDialog() {
+    return new Promise(resolve => {
+      const modal  = document.getElementById('newCharModal');
+      const step1  = document.getElementById('ncStep1');
+      const step2  = document.getElementById('ncStep2');
+      const testEl = document.getElementById('ncTestResult');
+
+      step1.style.display = '';
+      step2.style.display = 'none';
+      testEl.textContent  = '';
+      testEl.className    = 'nc-test-result';
+      document.getElementById('ncCreateBtn').disabled = true;
+      if (CloudSync.getWorkerUrl()) document.getElementById('ncWorkerUrl').value = CloudSync.getWorkerUrl();
+      if (CloudSync.getApiKey())    document.getElementById('ncApiKey').value    = CloudSync.getApiKey();
+
+      modal.classList.add('visible');
+
+      const close = result => { modal.classList.remove('visible'); resolve(result); };
+
+      document.getElementById('ncCancelBtn').onclick = () => close(null);
+      document.getElementById('ncLocalBtn').onclick  = () => close('local');
+      document.getElementById('ncCloudBtn').onclick  = () => {
+        if (CloudSync.isConfigured()) { close('cloud'); return; }
+        step1.style.display = 'none';
+        step2.style.display = '';
+      };
+      document.getElementById('ncBackBtn').onclick = () => {
+        step2.style.display = 'none';
+        step1.style.display = '';
+      };
+      document.getElementById('ncTestBtn').onclick = async () => {
+        const url = document.getElementById('ncWorkerUrl').value.trim();
+        const key = document.getElementById('ncApiKey').value.trim();
+        if (!url || !key) { testEl.textContent = '⚠ URL und Key angeben'; return; }
+        const btn = document.getElementById('ncTestBtn');
+        btn.disabled = true;
+        testEl.textContent = '⏳ Teste …';
+        testEl.className   = 'nc-test-result';
+        const r = await CloudSync.test(url, key);
+        btn.disabled = false;
+        if (r.ok) {
+          testEl.textContent = '✓ Verbindung OK';
+          testEl.className   = 'nc-test-result nc-test-ok';
+          document.getElementById('ncCreateBtn').disabled = false;
+          CloudSync.setWorkerUrl(url);
+          CloudSync.setApiKey(key);
+        } else {
+          testEl.textContent = `✗ Fehler (${r.status || r.error || 'Timeout'})`;
+          testEl.className   = 'nc-test-result nc-test-error';
+          document.getElementById('ncCreateBtn').disabled = true;
+        }
+      };
+      document.getElementById('ncCreateBtn').onclick = () => close('cloud');
+    });
+  },
+
   deleteCharacter() {
     if (!this.currentCharacter) return;
-    const name = this.currentCharacter.metadata.name || 'Charakter';
+    const name    = this.currentCharacter.metadata.name || 'Charakter';
+    const isCloud = this.currentCharacter.syncMode === 'cloud';
+    const charId  = this.currentCharacter.id;
     if (!confirm(`„${name}" wirklich löschen?`)) return;
 
-    Storage.deleteCharacter(this.currentCharacter.id);
+    Storage.deleteCharacter(charId);
+    this._stopCloudPoll();
+    if (isCloud) CloudSync.deleteCharacter(charId);
     this.currentCharacter = null;
     window.currentCharacter = null;
 
@@ -143,6 +224,7 @@ const App = {
     if (Storage.saveCharacter(this.currentCharacter)) {
       this._updateHeaderName();
       if (saveVersion) this._saveVersion();
+      if (this.currentCharacter.syncMode === 'cloud') this._pushToCloud();
     } else {
       const e = Storage.lastError;
       const isQuota = e instanceof DOMException &&
@@ -331,7 +413,75 @@ const App = {
     el.textContent = message;
     el.className = `status ${type}`;
     setTimeout(() => { el.textContent = ''; el.className = 'status'; }, 3000);
-  }
+  },
+
+  // ── Cloud-Sync ──────────────────────────────────────────────────────────
+  async _pushToCloud() {
+    if (!this.currentCharacter || this.currentCharacter.syncMode !== 'cloud') return;
+    this._setSyncState('syncing');
+    const r = await CloudSync.pushCharacter(this.currentCharacter);
+    this._setSyncState(r.ok ? 'ok' : 'error', r.ok ? null : (r.error || 'Push-Fehler'));
+  },
+
+  async _syncCloud() {
+    if (!this.currentCharacter || this.currentCharacter.syncMode !== 'cloud') return;
+    if (this.editMode) return;
+    this._setSyncState('syncing');
+    const r = await CloudSync.pullCharacter(this.currentCharacter.id);
+    if (r.ok) {
+      const cloudChar = Character.fromJSON(r.data);
+      this.currentCharacter = cloudChar;
+      window.currentCharacter = cloudChar;
+      Storage.saveCharacter(cloudChar);
+      this._setSyncState('ok');
+      this._updateHeaderName();
+      this.renderCurrentPage();
+    } else if (r.notFound) {
+      await this._pushToCloud();
+    } else {
+      this._setSyncState('error', r.error || 'Pull-Fehler');
+    }
+  },
+
+  _setSyncState(status, error = null) {
+    this._syncState = {
+      status,
+      lastSync: status === 'ok' ? new Date() : this._syncState.lastSync,
+      error,
+    };
+    this._updateSyncBadge();
+  },
+
+  _updateSyncBadge() {
+    const el = document.getElementById('syncBadge');
+    if (!el) return;
+    const { status, lastSync, error } = this._syncState;
+    const t = lastSync
+      ? lastSync.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+      : '–';
+    el.className   = `sync-badge sync-badge--${status}`;
+    el.textContent = status === 'syncing' ? '☁ Synchronisiere …'
+                   : status === 'error'   ? `☁ Sync-Fehler: ${error}`
+                   : status === 'ok'      ? `☁ Zuletzt: ${t}`
+                   : '☁ Cloud';
+  },
+
+  _startCloudPoll() {
+    this._stopCloudPoll();
+    if (!this.currentCharacter || this.currentCharacter.syncMode !== 'cloud') return;
+    const pollId = this.currentCharacter.id;
+    this._syncTimer = setInterval(() => {
+      if (!this.currentCharacter || this.currentCharacter.id !== pollId) {
+        this._stopCloudPoll(); return;
+      }
+      if (document.visibilityState !== 'visible') return;
+      this._syncCloud();
+    }, this._POLL_INTERVAL);
+  },
+
+  _stopCloudPoll() {
+    if (this._syncTimer) { clearInterval(this._syncTimer); this._syncTimer = null; }
+  },
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
