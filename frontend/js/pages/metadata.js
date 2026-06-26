@@ -30,6 +30,9 @@ const MetadataPage = {
             ).join('')}
           </select>
           <button id="newCharBtn"    class="btn-success char-btn">+ Neu</button>
+          ${typeof CloudSync !== 'undefined' && CloudSync.isConfigured()
+            ? `<button id="loadCloudCharBtn" class="btn-secondary char-btn">☁ Laden</button>`
+            : ''}
           <button id="deleteCharBtn" class="btn-danger  char-btn">Löschen</button>
         </div>
       </div>
@@ -160,6 +163,7 @@ const MetadataPage = {
       if (e.target.value) App.loadCharacter(e.target.value);
     });
     document.getElementById('newCharBtn')?.addEventListener('click', () => App.createNewCharacter());
+    document.getElementById('loadCloudCharBtn')?.addEventListener('click', () => App.showCloudCharList());
     document.getElementById('deleteCharBtn')?.addEventListener('click', () => App.deleteCharacter());
 
     // Portrait-Navigation

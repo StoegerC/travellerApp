@@ -71,6 +71,11 @@ const App = {
       }
     });
 
+    // Cloud-Charakter-Modal schließen
+    document.getElementById('cloudCharClose').addEventListener('click', () => {
+      document.getElementById('cloudCharModal').classList.remove('visible');
+    });
+
     // Charakter-Selector-Buttons leben jetzt in MetadataPage.attachListeners()
   },
 
@@ -481,6 +486,56 @@ const App = {
 
   _stopCloudPoll() {
     if (this._syncTimer) { clearInterval(this._syncTimer); this._syncTimer = null; }
+  },
+
+  async showCloudCharList() {
+    const modal   = document.getElementById('cloudCharModal');
+    const listEl  = document.getElementById('cloudCharList');
+    listEl.innerHTML = '<p class="vh-loading">Lade Cloud-Charaktere …</p>';
+    modal.classList.add('visible');
+
+    const result = await CloudSync.listCharacters();
+    if (!result.ok) {
+      listEl.innerHTML = `<p class="vh-empty">Fehler: ${result.error || 'Verbindung fehlgeschlagen'}</p>`;
+      return;
+    }
+
+    const chars       = result.data || [];
+    const localIds    = new Set(Storage.listCharacters().map(c => c.id));
+
+    if (!chars.length) {
+      listEl.innerHTML = '<p class="vh-empty">Keine Cloud-Charaktere gefunden.<br>Speichere einen Charakter um ihn zu indexieren.</p>';
+      return;
+    }
+
+    listEl.innerHTML = chars.map(c => {
+      const isLocal = localIds.has(c.id);
+      return `
+        <button class="cloud-char-item" data-id="${this._esc(c.id)}">
+          <span class="cloud-char-name">${this._esc(c.name || 'Namenlos')}</span>
+          <span class="cloud-char-status">${isLocal ? '✓ Lokal vorhanden' : '⬇ Laden'}</span>
+        </button>`;
+    }).join('');
+
+    listEl.querySelectorAll('.cloud-char-item').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        btn.querySelector('.cloud-char-status').textContent = '⏳ …';
+
+        const r = await CloudSync.pullCharacter(btn.dataset.id);
+        if (!r.ok) {
+          btn.querySelector('.cloud-char-status').textContent = '✗ Fehler';
+          btn.disabled = false;
+          return;
+        }
+
+        const char = Character.fromJSON(r.data);
+        Storage.saveCharacter(char);
+        modal.classList.remove('visible');
+        this.loadCharacter(char.id);
+        this.showStatus(`„${char.metadata.name || 'Charakter'}" geladen ✓`, 'success');
+      });
+    });
   },
 };
 

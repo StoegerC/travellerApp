@@ -70,6 +70,21 @@ const CloudSync = {
     }
   },
 
+  async listCharacters() {
+    if (!this.isConfigured()) return { ok: false, error: 'Nicht konfiguriert' };
+    try {
+      const res = await fetch(`${this.getWorkerUrl()}/chars`, {
+        headers: this._headers(),
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) return { ok: false, status: res.status };
+      const data = await res.json();
+      return { ok: true, data };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
   async deleteCharacter(charId) {
     if (!this.isConfigured()) return { ok: false };
     try {

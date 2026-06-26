@@ -6853,7 +6853,31 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover {
 .nc-test-ok    { color: #1b5e20; }
 .nc-test-error { color: #b71c1c; }
 
+.cloud-char-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+
+.cloud-char-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background 0.15s, border-color 0.15s;
+}
+.cloud-char-item:hover    { background: #f0f2ff; border-color: #667eea; }
+.cloud-char-item:disabled { opacity: 0.6; cursor: default; }
+.cloud-char-name          { font-weight: 600; }
+.cloud-char-status        { font-size: 0.82em; color: #666; }
+
 /* Dark Mode – Cloud Sync */
+body.dark-mode .cloud-char-item         { background: #1a1d2e; border-color: #2c3050; color: #dde0f5; }
+body.dark-mode .cloud-char-item:hover   { background: #1e2448; border-color: #667eea; }
+body.dark-mode .cloud-char-status       { color: #6068a0; }
+
 body.dark-mode .sync-badge--idle    { background: #161d40; color: #818cf8; border-color: #2c3050; }
 body.dark-mode .sync-badge--syncing { background: #1e1a08; color: #fbbf24; border-color: #4a3800; }
 body.dark-mode .sync-badge--ok      { background: #0d2218; color: #4ade80; border-color: #1a4a30; }

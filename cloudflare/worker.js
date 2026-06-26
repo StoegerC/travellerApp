@@ -2,9 +2,10 @@
  * Traveller Sync Worker
  *
  * Endpunkte:
- *   GET    /char/:id          → Charakter laden
- *   PUT    /char/:id          → Charakter speichern
- *   DELETE /char/:id          → Charakter löschen
+ *   GET    /chars              → Charakter-Index (ID + Name aller Cloud-Chars)
+ *   GET    /char/:id           → Charakter laden
+ *   PUT    /char/:id           → Charakter speichern (aktualisiert Index)
+ *   DELETE /char/:id           → Charakter löschen (entfernt aus Index)
  *
  * Auth: Authorization: Bearer <API_KEY>
  * Env:  API_KEY (Secret), KV (KV Namespace Binding)
@@ -18,12 +19,10 @@ const CORS_HEADERS = {
 
 export default {
   async fetch(request, env) {
-    // CORS preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
 
-    // Auth
     const auth = request.headers.get('Authorization') || '';
     if (auth !== `Bearer ${env.API_KEY}`) {
       return respond(401, 'Unauthorized');
@@ -33,6 +32,13 @@ export default {
     const parts = url.pathname.replace(/^\//, '').split('/');
     const type  = parts[0];
     const id    = parts[1];
+
+    // ── GET /chars ───────────────────────────────────────────────────────────
+
+    if (type === 'chars' && !id && request.method === 'GET') {
+      const index = await env.KV.get('chars:index');
+      return respondJSON(index || '[]');
+    }
 
     // ── /char/:id ────────────────────────────────────────────────────────────
 
@@ -47,11 +53,13 @@ export default {
         const body = await request.text();
         if (!body) return respond(400, 'Empty body');
         await env.KV.put(`char:${id}`, body);
+        await updateIndex(env, id, body, false);
         return respond(200, 'OK');
       }
 
       if (request.method === 'DELETE') {
         await env.KV.delete(`char:${id}`);
+        await updateIndex(env, id, null, true);
         return respond(200, 'OK');
       }
     }
@@ -59,6 +67,23 @@ export default {
     return respond(404, 'Not Found');
   },
 };
+
+async function updateIndex(env, id, body, remove) {
+  try {
+    const raw   = await env.KV.get('chars:index');
+    const index = raw ? JSON.parse(raw) : [];
+    const pos   = index.findIndex(c => c.id === id);
+
+    if (remove) {
+      if (pos >= 0) index.splice(pos, 1);
+    } else {
+      const name = body ? (JSON.parse(body).metadata?.name || '') : '';
+      if (pos >= 0) { index[pos].name = name; }
+      else          { index.push({ id, name }); }
+    }
+    await env.KV.put('chars:index', JSON.stringify(index));
+  } catch {}
+}
 
 function respond(status, text) {
   return new Response(text, { status, headers: CORS_HEADERS });
