@@ -18,10 +18,7 @@ const CloudSync = {
   isConfigured() { return !!(this.getWorkerUrl() && this.getApiKey()); },
 
   _headers() {
-    return {
-      'Authorization': `Bearer ${this.getApiKey()}`,
-      'Content-Type':  'application/json',
-    };
+    return { 'Authorization': `Bearer ${this.getApiKey()}` };
   },
 
   // ── Verbindungstest ────────────────────────────────────────────────────────
@@ -46,7 +43,7 @@ const CloudSync = {
     try {
       const res = await fetch(`${this.getWorkerUrl()}/char/${character.id}`, {
         method:  'PUT',
-        headers: this._headers(),
+        headers: { ...this._headers(), 'Content-Type': 'application/json' },
         body:    JSON.stringify(character.toJSON()),
       });
       if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
