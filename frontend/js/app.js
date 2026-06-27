@@ -694,7 +694,7 @@ const App = {
 
     const result = await CloudSync.listCharacters();
     if (!result.ok) {
-      listEl.innerHTML = `<p class="vh-empty">Fehler: ${result.error || 'Verbindung fehlgeschlagen'}</p>`;
+      listEl.innerHTML = `<p class="vh-empty">Fehler: ${result.error || (result.status ? `HTTP ${result.status}` : 'Verbindung fehlgeschlagen')}</p>`;
       return;
     }
 
