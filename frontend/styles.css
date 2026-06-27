@@ -5931,6 +5931,8 @@ body.dark-mode input[type="text"],
 body.dark-mode input[type="number"],
 body.dark-mode input[type="datetime-local"],
 body.dark-mode input[type="search"],
+body.dark-mode input[type="url"],
+body.dark-mode input[type="password"],
 body.dark-mode textarea,
 body.dark-mode select {
   background: #1d2035;
