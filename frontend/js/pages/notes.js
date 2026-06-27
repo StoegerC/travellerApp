@@ -300,7 +300,7 @@ const NotesPage = {
           ${App.currentCharacter?.campaignId ? `
           <div class="form-group">
             <label class="camp-share-label">
-              <input type="checkbox" id="entryCampaignToggle" ${s.isCampaign ? 'checked' : ''}>
+              <input type="checkbox" id="entryCampaignToggle" ${(isNew || s.isCampaign) ? 'checked' : ''}>
               <span>🏕 In Kampagne teilen</span>
             </label>
           </div>` : ''}
@@ -524,7 +524,7 @@ const NotesPage = {
           ${App.currentCharacter?.campaignId ? `
           <div class="form-group">
             <label class="camp-share-label">
-              <input type="checkbox" id="entryCampaignToggle" ${p.isCampaign ? 'checked' : ''}>
+              <input type="checkbox" id="entryCampaignToggle" ${(isNew || p.isCampaign) ? 'checked' : ''}>
               <span>🏕 In Kampagne teilen</span>
             </label>
           </div>` : ''}
@@ -849,7 +849,7 @@ const NotesPage = {
           ${App.currentCharacter?.campaignId ? `
           <div class="form-group">
             <label class="camp-share-label">
-              <input type="checkbox" id="entryCampaignToggle" ${l.isCampaign ? 'checked' : ''}>
+              <input type="checkbox" id="entryCampaignToggle" ${(isNew || l.isCampaign) ? 'checked' : ''}>
               <span>🏕 In Kampagne teilen</span>
             </label>
           </div>` : ''}
@@ -1055,7 +1055,7 @@ const NotesPage = {
           ${App.currentCharacter?.campaignId ? `
           <div class="form-group">
             <label class="camp-share-label">
-              <input type="checkbox" id="entryCampaignToggle" ${q.isCampaign ? 'checked' : ''}>
+              <input type="checkbox" id="entryCampaignToggle" ${(isNew || q.isCampaign) ? 'checked' : ''}>
               <span>🏕 In Kampagne teilen</span>
             </label>
           </div>` : ''}
