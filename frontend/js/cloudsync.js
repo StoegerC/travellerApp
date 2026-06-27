@@ -24,6 +24,9 @@ const CloudSync = {
   // ── Verbindungstest ────────────────────────────────────────────────────────
 
   async test(workerUrl, apiKey) {
+    if (!/^https?:\/\/.+/.test(workerUrl)) {
+      return { ok: false, error: 'URL muss mit https:// beginnen' };
+    }
     try {
       const res = await fetch(`${workerUrl.replace(/\/$/, '')}/char/__ping__`, {
         headers: { 'Authorization': `Bearer ${apiKey}` },
