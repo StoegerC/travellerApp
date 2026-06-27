@@ -5598,6 +5598,7 @@ button {
     gap: 5px;
   }
   .btn-dark-mode,
+  .btn-cloud-config,
   .btn-undo,
   .btn-history {
     min-height: 36px;
@@ -5871,7 +5872,8 @@ body.page-karte .map-loc-bar {
    =================================================================== */
 
 /* ── Dark Mode Button ── */
-.btn-dark-mode {
+.btn-dark-mode,
+.btn-cloud-config {
   padding: 8px 10px;
   background: rgba(255, 255, 255, 0.15);
   color: white;
@@ -5884,7 +5886,8 @@ body.page-karte .map-loc-bar {
   transition: background 0.2s;
   line-height: 1;
 }
-.btn-dark-mode:hover { background: rgba(255, 255, 255, 0.28); }
+.btn-dark-mode:hover,
+.btn-cloud-config:hover { background: rgba(255, 255, 255, 0.28); }
 
 /* ── Basis ── */
 body.dark-mode {

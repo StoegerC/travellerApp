@@ -52,6 +52,7 @@ const App = {
     document.getElementById('toggleEditBtn').addEventListener('click', () => this.toggleEditMode());
     document.getElementById('undoBtn').addEventListener('click', () => this.undo());
     document.getElementById('historyBtn').addEventListener('click', () => this.showVersionHistory());
+    document.getElementById('cloudConfigHeaderBtn').addEventListener('click', () => this.showCloudConfig());
     document.getElementById('darkModeBtn').addEventListener('click', () => this.toggleDarkMode());
     document.getElementById('closeVersionModal').addEventListener('click', () => {
       document.getElementById('versionModal').classList.remove('visible');
