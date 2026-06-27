@@ -12,9 +12,10 @@
  */
 const Storage = {
   _DB_NAME:        'traveller_charsheet',
-  _DB_VERSION:     2,
+  _DB_VERSION:     3,
   _STORE:          'characters',
   _VERSION_STORE:  'character_versions',
+  _CAMPAIGN_STORE: 'campaigns',
   _LS_KEY:         'traveller_characters', // nur für Migration
   _MAX_VERSIONS:   30,
   lastError:       null,
@@ -36,6 +37,7 @@ const Storage = {
         const oldVer = e.oldVersion;
         if (oldVer < 1) db.createObjectStore(this._STORE, { keyPath: 'id' });
         if (oldVer < 2) db.createObjectStore(this._VERSION_STORE, { keyPath: 'id' });
+        if (oldVer < 3) db.createObjectStore(this._CAMPAIGN_STORE, { keyPath: 'id' });
       };
       req.onsuccess = e => resolve(e.target.result);
       req.onerror   = e => reject(e.target.error);
@@ -130,6 +132,29 @@ const Storage = {
     this._cache = this._cache.filter(c => c.id !== id);
     this._deleteFromDB(id).catch(e => console.error('IndexedDB Löschfehler:', e));
     this.deleteVersionsForChar(id);
+  },
+
+  // ── Kampagnen ──────────────────────────────────────────────────────────
+  saveCampaign(campaign) {
+    if (!this._db || !campaign?.id) return;
+    const tx = this._db.transaction(this._CAMPAIGN_STORE, 'readwrite');
+    tx.objectStore(this._CAMPAIGN_STORE).put(campaign);
+  },
+
+  loadCampaign(id) {
+    if (!this._db) return Promise.resolve(null);
+    return new Promise((resolve, reject) => {
+      const req = this._db.transaction(this._CAMPAIGN_STORE)
+        .objectStore(this._CAMPAIGN_STORE).get(id);
+      req.onsuccess = e => resolve(e.target.result || null);
+      req.onerror   = e => reject(e.target.error);
+    });
+  },
+
+  deleteCampaign(id) {
+    if (!this._db) return;
+    const tx = this._db.transaction(this._CAMPAIGN_STORE, 'readwrite');
+    tx.objectStore(this._CAMPAIGN_STORE).delete(id);
   },
 
   // ── Versionsverlauf ────────────────────────────────────────────────────

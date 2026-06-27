@@ -12,6 +12,9 @@ const App = {
   _syncState: { status: 'idle', lastSync: null, error: null },
   _syncTimer: null,
   _POLL_INTERVAL: 15000,
+  _campaignData: null,
+  _campaignTimer: null,
+  _CAMPAIGN_POLL: 30000,
 
   pages: {
     metadata:   MetadataPage,
@@ -73,6 +76,13 @@ const App = {
       }
     });
 
+    // Kampagnen-Modal
+    document.getElementById('campaignModalClose').addEventListener('click', () => {
+      document.getElementById('campaignModal').classList.remove('visible');
+    });
+    document.getElementById('campaignCreateBtn').addEventListener('click', () => this.createCampaign());
+    document.getElementById('campaignJoinBtn').addEventListener('click',   () => this.joinCampaign());
+
     // Laden-Modal schließen
     document.getElementById('loadCharClose').addEventListener('click', () => {
       document.getElementById('loadCharModal').classList.remove('visible');
@@ -119,12 +129,19 @@ const App = {
     this._updateUndoBtn();
     this._updateHeaderName();
     this._syncState = { status: 'idle', lastSync: null, error: null };
+    this._campaignData = null;
 
     if (this.currentCharacter.syncMode === 'cloud') {
       this._startCloudPoll();
       this._syncCloud();
     } else {
       this._stopCloudPoll();
+    }
+
+    if (this.currentCharacter.campaignId) {
+      this._loadCampaignData(this.currentCharacter.campaignId);
+    } else {
+      this._stopCampaignPoll();
     }
 
     this.renderCurrentPage();
@@ -685,6 +702,185 @@ const App = {
     };
     reader.onerror = () => this.showStatus('Datei konnte nicht gelesen werden', 'error');
     reader.readAsText(file);
+  },
+
+  // ── Kampagnen ─────────────────────────────────────────────────────────────
+
+  async _loadCampaignData(campaignId) {
+    const local = await Storage.loadCampaign(campaignId);
+    if (local) {
+      this._campaignData = local;
+      this.renderCurrentPage();
+    }
+    if (this.currentCharacter?.syncMode === 'cloud' && CloudSync.isConfigured()) {
+      const r = await CampaignSync.getCampaign(campaignId);
+      if (r.ok) {
+        this._campaignData = r.data;
+        Storage.saveCampaign(r.data);
+        this.renderCurrentPage();
+        this._startCampaignPoll(campaignId);
+      }
+    }
+  },
+
+  async _syncCampaign() {
+    if (!this.currentCharacter?.campaignId || !CloudSync.isConfigured()) return;
+    const r = await CampaignSync.getCampaign(this.currentCharacter.campaignId);
+    if (r.ok) {
+      this._campaignData = r.data;
+      Storage.saveCampaign(r.data);
+      if (this.currentPage === 'notes' && NotesPage._activeTab === 'kampagne') {
+        this.renderCurrentPage();
+      } else if (this.currentPage === 'metadata') {
+        this.renderCurrentPage();
+      }
+    }
+  },
+
+  async _saveCampaignNotes() {
+    if (!this._campaignData) return;
+    Storage.saveCampaign(this._campaignData);
+    if (this.currentCharacter?.syncMode === 'cloud' && CloudSync.isConfigured()) {
+      await CampaignSync.updateNotes(this._campaignData.id, this._campaignData.notes);
+    }
+  },
+
+  _startCampaignPoll(campaignId) {
+    this._stopCampaignPoll();
+    this._campaignTimer = setInterval(() => {
+      if (!this.currentCharacter || this.currentCharacter.campaignId !== campaignId) {
+        this._stopCampaignPoll(); return;
+      }
+      if (document.visibilityState !== 'visible') return;
+      this._syncCampaign();
+    }, this._CAMPAIGN_POLL);
+  },
+
+  _stopCampaignPoll() {
+    if (this._campaignTimer) { clearInterval(this._campaignTimer); this._campaignTimer = null; }
+  },
+
+  showCampaignModal() {
+    document.getElementById('campaignModal').classList.add('visible');
+    this._loadCampaignList();
+  },
+
+  async _loadCampaignList() {
+    const listEl = document.getElementById('campaignJoinList');
+    listEl.innerHTML = '<p class="vh-loading">Lade Kampagnen …</p>';
+    const r = await CampaignSync.listCampaigns();
+    if (!r.ok) { listEl.innerHTML = '<p class="vh-empty">Laden fehlgeschlagen.</p>'; return; }
+    const camps = r.data || [];
+    if (!camps.length) { listEl.innerHTML = '<p class="vh-empty">Keine Kampagnen gefunden.</p>'; return; }
+    listEl.innerHTML = camps.map(c => `
+      <button class="campaign-item" data-id="${this._esc(c.id)}">
+        <span class="campaign-item-name">${this._esc(c.name)}</span>
+        <span class="campaign-item-meta">${this._esc(c.id)} · ${c.memberCount} Mitglied${c.memberCount !== 1 ? 'er' : ''}</span>
+      </button>`).join('');
+    listEl.querySelectorAll('.campaign-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('campaignJoinId').value = btn.dataset.id;
+      });
+    });
+  },
+
+  async createCampaign() {
+    const char = this.currentCharacter;
+    if (!char) return;
+    const rawId = document.getElementById('campaignCreateId').value.trim().toLowerCase();
+    const name  = document.getElementById('campaignCreateName').value.trim();
+    if (!rawId || !name) { this.showStatus('ID und Name erforderlich', 'error'); return; }
+    if (!/^[a-z0-9_-]{2,32}$/.test(rawId)) {
+      this.showStatus('ID: nur Kleinbuchstaben, Zahlen, - und _ (2–32 Zeichen)', 'error'); return;
+    }
+    const btn = document.getElementById('campaignCreateBtn');
+    btn.disabled = true;
+    const r = await CampaignSync.createCampaign(rawId, name, char.id);
+    btn.disabled = false;
+    if (r.conflict) { this.showStatus('Kampagnen-ID bereits vergeben', 'error'); return; }
+    if (!r.ok) { this.showStatus(`Fehler: ${r.error || 'HTTP ' + r.status}`, 'error'); return; }
+    this._campaignData = r.data;
+    Storage.saveCampaign(r.data);
+    char.campaignId = rawId;
+    Storage.saveCharacter(char);
+    if (char.syncMode === 'cloud') this._pushToCloud();
+    document.getElementById('campaignModal').classList.remove('visible');
+    this._startCampaignPoll(rawId);
+    this.renderCurrentPage();
+    this.showStatus(`Kampagne „${name}" erstellt ✓`, 'success');
+  },
+
+  async joinCampaign() {
+    const char = this.currentCharacter;
+    if (!char) return;
+    const id = (document.getElementById('campaignJoinId').value.trim() || '').toLowerCase();
+    if (!id) { this.showStatus('Bitte Kampagnen-ID eingeben', 'error'); return; }
+    const btn = document.getElementById('campaignJoinBtn');
+    btn.disabled = true;
+    const r = await CampaignSync.join(id, char.id);
+    btn.disabled = false;
+    if (r.notFound) { this.showStatus('Kampagne nicht gefunden', 'error'); return; }
+    if (!r.ok) { this.showStatus(`Fehler: ${r.error || 'HTTP ' + r.status}`, 'error'); return; }
+    const rGet = await CampaignSync.getCampaign(id);
+    if (!rGet.ok) { this.showStatus('Kampagne beigetreten, Laden fehlgeschlagen', 'error'); return; }
+    this._campaignData = rGet.data;
+    Storage.saveCampaign(rGet.data);
+    char.campaignId = id;
+    Storage.saveCharacter(char);
+    if (char.syncMode === 'cloud') this._pushToCloud();
+    document.getElementById('campaignModal').classList.remove('visible');
+    this._startCampaignPoll(id);
+    this.renderCurrentPage();
+    this.showStatus(`Kampagne „${rGet.data.name}" beigetreten ✓`, 'success');
+  },
+
+  async leaveCampaign() {
+    const char = this.currentCharacter;
+    if (!char?.campaignId) return;
+    if (!confirm('Kampagne verlassen? Du kannst jederzeit wieder beitreten.')) return;
+    if (char.syncMode === 'cloud' && CloudSync.isConfigured()) {
+      await CampaignSync.leave(char.campaignId, char.id);
+    }
+    char.campaignId = null;
+    Storage.saveCharacter(char);
+    if (char.syncMode === 'cloud') this._pushToCloud();
+    this._stopCampaignPoll();
+    this._campaignData = null;
+    NotesPage._activeTab = 'sessions';
+    this.renderCurrentPage();
+    this.showStatus('Kampagne verlassen', 'success');
+  },
+
+  async deleteCampaign() {
+    const char = this.currentCharacter;
+    if (!char?.campaignId || !this._campaignData) return;
+    if (this._campaignData.ownerId !== char.id) {
+      this.showStatus('Nur der Ersteller kann die Kampagne löschen', 'error'); return;
+    }
+    if (!confirm(`Kampagne „${this._campaignData.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`)) return;
+    if (char.syncMode === 'cloud' && CloudSync.isConfigured()) {
+      await CampaignSync.deleteCampaign(char.campaignId, char.id);
+    }
+    Storage.deleteCampaign(char.campaignId);
+    char.campaignId = null;
+    Storage.saveCharacter(char);
+    if (char.syncMode === 'cloud') this._pushToCloud();
+    this._stopCampaignPoll();
+    this._campaignData = null;
+    NotesPage._activeTab = 'sessions';
+    this.renderCurrentPage();
+    this.showStatus('Kampagne gelöscht', 'success');
+  },
+
+  async kickCampaignMember(charId) {
+    const char = this.currentCharacter;
+    if (!char?.campaignId || !this._campaignData) return;
+    if (!confirm('Mitglied aus der Kampagne entfernen?')) return;
+    const r = await CampaignSync.kickMember(char.campaignId, charId, char.id);
+    if (!r.ok) { this.showStatus('Entfernen fehlgeschlagen', 'error'); return; }
+    await this._syncCampaign();
+    this.renderCurrentPage();
+    this.showStatus('Mitglied entfernt', 'success');
   },
 
   async showCloudCharList() {

@@ -136,6 +136,9 @@ const MetadataPage = {
       </div>`;
     }
 
+    // ── Kampagne ─────────────────────────────────────────────────────────
+    html += this._renderCampaignSection(character);
+
     // ── Export / Import ─────────────────────────────────────────────────
     html += `
       <div class="export-section">
@@ -234,8 +237,61 @@ const MetadataPage = {
     document.getElementById('syncActivateBtn')?.addEventListener('click',   () => App.activateCloudSync());
     document.getElementById('syncDeactivateBtn')?.addEventListener('click', () => App.deactivateCloudSync());
 
+    // Kampagne
+    document.getElementById('campaignOpenBtn')?.addEventListener('click',   () => App.showCampaignModal());
+    document.getElementById('campaignLeaveBtn')?.addEventListener('click',  () => App.leaveCampaign());
+    document.getElementById('campaignDeleteBtn')?.addEventListener('click', () => App.deleteCampaign());
+    document.querySelectorAll('.campaign-kick-btn').forEach(btn => {
+      btn.addEventListener('click', () => App.kickCampaignMember(btn.dataset.charId));
+    });
+
     // Export
     document.getElementById('exportCharBtn')?.addEventListener('click', () => this._exportJSON());
+  },
+
+  _renderCampaignSection(character) {
+    const camp = App._campaignData;
+    const isCloud = character.syncMode === 'cloud';
+    let html = '<div class="campaign-section"><h3>Kampagne</h3>';
+
+    if (!character.campaignId) {
+      html += `<div class="campaign-none">
+        <p class="campaign-hint">Kein Kampagnen-Mitglied.</p>
+        <button id="campaignOpenBtn" class="btn-secondary campaign-btn"${!isCloud ? ' disabled title="Nur für Cloud-Charaktere"' : ''}>
+          Kampagne erstellen / beitreten
+        </button>
+      </div>`;
+    } else if (!camp) {
+      html += `<p class="campaign-hint">Kampagne <strong>${this._esc(character.campaignId)}</strong> wird geladen …</p>
+        <button id="campaignLeaveBtn" class="btn-secondary campaign-btn">Verlassen</button>`;
+    } else {
+      const isOwner = camp.ownerId === character.id;
+      html += `<div class="campaign-info">
+        <div class="campaign-name-row">
+          <strong class="campaign-name">${this._esc(camp.name)}</strong>
+          <span class="campaign-id-badge">${this._esc(camp.id)}</span>
+          ${isOwner ? '<span class="campaign-owner-badge">Owner</span>' : ''}
+        </div>
+        <div class="campaign-members">
+          <p class="campaign-members-title">Mitglieder (${camp.members.length}):</p>
+          <ul class="campaign-member-list">
+            ${camp.members.map(m => `
+              <li class="campaign-member-item">
+                <span class="campaign-member-id">${this._esc(m.charId)}</span>
+                ${isOwner && m.charId !== character.id
+                  ? `<button class="campaign-kick-btn btn-danger-sm" data-char-id="${this._esc(m.charId)}">✕</button>`
+                  : ''}
+              </li>`).join('')}
+          </ul>
+        </div>
+        <div class="campaign-actions">
+          <button id="campaignLeaveBtn" class="btn-secondary campaign-btn">Verlassen</button>
+          ${isOwner ? `<button id="campaignDeleteBtn" class="btn-danger campaign-btn">Löschen</button>` : ''}
+        </div>
+      </div>`;
+    }
+    html += '</div>';
+    return html;
   },
 
   _exportJSON() {

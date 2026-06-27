@@ -15,10 +15,13 @@ const NotesPage = {
   _notesSort:       { sessions: 'createdAt', persons: 'name', locations: 'name', quests: 'createdAt' },
   _notesDir:        { sessions: 'desc', persons: 'asc', locations: 'asc', quests: 'desc' },
   _questFilterVal:  'active',
+  _isCamp() { return this._activeTab === 'kampagne'; },
 
   // ─────────────────────────────── Datenzugriff ────────────────────────────
   _d(char) {
-    const n = char.notes || {};
+    const n = (this._isCamp() && App._campaignData)
+      ? (App._campaignData.notes || {})
+      : (char.notes || {});
     return {
       sessions:  Array.isArray(n.sessions)  ? n.sessions  : [],
       persons:   Array.isArray(n.persons)   ? n.persons   : [],
@@ -104,6 +107,9 @@ const NotesPage = {
           ? this._questDetail(this._detailId, data)
           : this._questList(data);
         break;
+      case 'kampagne':
+        html += this._campaignSubTab(data);
+        break;
     }
     return html;
   },
@@ -115,6 +121,9 @@ const NotesPage = {
       { id: 'locations', label: '🌍 Orte',     count: data.locations.length },
       { id: 'quests',    label: '⚔️ Quests',   count: data.quests.length    },
     ];
+    if (App.currentCharacter?.campaignId && App._campaignData) {
+      tabs.push({ id: 'kampagne', label: '🏕 Kampagne', count: null });
+    }
     let html = '<div class="notes-subtabs">';
     tabs.forEach(t => {
       const active = this._activeTab === t.id ? ' active' : '';
@@ -1046,7 +1055,8 @@ const NotesPage = {
     const data = this._d(character);
 
     if (!this._detailId || !App.editMode) {
-      character.notes = data;
+      if (this._isCamp() && App._campaignData) App._campaignData.notes = data;
+      else character.notes = data;
       return;
     }
 
@@ -1169,7 +1179,8 @@ const NotesPage = {
       }
     }
 
-    character.notes = data;
+    if (this._isCamp() && App._campaignData) App._campaignData.notes = data;
+    else character.notes = data;
   },
 
   // ─────────────────────────── EVENT LISTENER ──────────────────────────────
@@ -1179,11 +1190,20 @@ const NotesPage = {
       btn.addEventListener('click', () => {
         if (App.currentCharacter) {
           this.save(App.currentCharacter);
-          Storage.saveCharacter(App.currentCharacter);
+          this._isCamp() ? App._saveCampaignNotes() : Storage.saveCharacter(App.currentCharacter);
         }
         this._activeTab = btn.dataset.tab;
         this._detailId  = null;
         this._editTags  = null;
+        App.renderCurrentPage();
+      });
+    });
+
+    // Kampagne-Subtabs
+    document.querySelectorAll('.campaign-subtab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this._campSubTab = btn.dataset.ctab;
+        this._detailId   = null;
         App.renderCurrentPage();
       });
     });
@@ -1213,7 +1233,7 @@ const NotesPage = {
         const wasNew = this._detailId === 'new';
         const tab    = this._activeTab;
         this.save(App.currentCharacter);
-        Storage.saveCharacter(App.currentCharacter);
+        this._isCamp() ? App._saveCampaignNotes() : Storage.saveCharacter(App.currentCharacter);
         if (wasNew && (tab === 'persons' || tab === 'sessions')) App.editMode = false;
         App.renderCurrentPage();
       }
@@ -1226,8 +1246,9 @@ const NotesPage = {
       const data = this._d(App.currentCharacter);
       const key = { sessions: 'sessions', persons: 'persons', locations: 'locations', quests: 'quests' }[this._activeTab];
       data[key] = data[key].filter(x => x.id !== id);
-      App.currentCharacter.notes = data;
-      Storage.saveCharacter(App.currentCharacter);
+      if (this._isCamp() && App._campaignData) App._campaignData.notes = data;
+      else App.currentCharacter.notes = data;
+      this._isCamp() ? App._saveCampaignNotes() : Storage.saveCharacter(App.currentCharacter);
       this._detailId = null;
       this._editTags = null;
       App.renderCurrentPage();
@@ -1373,8 +1394,9 @@ const NotesPage = {
         const session = data.sessions.find(s => s.id === id);
         if (session) session.isActive = true;
       }
-      App.currentCharacter.notes = data;
-      Storage.saveCharacter(App.currentCharacter);
+      if (this._isCamp() && App._campaignData) App._campaignData.notes = data;
+      else App.currentCharacter.notes = data;
+      this._isCamp() ? App._saveCampaignNotes() : Storage.saveCharacter(App.currentCharacter);
       App.renderCurrentPage();
     });
   },
@@ -1382,7 +1404,7 @@ const NotesPage = {
   _goBack() {
     if (App.currentCharacter) {
       this.save(App.currentCharacter);
-      Storage.saveCharacter(App.currentCharacter);
+      this._isCamp() ? App._saveCampaignNotes() : Storage.saveCharacter(App.currentCharacter);
     }
     this._detailId = null;
     this._editTags = null;
@@ -1478,7 +1500,8 @@ const NotesPage = {
       if (type === 'quests')    { newItem.status = 'active'; newItem.title = name; }
 
       data[type].push(newItem);
-      char.notes = data;
+      if (this._isCamp() && App._campaignData) App._campaignData.notes = data;
+      else char.notes = data;
 
       if (!this._editTags[type]) this._editTags[type] = [];
       this._editTags[type].push(newItem.id);
@@ -1502,7 +1525,7 @@ const NotesPage = {
       document.getElementById(`tpcf-${type}`).style.display = 'none';
       if (input) input.value = '';
 
-      Storage.saveCharacter(char);
+      this._isCamp() ? App._saveCampaignNotes() : Storage.saveCharacter(char);
     };
 
     document.querySelectorAll('.tp-create-save').forEach(btn => {
@@ -1626,13 +1649,13 @@ const NotesPage = {
     document.querySelectorAll('.person-fav-btn').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        const char   = window.currentCharacter;
-        const person = (char.notes?.persons || []).find(p => p.id === btn.dataset.personid);
+        const notes  = (this._isCamp() && App._campaignData) ? App._campaignData.notes : window.currentCharacter?.notes;
+        const person = (notes?.persons || []).find(p => p.id === btn.dataset.personid);
         if (!person) return;
         person.isFavorite = !person.isFavorite;
         btn.classList.toggle('active', person.isFavorite);
         btn.textContent = person.isFavorite ? '⭐' : '☆';
-        Storage.saveCharacter(char);
+        this._isCamp() ? App._saveCampaignNotes() : Storage.saveCharacter(window.currentCharacter);
       });
     });
   },
@@ -1854,7 +1877,7 @@ const NotesPage = {
       const term       = search.value.toLowerCase();
       const personId   = personSel?.value   || '';
       const locationId = locationSel?.value || '';
-      const sessions   = App.currentCharacter?.notes?.sessions || [];
+      const sessions   = (this._isCamp() ? App._campaignData?.notes : App.currentCharacter?.notes)?.sessions || [];
       document.querySelectorAll('#sessionList .notes-list-item').forEach(item => {
         const s = sessions.find(x => x.id === item.dataset.id);
         if (!s) return;
@@ -1917,5 +1940,47 @@ const NotesPage = {
       clearBtn.style.display = 'none';
       filter();
     });
-  }
+  },
+
+  // ─────────────────────────── KAMPAGNE-TAB ───────────────────────────────
+  _campaignSubTab(data) {
+    const camp = App._campaignData;
+    if (!camp) return '<p class="notes-empty">Kampagne wird geladen …</p>';
+    const subtabs = [
+      { id: 'sessions',  label: '📜 Journal',  items: data.sessions  },
+      { id: 'persons',   label: '👥 Personen', items: data.persons   },
+      { id: 'locations', label: '🌍 Orte',     items: data.locations },
+      { id: 'quests',    label: '⚔️ Quests',   items: data.quests    },
+    ];
+    const active = this._campSubTab || 'sessions';
+    let html = `<div class="campaign-tab-header">
+      <h3 class="campaign-tab-title">🏕 ${this._esc(camp.name)}</h3>
+      <p class="campaign-tab-id">ID: ${this._esc(camp.id)} · ${camp.members.length} Mitglied${camp.members.length !== 1 ? 'er' : ''}</p>
+    </div>
+    <div class="campaign-subtabs">
+      ${subtabs.map(t => `<button class="campaign-subtab-btn${active === t.id ? ' active' : ''}" data-ctab="${t.id}">${t.label} <span class="subtab-count">${t.items.length}</span></button>`).join('')}
+    </div>`;
+
+    const cur = subtabs.find(t => t.id === active);
+    if (active === 'sessions') {
+      html += this._detailId
+        ? this._sessionDetail(this._detailId, data)
+        : this._sessionList(data);
+    } else if (active === 'persons') {
+      html += this._detailId
+        ? this._personDetail(this._detailId, data)
+        : this._personList(data);
+    } else if (active === 'locations') {
+      html += this._detailId
+        ? this._locationDetail(this._detailId, data)
+        : this._locationList(data);
+    } else if (active === 'quests') {
+      html += this._detailId
+        ? this._questDetail(this._detailId, data)
+        : this._questList(data);
+    }
+    return html;
+  },
+
+  _campSubTab: 'sessions',
 };

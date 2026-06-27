@@ -10,7 +10,7 @@
   <title>Traveller – Charakterdatenblatt</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=1.4.0">
+  <link rel="stylesheet" href="styles.css?v=1.5.0">
   <script>
   (function(){
     var c=document.createElement('canvas'); c.width=c.height=64;
@@ -70,7 +70,7 @@
             <circle cx="34" cy="18" r="1.5" fill="#60a5fa"/>
           </svg>
           <div class="header-title">
-            <h1>Traveller <small class="app-version">v1.4.0</small></h1>
+            <h1>Traveller <small class="app-version">v1.5.0</small></h1>
             <span id="charNameDisplay" class="char-name-display"></span>
           </div>
         </div>
@@ -108,7 +108,7 @@
         <span class="tab-label">Finanzen</span>
       </button>
       <button class="tab-btn" data-page="career">
-        <span class="tab-icon">🗺️</span>
+        <span class="tab-icon">📋</span>
         <span class="tab-label">Werdegang</span>
       </button>
       <button class="tab-btn" data-page="notes">
@@ -230,6 +230,44 @@
     </div>
   </div>
 
+  <!-- Kampagnen-Modal -->
+  <div id="campaignModal" class="vh-modal">
+    <div class="vh-panel nc-panel">
+      <div class="vh-header">
+        <h2 class="vh-title">Kampagne</h2>
+        <button id="campaignModalClose" class="vh-close">✕</button>
+      </div>
+
+      <!-- Erstellen -->
+      <div class="campaign-modal-section">
+        <h3 class="campaign-modal-subtitle">Neue Kampagne erstellen</h3>
+        <div class="form-group">
+          <label>Kampagnen-ID <span class="campaign-id-hint">(kurz, eindeutig, z.B. spinward26)</span></label>
+          <input type="text" id="campaignCreateId" placeholder="spinward26" autocomplete="off"
+                 pattern="[a-z0-9_-]{2,32}" maxlength="32">
+        </div>
+        <div class="form-group">
+          <label>Anzeigename</label>
+          <input type="text" id="campaignCreateName" placeholder="Die Spinward Marches" autocomplete="off">
+        </div>
+        <button id="campaignCreateBtn" class="btn-success campaign-btn">Erstellen</button>
+      </div>
+
+      <div class="campaign-modal-divider">– oder –</div>
+
+      <!-- Beitreten -->
+      <div class="campaign-modal-section">
+        <h3 class="campaign-modal-subtitle">Kampagne beitreten</h3>
+        <div id="campaignJoinList" class="campaign-join-list"></div>
+        <div class="form-group">
+          <label>Kampagnen-ID eingeben</label>
+          <input type="text" id="campaignJoinId" placeholder="spinward26" autocomplete="off">
+        </div>
+        <button id="campaignJoinBtn" class="btn-success campaign-btn">Beitreten</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Charakter laden -->
   <div id="loadCharModal" class="vh-modal">
     <div class="vh-panel nc-panel">
@@ -266,20 +304,21 @@
     </div>
   </div>
 
-  <script src="js/cloudsync.js?v=1.4.0"></script>
-  <script src="js/markdown.js?v=1.4.0"></script>
-  <script src="js/data/skills.js?v=1.4.0"></script>
-  <script src="js/models/character.js?v=1.4.0"></script>
-  <script src="js/storage.js?v=1.4.0"></script>
-  <script src="js/pages/metadata.js?v=1.4.0"></script>
-  <script src="js/pages/attributes.js?v=1.4.0"></script>
-  <script src="js/pages/equipment.js?v=1.4.0"></script>
-  <script src="js/pages/career.js?v=1.4.0"></script>
-  <script src="js/pages/notes.js?v=1.4.0"></script>
-  <script src="js/pages/karte.js?v=1.4.0"></script>
-  <script src="js/pages/combat.js?v=1.4.0"></script>
-  <script src="js/pages/finances.js?v=1.4.0"></script>
-  <script src="js/app.js?v=1.4.0"></script>
+  <script src="js/cloudsync.js?v=1.5.0"></script>
+  <script src="js/campaign.js?v=1.5.0"></script>
+  <script src="js/markdown.js?v=1.5.0"></script>
+  <script src="js/data/skills.js?v=1.5.0"></script>
+  <script src="js/models/character.js?v=1.5.0"></script>
+  <script src="js/storage.js?v=1.5.0"></script>
+  <script src="js/pages/metadata.js?v=1.5.0"></script>
+  <script src="js/pages/attributes.js?v=1.5.0"></script>
+  <script src="js/pages/equipment.js?v=1.5.0"></script>
+  <script src="js/pages/career.js?v=1.5.0"></script>
+  <script src="js/pages/notes.js?v=1.5.0"></script>
+  <script src="js/pages/karte.js?v=1.5.0"></script>
+  <script src="js/pages/combat.js?v=1.5.0"></script>
+  <script src="js/pages/finances.js?v=1.5.0"></script>
+  <script src="js/app.js?v=1.5.0"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
