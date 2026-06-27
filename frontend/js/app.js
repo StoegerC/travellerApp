@@ -751,20 +751,34 @@ const App = {
     if (r.ok) {
       this._campaignData = r.data;
       Storage.saveCampaign(r.data);
-      if (this.currentPage === 'notes' && NotesPage._activeTab === 'kampagne') {
-        this.renderCurrentPage();
-      } else if (this.currentPage === 'metadata') {
+      if (this.currentPage === 'notes' || this.currentPage === 'metadata') {
         this.renderCurrentPage();
       }
     }
   },
 
-  async _saveCampaignNotes() {
-    if (!this._campaignData) return;
-    Storage.saveCampaign(this._campaignData);
-    if (this.currentCharacter?.syncMode === 'cloud' && CloudSync.isConfigured()) {
-      await CampaignSync.updateNotes(this._campaignData.id, this._campaignData.notes);
-    }
+  async _syncMyCampaignEntries() {
+    const char = this.currentCharacter;
+    if (!char?.campaignId || char.syncMode !== 'cloud' || !CloudSync.isConfigured()) return;
+    const myId  = char.id;
+    const notes = char.notes || {};
+    const myShared = {
+      sessions:  (notes.sessions  || []).filter(e => e.isCampaign).map(e => ({ ...e, ownerId: myId })),
+      persons:   (notes.persons   || []).filter(e => e.isCampaign).map(e => ({ ...e, ownerId: myId })),
+      locations: (notes.locations || []).filter(e => e.isCampaign).map(e => ({ ...e, ownerId: myId })),
+      quests:    (notes.quests    || []).filter(e => e.isCampaign).map(e => ({ ...e, ownerId: myId })),
+    };
+    const result = await CampaignSync.getCampaign(char.campaignId);
+    if (!result.ok) return;
+    const cur = result.data.notes || { sessions: [], persons: [], locations: [], quests: [] };
+    const merged = {
+      sessions:  [...(cur.sessions  || []).filter(e => e.ownerId !== myId), ...myShared.sessions],
+      persons:   [...(cur.persons   || []).filter(e => e.ownerId !== myId), ...myShared.persons],
+      locations: [...(cur.locations || []).filter(e => e.ownerId !== myId), ...myShared.locations],
+      quests:    [...(cur.quests    || []).filter(e => e.ownerId !== myId), ...myShared.quests],
+    };
+    await CampaignSync.updateNotes(char.campaignId, merged);
+    if (this._campaignData) this._campaignData.notes = merged;
   },
 
   _startCampaignPoll(campaignId) {

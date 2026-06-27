@@ -2713,6 +2713,57 @@ button {
 }
 
 /* ===== EXPORT SECTION ===== */
+/* ===== KAMPAGNE-BADGES & EXTERNE EINTRÄGE ===== */
+.camp-share-badge {
+  font-size: 0.75em;
+  padding: 0 3px;
+  vertical-align: middle;
+  opacity: 0.85;
+}
+.camp-share-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.9em;
+  color: #555;
+}
+.camp-share-label input[type="checkbox"] { width: 16px; height: 16px; }
+.camp-ext-section {
+  border-top: 1px dashed #ddd;
+  margin-top: 12px;
+  padding-top: 8px;
+}
+.camp-ext-label {
+  display: block;
+  font-size: 0.75em;
+  color: #888;
+  margin-bottom: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.camp-ext-entry {
+  padding: 6px 10px;
+  background: #f8f5ff;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  opacity: 0.85;
+  font-size: 0.9em;
+}
+.pcard-ext {
+  padding: 8px 10px;
+  background: #f8f5ff;
+  border-radius: 8px;
+  opacity: 0.85;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 /* ===== KAMPAGNE ===== */
 .campaign-section {
   border-top: 1px solid #e9ecef;
@@ -7012,6 +7063,11 @@ body.dark-mode .campaign-modal-divider  { color: #3a405a; }
 body.dark-mode .campaign-subtab-btn   { background: #1d2035; border-color: #2c3050; color: #9095b8; }
 body.dark-mode .campaign-subtab-btn.active { background: #667eea; color: white; border-color: #667eea; }
 body.dark-mode .campaign-tab-id       { color: #6070a0; }
+body.dark-mode .camp-share-label      { color: #9095b8; }
+body.dark-mode .camp-ext-section      { border-top-color: #2c3050; }
+body.dark-mode .camp-ext-label        { color: #6070a0; }
+body.dark-mode .camp-ext-entry        { background: #1a1d35; }
+body.dark-mode .pcard-ext             { background: #1a1d35; }
 body.dark-mode .sync-badge--idle    { background: #161d40; color: #818cf8; border-color: #2c3050; }
 body.dark-mode .sync-badge--syncing { background: #1e1a08; color: #fbbf24; border-color: #4a3800; }
 body.dark-mode .sync-badge--ok      { background: #0d2218; color: #4ade80; border-color: #1a4a30; }
