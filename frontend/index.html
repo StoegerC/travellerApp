@@ -10,7 +10,7 @@
   <title>Traveller – Charakterdatenblatt</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=1.5.0">
+  <link rel="stylesheet" href="styles.css?v=1.5.1">
   <script>
   (function(){
     var c=document.createElement('canvas'); c.width=c.height=64;
@@ -70,7 +70,7 @@
             <circle cx="34" cy="18" r="1.5" fill="#60a5fa"/>
           </svg>
           <div class="header-title">
-            <h1>Traveller <small class="app-version">v1.5.0</small></h1>
+            <h1>Traveller <small class="app-version">v1.5.1</small></h1>
             <span id="charNameDisplay" class="char-name-display"></span>
           </div>
         </div>
@@ -272,11 +272,16 @@
   <div id="loadCharModal" class="vh-modal">
     <div class="vh-panel nc-panel">
       <div class="vh-header">
-        <h2 class="vh-title">Charakter laden</h2>
+        <h2 class="vh-title" id="loadCharTitle">Charakter laden</h2>
         <button id="loadCharClose" class="vh-close">✕</button>
       </div>
-      <p class="vh-hint">Wie soll der Charakter geladen werden?</p>
+      <p class="vh-hint" id="loadCharHint">Wie soll der Charakter geladen werden?</p>
       <div class="nc-choice-row">
+        <button id="lcNewBtn" class="nc-choice-btn" style="display:none;">
+          <span class="nc-choice-icon">✨</span>
+          <span class="nc-choice-label">Neu erstellen</span>
+          <span class="nc-choice-desc">Leeren Charakter anlegen</span>
+        </button>
         <button id="lcJsonBtn" class="nc-choice-btn">
           <span class="nc-choice-icon">📂</span>
           <span class="nc-choice-label">Aus JSON</span>
@@ -304,21 +309,21 @@
     </div>
   </div>
 
-  <script src="js/cloudsync.js?v=1.5.0"></script>
-  <script src="js/campaign.js?v=1.5.0"></script>
-  <script src="js/markdown.js?v=1.5.0"></script>
-  <script src="js/data/skills.js?v=1.5.0"></script>
-  <script src="js/models/character.js?v=1.5.0"></script>
-  <script src="js/storage.js?v=1.5.0"></script>
-  <script src="js/pages/metadata.js?v=1.5.0"></script>
-  <script src="js/pages/attributes.js?v=1.5.0"></script>
-  <script src="js/pages/equipment.js?v=1.5.0"></script>
-  <script src="js/pages/career.js?v=1.5.0"></script>
-  <script src="js/pages/notes.js?v=1.5.0"></script>
-  <script src="js/pages/karte.js?v=1.5.0"></script>
-  <script src="js/pages/combat.js?v=1.5.0"></script>
-  <script src="js/pages/finances.js?v=1.5.0"></script>
-  <script src="js/app.js?v=1.5.0"></script>
+  <script src="js/cloudsync.js?v=1.5.1"></script>
+  <script src="js/campaign.js?v=1.5.1"></script>
+  <script src="js/markdown.js?v=1.5.1"></script>
+  <script src="js/data/skills.js?v=1.5.1"></script>
+  <script src="js/models/character.js?v=1.5.1"></script>
+  <script src="js/storage.js?v=1.5.1"></script>
+  <script src="js/pages/metadata.js?v=1.5.1"></script>
+  <script src="js/pages/attributes.js?v=1.5.1"></script>
+  <script src="js/pages/equipment.js?v=1.5.1"></script>
+  <script src="js/pages/career.js?v=1.5.1"></script>
+  <script src="js/pages/notes.js?v=1.5.1"></script>
+  <script src="js/pages/karte.js?v=1.5.1"></script>
+  <script src="js/pages/combat.js?v=1.5.1"></script>
+  <script src="js/pages/finances.js?v=1.5.1"></script>
+  <script src="js/app.js?v=1.5.1"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

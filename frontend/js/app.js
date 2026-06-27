@@ -36,7 +36,7 @@ const App = {
     if (characters.length > 0) {
       this.loadCharacter(characters[0].id);
     } else {
-      this.createNewCharacter();
+      this.showLoadCharDialog(true);
     }
 
     this.updateEditButton();
@@ -86,6 +86,12 @@ const App = {
     // Laden-Modal schließen
     document.getElementById('loadCharClose').addEventListener('click', () => {
       document.getElementById('loadCharModal').classList.remove('visible');
+    });
+
+    // Neuer Charakter (nur im Willkommen-Modus sichtbar)
+    document.getElementById('lcNewBtn').addEventListener('click', () => {
+      document.getElementById('loadCharModal').classList.remove('visible');
+      this.createNewCharacter();
     });
 
     // Laden aus JSON
@@ -635,8 +641,24 @@ const App = {
     };
   },
 
-  showLoadCharDialog() {
-    document.getElementById('loadCharModal').classList.add('visible');
+  showLoadCharDialog(firstLaunch = false) {
+    const modal    = document.getElementById('loadCharModal');
+    const closeBtn = document.getElementById('loadCharClose');
+    const newBtn   = document.getElementById('lcNewBtn');
+    const title    = document.getElementById('loadCharTitle');
+    const hint     = document.getElementById('loadCharHint');
+    if (firstLaunch) {
+      closeBtn.style.display = 'none';
+      newBtn.style.display   = '';
+      title.textContent      = 'Willkommen';
+      hint.textContent       = 'Wie möchtest du starten?';
+    } else {
+      closeBtn.style.display = '';
+      newBtn.style.display   = 'none';
+      title.textContent      = 'Charakter laden';
+      hint.textContent       = 'Wie soll der Charakter geladen werden?';
+    }
+    modal.classList.add('visible');
   },
 
   async activateCloudSync() {
