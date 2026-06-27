@@ -44,9 +44,15 @@ BACKLOG
 ════════════════════════════
 
 CLOUD-SYNC & KAMPAGNE  (geplant für v1.1)
-[ ] Cloudflare Worker + KV: GET/PUT für char:{id} und campaign:{id}, Auth via Bearer-Key
-[ ] cloudsync.js: push/pull/merge (Per-Item updatedAt), API-Key in localStorage
-[ ] Charakter-Typ: syncMode local|cloud + campaignId; Dialog bei „+ Neu"
+[x] Cloudflare Worker + KV: GET/PUT/DELETE für char:{id}, Auth via Bearer-Key
+[x] cloudsync.js: push/pull, API-Key + Worker-URL in localStorage
+[x] Charakter-Typ: syncMode local|cloud; Dialog bei „+ Neu", Toggle bei bestehenden Chars
+[x] Sync-Badge in Metadaten-Tab (letzter Sync, Status, Fehleranzeige)
+[x] Background-Poll alle 30s wenn Cloud-Charakter aktiv
+[x] Pull-to-Refresh auf Mobile
+[x] Cloud-Charakterliste: Chars aus Cloud auf neues Gerät laden
+[x] Laden-Modal: Aus JSON oder Aus Cloud (ersetzt separaten Import-Button)
+[x] Cloud-Einstellungen immer über ☁-Button im Header erreichbar
 [ ] Kampagne erstellen / beitreten (selbstgewählte kurze ID, z.B. spinward26)
 [ ] Kampagne: ownerId – nur Ersteller kann Mitglieder entfernen
 [ ] Kampagne: Entfernen propagiert via Sync (entferntes Gerät erkennt Ausschluss beim Poll)
@@ -54,10 +60,6 @@ CLOUD-SYNC & KAMPAGNE  (geplant für v1.1)
 [ ] Kampagne beitreten: verfügbare Kampagnen als auswählbare Liste anzeigen + manuelle ID-Eingabe
 [ ] Kampagnen-Log: Log-Tab zeigt geteilte Kampagnendaten wenn campaignId gesetzt
 [ ] Soft-Delete (_deleted + deletedAt) für Sync-sichere Löschungen
-[ ] Export: Cloud-Charaktere vollständig exportierbar (Snapshot)
-[ ] Import: bei Cloud-Charakter mit Kampagne abfragen ob Log aus Datei oder Cloud
-[ ] Sync-Badge in Metadaten-Tab (letzter Sync, Status)
-[ ] Background-Poll alle 15s wenn Cloud-Charakter aktiv
 
 DATENHALTUNG
 [ ] Charakter per QR-Code oder Link teilen (Base64-JSON)
