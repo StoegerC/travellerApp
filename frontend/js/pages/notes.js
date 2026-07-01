@@ -922,6 +922,10 @@ const NotesPage = {
 
     const f = this._questFilterVal;
     let html = `<div class="notes-list-header">
+      <div class="person-search-row">
+        <input type="text" id="questSearch" class="notes-search" placeholder="Quests durchsuchen …">
+        <button id="addQuestBtn" class="btn-success">+ Quest</button>
+      </div>
       <div class="session-filter-group">
         <span class="session-filter-label">Filter</span>
         <div class="session-filter-fields">
@@ -935,7 +939,6 @@ const NotesPage = {
         </div>
       </div>
       <div class="loc-filter-row">
-        <button id="addQuestBtn" class="btn-success">+ Quest</button>
         ${this._sortChips('quests', [{ value: 'createdAt', label: 'Erstellungsdatum' }, { value: 'name', label: 'Name' }])}
       </div>
     </div><div class="notes-list" id="questList">`;
@@ -953,7 +956,7 @@ const NotesPage = {
       const giver = data.persons.find(p => p.id === q.questgiverId);
       html += `
         <div class="notes-list-item quest-list-item"
-             data-id="${q.id}" data-qstatus="${q.status || 'active'}">
+             data-id="${q.id}" data-qstatus="${q.status || 'active'}" data-name="${this._esc((q.title || '').toLowerCase())}">
           <div class="nli-row">
             <span class="nli-title">${this._esc(q.title || 'Ohne Titel')}</span>
             ${q.isCampaign ? '<span class="camp-share-badge" title="In Kampagne geteilt">🏕</span>' : ''}
@@ -1971,7 +1974,21 @@ const NotesPage = {
   },
 
   _attachQuestFilter() {
-    document.getElementById('filterQuestStatus')?.addEventListener('change', e => {
+    const search    = document.getElementById('questSearch');
+    const statusSel = document.getElementById('filterQuestStatus');
+
+    const applyFilter = () => {
+      const term   = (search?.value || '').toLowerCase();
+      const status = statusSel?.value || '';
+      document.querySelectorAll('.quest-list-item').forEach(item => {
+        const nameMatch   = (item.dataset.name || '').includes(term);
+        const statusMatch = !status || item.dataset.qstatus === status;
+        item.style.display = (nameMatch && statusMatch) ? '' : 'none';
+      });
+    };
+
+    search?.addEventListener('input', applyFilter);
+    statusSel?.addEventListener('change', e => {
       this._questFilterVal = e.target.value;
       App.renderCurrentPage();
     });
