@@ -1,0 +1,64 @@
+name: Feature Request
+description: Idee oder Wunsch für eine neue Funktion
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke für deinen Vorschlag! Bitte füll das Formular so vollständig wie möglich aus.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Zusammenfassung
+      description: Was soll die neue Funktion können? Kurze Beschreibung in 1–2 Sätzen.
+      placeholder: "Ich wünsche mir, dass..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation / Problem
+      description: Welches Problem löst diese Funktion? In welcher Spielsituation wäre sie nützlich?
+      placeholder: "Am Spieltisch fehlt mir..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Mögliche Umsetzung
+      description: Hast du schon eine Idee wie es aussehen oder funktionieren könnte? (Optional)
+      placeholder: "Zum Beispiel ein Button der..."
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Bereich
+      description: Welchen Teil der App betrifft der Wunsch?
+      options:
+        - Attribute & Skills
+        - Ausrüstung
+        - Kampfwerte
+        - Finanzen
+        - Notizen / Journal
+        - Werdegang
+        - Allgemein / UI
+        - Sonstiges
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Wie wichtig ist dir das?
+      options:
+        - Wäre nett (nice to have)
+        - Würde ich regelmäßig nutzen
+        - Fehlt mir wirklich am Spieltisch
+    validations:
+      required: true
