@@ -397,6 +397,23 @@ const App = {
     const page = this.pages[this.currentPage];
     if (!page) return;
 
+    // Beim Re-Render während einer aktiven Notiz-Bearbeitung den DOM-Stand zuerst
+    // sichern, damit ungespeicherter Text nicht durch den Render überschrieben wird.
+    // Nur wenn das passende Formular-Element auch wirklich im DOM existiert
+    // (verhindert Datenverlust bei Tab-Wechseln, die _activeTab schon vorab setzen).
+    if (this.editMode && this.currentPage === 'notes' &&
+        typeof NotesPage !== 'undefined' && NotesPage._detailId && page.save) {
+      const formAnchor = {
+        sessions:  'sessionContent',
+        persons:   'personName',
+        locations: 'locName',
+        quests:    'questTitle',
+      }[NotesPage._activeTab];
+      if (formAnchor && document.getElementById(formAnchor)) {
+        page.save(this.currentCharacter);
+      }
+    }
+
     // Karten-iframe verstecken bevor innerHTML ersetzt wird (Safari-safe: kein DOM-Move)
     if (typeof KartePage !== 'undefined') KartePage.hideMapIframe();
 
@@ -489,10 +506,16 @@ const App = {
       clearTimeout(Storage._pushTimer);
       Storage._pushTimer = null;
       await this._pushToCloud();
+      if (this.editMode) return; // editMode kann sich während Push geändert haben
     }
     this._setSyncState('syncing');
     const r = await CloudSync.pullCharacter(this.currentCharacter.id);
     if (r.ok) {
+      if (this.editMode) {
+        // editMode wurde während des Pulls gesetzt – Charakter nicht ersetzen
+        this._setSyncState('ok');
+        return;
+      }
       const cloudChar = Character.fromJSON(r.data);
       this.currentCharacter = cloudChar;
       window.currentCharacter = cloudChar;
@@ -501,7 +524,7 @@ const App = {
       Storage._suppressPush = false;
       this._setSyncState('ok');
       this._updateHeaderName();
-      if (!this.editMode) this.renderCurrentPage();
+      this.renderCurrentPage();
     } else if (r.notFound) {
       await this._pushToCloud();
     } else {
