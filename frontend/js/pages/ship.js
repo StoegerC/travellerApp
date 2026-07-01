@@ -460,12 +460,13 @@ const ShipPage = {
   attachListeners() {
     const char = window.currentCharacter;
     if (!char) return;
+    const _save = () => { Storage.saveCharacter(char); if (char.syncMode === 'cloud') App._pushToCloud(); };
 
     // Schiff wechseln
     document.getElementById('shipSelect')?.addEventListener('change', e => {
       this.save(char);
       char.activeShipId = e.target.value || null;
-      Storage.saveCharacter(char);
+      _save();
       App.renderCurrentPage();
     });
 
@@ -478,7 +479,7 @@ const ShipPage = {
       if (!char.ships) char.ships = [];
       char.ships.push(ship);
       char.activeShipId = ship.id;
-      Storage.saveCharacter(char);
+      _save();
       App.renderCurrentPage();
     });
 
@@ -489,7 +490,7 @@ const ShipPage = {
       if (!window.confirm(`Schiff „${ship.name}" wirklich löschen?`)) return;
       char.ships = char.ships.filter(s => s.id !== ship.id);
       char.activeShipId = char.ships[0]?.id || null;
-      Storage.saveCharacter(char);
+      _save();
       App.renderCurrentPage();
     });
 
@@ -498,7 +499,7 @@ const ShipPage = {
       const ship = this._ship(char);
       if (!ship) return;
       ship.isCampaign = !ship.isCampaign;
-      Storage.saveCharacter(char);
+      _save();
       App.renderCurrentPage();
     });
 
@@ -506,7 +507,7 @@ const ShipPage = {
     document.querySelectorAll('.ship-subtab').forEach(btn => {
       btn.addEventListener('click', () => {
         this.save(char);
-        Storage.saveCharacter(char);
+        _save();
         this._activeTab = btn.dataset.tab;
         App.renderCurrentPage();
       });
@@ -521,7 +522,7 @@ const ShipPage = {
         const ship = this._ship(char);
         if (!ship) return;
         ship.image = ev.target.result;
-        Storage.saveCharacter(char);
+        _save();
         App.renderCurrentPage();
       };
       reader.readAsDataURL(file);
@@ -532,7 +533,7 @@ const ShipPage = {
       const ship = this._ship(char);
       if (!ship) return;
       ship.image = null;
-      Storage.saveCharacter(char);
+      _save();
       App.renderCurrentPage();
     });
 
@@ -550,7 +551,7 @@ const ShipPage = {
         } else if (track === 'fuel') {
           ship.fuelCurrent = Math.max(0, Math.min(ship.fuelMax || 0, (parseInt(ship.fuelCurrent) || 0) + delta));
         }
-        Storage.saveCharacter(char);
+        _save();
         App.renderCurrentPage();
       });
     });
@@ -567,7 +568,7 @@ const ShipPage = {
         ship.critHits[sys][lvl] = !ship.critHits[sys][lvl];
         btn.classList.toggle('hit', ship.critHits[sys][lvl]);
         btn.textContent = ship.critHits[sys][lvl] ? '✕' : '';
-        Storage.saveCharacter(char);
+        _save();
       });
     });
 
@@ -613,7 +614,7 @@ const ShipPage = {
         w.ammo = Math.max(0, Math.min(max, (parseInt(w.ammo) || 0) + delta));
         const disp = document.querySelector(`.ship-ammo-disp[data-idx="${idx}"]`);
         if (disp) disp.textContent = w.ammo;
-        Storage.saveCharacter(char);
+        _save();
       });
     });
 
@@ -629,7 +630,7 @@ const ShipPage = {
         if (idx >= 0) char.shipRoles[ship.id].splice(idx, 1);
         else          char.shipRoles[ship.id].push(role);
         btn.classList.toggle('active', idx < 0);
-        Storage.saveCharacter(char);
+        _save();
       });
     });
 
