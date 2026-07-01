@@ -1,73 +1,13 @@
-Traveller Charsheet – Changelog & Backlog
-==========================================
+Traveller Charsheet – Offene Aufgaben
+======================================
+Abgeschlossene Features siehe CHANGELOG.md
 
-VERSION 1.0.0  (2026-06-25)
-════════════════════════════
-
-DATENHALTUNG & PERSISTENZ
-[x] Autosave (1,5 Sek. Debounce nach jeder Eingabe; Speichern-Button entfernt)
-[x] IndexedDB statt localStorage (kein relevantes Limit mehr)
-[x] JSON-Export / Import (Backup & Geräte-Transfer)
-
-CHARAKTERVERWALTUNG
-[x] Undo / Versionsverlauf: in-memory Undo (↩ Button + Cmd/Strg+Z), persistente Versionen
-    in IndexedDB (gespeichert bei Tab-Wechsel / Fertig), Verlauf-Modal
-[x] Mehrere Porträts mit Pfeil-Navigation (‹ ›), Upload, Löschen
-
-KAMPF
-[x] Physische Attribute und Aktive Rüstung getrennte Kacheln
-[x] 2×2-Grid-Layout: Initiative | Bewaffnung / Attribute | Rüstung / Strahlungsdosis
-[x] Dark-Mode: Statusanzeige, Initiative-Buttons, Munition, Erste Hilfe
-
-NOTIZEN / LOG
-[x] Kreuzverweise: Session ↔ Person / Ort / Quest (bidirektionale Link-Chips)
-[x] Personen: Rasse-Feld, Status-Default „Lebend", Filter, Bearbeitungsflow
-[x] Orte: Travellermap-Integration, UWP-Dekodierung, Imperialkalender (YYYY-DDD)
-[x] Sessions: Markdown-Editor, Volltext-Suche, Filter, Aktiv-Markierung
-[x] Zeitstempel (createdAt) überall; Sortierung nach Datum / Name / Besuchsdatum
-[x] Autosave-Bug: _editTags wurde nach Autosave genullt → behoben
-
-KARTE
-[x] Eigener Karte-Tab mit Travellermap-Iframe (persistent, Safari-kompatibel)
-[x] Vollbild-Karte mit sichtbarer Seitenleisten-Navigation
-[x] Orte direkt aus Log auf Karte verknüpfbar
-
-UI / UX
-[x] Favicon (Traveller-Stern, Canvas-generiert, Safari-kompatibel)
-[x] Responsives Layout: kompakter Header mobil, Sidebar-Navigation ≥ 1280px
-[x] Dark Mode (🌙/☀️ Toggle + automatische Erkennung via prefers-color-scheme)
-[x] PWA: installierbar auf iOS / iPad / Mac, vollständig offline-fähig
-[x] GitHub Pages: automatisches Deployment bei Push auf main
-
-════════════════════════════
-BACKLOG
-════════════════════════════
-
-INFRASTRUKTUR
-[x] LICENSE: MIT durch Mongoose Publishing Traveller Fair Use Policy ersetzt
-[x] GitHub Issue-Template für Feature Requests angelegt
-
-CLOUD-SYNC & KAMPAGNE  (geplant für v1.1)
-[x] Cloudflare Worker + KV: GET/PUT/DELETE für char:{id}, Auth via Bearer-Key
-[x] cloudsync.js: push/pull, API-Key + Worker-URL in localStorage
-[x] Charakter-Typ: syncMode local|cloud; Dialog bei „+ Neu", Toggle bei bestehenden Chars
-[x] Sync-Badge in Metadaten-Tab (letzter Sync, Status, Fehleranzeige)
-[x] Background-Poll alle 30s wenn Cloud-Charakter aktiv
-[x] Pull-to-Refresh auf Mobile
-[x] Cloud-Charakterliste: Chars aus Cloud auf neues Gerät laden
-[x] Laden-Modal: Aus JSON oder Aus Cloud (ersetzt separaten Import-Button)
-[x] Cloud-Einstellungen immer über ☁-Button im Header erreichbar
-[ ] Kampagne erstellen / beitreten (selbstgewählte kurze ID, z.B. spinward26)
-[ ] Kampagne: ownerId – nur Ersteller kann Mitglieder entfernen
-[ ] Kampagne: Entfernen propagiert via Sync (entferntes Gerät erkennt Ausschluss beim Poll)
-[ ] Kampagne: GET /campaigns Endpunkt – listet alle Kampagnen (ID, Name, Mitgliederzahl)
-[ ] Kampagne beitreten: verfügbare Kampagnen als auswählbare Liste anzeigen + manuelle ID-Eingabe
-[ ] Kampagnen-Log: Log-Tab zeigt geteilte Kampagnendaten wenn campaignId gesetzt
+KAMPAGNE
+[ ] Entfernen propagiert via Sync (entferntes Gerät erkennt Ausschluss beim Poll)
 [ ] Soft-Delete (_deleted + deletedAt) für Sync-sichere Löschungen
 
 DATENHALTUNG
 [ ] Charakter per QR-Code oder Link teilen (Base64-JSON)
-[c] Backend-API (server.js Dummy) – durch PWA + IndexedDB ersetzt
 
 CHARAKTERVERWALTUNG
 [ ] Skill-Level -1 (nicht vorhanden) vs. 0 (Level 0) klar in der UI unterscheiden

@@ -87,19 +87,29 @@ Jede neue Funktion oder größere Änderung wird in einem eigenen Branch entwick
 
 **Ausnahmen** (direkt auf `main`): Tippfehler, 1–3 Zeilen CSS, explizite Anweisung des Users.
 
-## Todo-Liste
+## Session-Start
 
-Die offene Aufgabenliste liegt in **`Todo.txt`** im Projekt-Root.
+**Zu Beginn jeder neuen Gesprächssitzung** zuerst lesen:
+1. `CHANGELOG.md` — welche Features in welcher Version bereits existieren
+2. `Todo.txt` — welche Aufgaben noch offen sind
 
-**Markierungen:**
-- `[ ]` — offen
-- `[x]` — erledigt
-- `[c]` — cancelled
+Das verhindert, dass bereits implementierte Features nochmal geplant oder falsche Annahmen über den Projektstand gemacht werden.
+
+## Changelog
+
+Abgeschlossene Features werden in **`CHANGELOG.md`** dokumentiert (Keep-a-Changelog-Format).
 
 **Regeln für Claude:**
-- Nach Abschluss eines Features den entsprechenden Eintrag auf `[x]` setzen
+- Nach Abschluss eines Features einen Eintrag unter `## [Unreleased]` ergänzen
+- Bei einem neuen Release: `[Unreleased]`-Einträge in einen versionierten Block verschieben
+
+## Todo-Liste
+
+Die offene Aufgabenliste liegt in **`Todo.txt`** im Projekt-Root — enthält nur noch offene `[ ]`-Punkte.
+
+**Regeln für Claude:**
+- Abgeschlossene Punkte aus Todo.txt entfernen und in CHANGELOG.md eintragen
 - Neue Ideen oder entdeckte Probleme eigenständig als `[ ]` eintragen
-- Erledigte Einträge nie löschen — sie dienen als Dokumentation
 - Die Liste ist nach Themenbereichen gruppiert; neue Einträge in den passenden Abschnitt einfügen
 
 ## Sprache
