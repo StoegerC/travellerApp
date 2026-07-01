@@ -10,7 +10,7 @@
   <title>Traveller – Charakterdatenblatt</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=1.5.3">
+  <link rel="stylesheet" href="styles.css?v=1.9.0">
   <script>
   (function(){
     var c=document.createElement('canvas'); c.width=c.height=64;
@@ -75,7 +75,7 @@
             <circle cx="34" cy="18" r="1.5" fill="#60a5fa"/>
           </svg>
           <div class="header-title">
-            <h1>Traveller <small class="app-version">v1.5.3</small></h1>
+            <h1>Traveller <small class="app-version">v1.9.0</small></h1>
             <span id="charNameDisplay" class="char-name-display"></span>
           </div>
         </div>
@@ -108,10 +108,6 @@
         <span class="tab-icon">⚔️</span>
         <span class="tab-label">Kampf</span>
       </button>
-      <button class="tab-btn" data-page="finances">
-        <span class="tab-icon">💳</span>
-        <span class="tab-label">Finanzen</span>
-      </button>
       <button class="tab-btn" data-page="career">
         <span class="tab-icon">📋</span>
         <span class="tab-label">Werdegang</span>
@@ -139,7 +135,6 @@
       <div id="notes-page"      class="page-content"></div>
       <div id="karte-page"      class="page-content"></div>
       <div id="combat-page"     class="page-content"></div>
-      <div id="finances-page"   class="page-content"></div>
     </main>
 
   </div>
@@ -314,21 +309,21 @@
     </div>
   </div>
 
-  <script src="js/cloudsync.js?v=1.5.3"></script>
-  <script src="js/campaign.js?v=1.5.3"></script>
-  <script src="js/markdown.js?v=1.5.3"></script>
-  <script src="js/data/skills.js?v=1.5.3"></script>
-  <script src="js/models/character.js?v=1.5.3"></script>
-  <script src="js/storage.js?v=1.5.3"></script>
-  <script src="js/pages/metadata.js?v=1.5.3"></script>
-  <script src="js/pages/attributes.js?v=1.5.3"></script>
-  <script src="js/pages/equipment.js?v=1.5.3"></script>
-  <script src="js/pages/career.js?v=1.5.3"></script>
-  <script src="js/pages/notes.js?v=1.5.3"></script>
-  <script src="js/pages/karte.js?v=1.5.3"></script>
-  <script src="js/pages/combat.js?v=1.5.3"></script>
-  <script src="js/pages/finances.js?v=1.5.3"></script>
-  <script src="js/app.js?v=1.5.3"></script>
+  <script src="js/cloudsync.js?v=1.9.0"></script>
+  <script src="js/campaign.js?v=1.9.0"></script>
+  <script src="js/markdown.js?v=1.9.0"></script>
+  <script src="js/data/skills.js?v=1.9.0"></script>
+  <script src="js/models/character.js?v=1.9.0"></script>
+  <script src="js/storage.js?v=1.9.0"></script>
+  <script src="js/pages/metadata.js?v=1.9.0"></script>
+  <script src="js/pages/attributes.js?v=1.9.0"></script>
+  <script src="js/pages/finances.js?v=1.9.0"></script>
+  <script src="js/pages/equipment.js?v=1.9.0"></script>
+  <script src="js/pages/career.js?v=1.9.0"></script>
+  <script src="js/pages/notes.js?v=1.9.0"></script>
+  <script src="js/pages/karte.js?v=1.9.0"></script>
+  <script src="js/pages/combat.js?v=1.9.0"></script>
+  <script src="js/app.js?v=1.9.0"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

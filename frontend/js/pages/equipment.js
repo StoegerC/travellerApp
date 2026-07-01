@@ -54,6 +54,9 @@ const EquipmentPage = {
     else if (this._activeTab === 'armor')  html += this._armorTab(data.armor);
     else                                   html += this._miscTab(data.misc);
 
+    html += '<div class="equip-fin-divider"><h2>Finanzen</h2></div>';
+    html += '<div id="finances-section">' + FinancesPage.render(character) + '</div>';
+
     return html;
   },
 
@@ -486,6 +489,8 @@ const EquipmentPage = {
 
     // Ausgerüstet-Checkbox (edit mode) – exklusiv
     document.querySelectorAll('.eq-equipped').forEach(cb => this._bindEquippedCb(cb));
+
+    FinancesPage.attachListeners();
   },
 
   _bindAmmoBtn(btn) {
