@@ -45,7 +45,7 @@ const AttributesPage = {
             <th style="text-align: left; padding: 12px; border-bottom: 2px solid #ddd;">Attribut</th>
             <th style="padding: 12px; border-bottom: 2px solid #ddd; width: 120px;">Wert</th>
             <th style="padding: 12px; border-bottom: 2px solid #ddd; width: 120px;">Aktuell</th>
-            <th style="padding: 12px; border-bottom: 2px solid #ddd; width: 120px;">DM</th>
+            <th style="padding: 12px; border-bottom: 2px solid #ddd; width: 120px; color: #888; font-weight: normal; font-size: 0.9em;">DM</th>
           </tr>
         </thead>
         <tbody>
