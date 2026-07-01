@@ -2,7 +2,7 @@
 
 ## Was ist dieses Projekt?
 
-Digitales Charakterdatenblatt für das Pen-&-Paper-Rollenspiel **Traveller Classic**.
+Digitales Charakterdatenblatt für das Pen-&-Paper-Rollenspiel **Mongoose Traveller 2e (MGT2)**.
 Wird am Spieltisch eingesetzt — der Spieler hat das Gerät vor sich liegen während die Runde läuft.
 
 **Kernfunktionen:** Attribute & Skills, Ausrüstung, Werdegang, Kampfwerte, Finanzen,

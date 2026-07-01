@@ -19,10 +19,36 @@ NOTIZEN / VERKNÜPFUNGEN
 [ ] Quest: mehrere Auftraggeber ermöglichen
 [ ] Events in Session-Tags auswerten (werden gesammelt aber nirgendwo angezeigt)
 
+SCHIFF (MGT2) — geplant
+[ ] Datenmodell: ship{} in Kampagnendaten (Cloudflare), mehrere Schiffe pro Kampagne
+[ ] Charakter hat activeShipId (max. 1 aktives Schiff)
+[ ] Schiff-Tab: nur sichtbar wenn campaignId gesetzt
+[ ] Schiff-Tab Block 1: Kopf (Name, Klasse, TL, Tonnage, Hull/Struktur HP, Panzerung)
+[ ] Schiff-Tab Block 2: Kritische Treffer (6 Hex-Boxen × 11 Systeme, MGT2)
+[ ] Schiff-Tab Block 3: Bewaffnung (Turrets + Bays, Munitionszähler)
+[ ] Schiff-Tab Block 4: Schiffsdaten aufklappbar (Antriebe, Computer, Sensoren, Treibstoff)
+[ ] Schiff-Tab Block 5: Mannschaft & Kosten aufklappbar (separat von Finanzen-Tab)
+[ ] Kampfmodus-Toggle: Range Band (7), Thrust-Pool, Reaktionen, Runden-Tracker
+[ ] Kampagnen-Sync: Schiffsdaten über CampaignSync.updateShip() geteilt
+[ ] Schiff wechseln: Auswahl aus Kampagnenschiffen, activeShipId setzen
+
+DATENHALTUNG
+[ ] Cloudflare-Backup: nächtlicher GitHub Actions Export in privates Git-Repo
+[ ] Charakter per QR-Code oder Link teilen (Base64-JSON)
+
+CHARAKTERVERWALTUNG
+[ ] Skill-Level -1 (nicht vorhanden) vs. 0 (Level 0) klar in der UI unterscheiden
+[ ] Regel-System-Switch (character.system wird gesetzt aber nie ausgewertet)
+
+NOTIZEN / VERKNÜPFUNGEN
+[ ] Person kann mehrere Orte haben (aktuell nur ein locationId)
+[ ] Quest: Ortsverknüpfung hinzufügen
+[ ] Quest: mehrere Auftraggeber ermöglichen
+[ ] Events in Session-Tags auswerten (werden gesammelt aber nirgendwo angezeigt)
+
 UI / UX
 [ ] Weiterbildung: automatisches Datum-Tracking statt manuellem +/- Monatszähler
 [ ] Würfelwurf-Widget: 2d6 + Modifikator direkt in der App
 [ ] Schnellsuche global im Header (Personen, Orte, Quests, Sessions)
 [ ] Timeline-Ansicht: Sessions chronologisch als Zeitstrahl
 [ ] Druckansicht / PDF-Export des Charakterbogens
-[ ] Schiffs-Log: eigener Tab für Raumschiff-Daten und Reisen (Traveller-spezifisch)
