@@ -7119,3 +7119,566 @@ body.dark-mode .nc-choice-desc      { color: #6068a0; }
 /* ===== DARK MODE: UPDATE-BANNER ===== */
 body.dark-mode .update-banner       { background: #3d4a7a; }
 body.dark-mode .update-reload-btn   { background: #dde0f5; color: #1a1d2e; }
+
+/* ===== SCHIFF-SEITE ===== */
+
+.ship-selector-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.ship-selector-select {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 15px;
+  background: #fff;
+  min-height: 44px;
+}
+.ship-selector-btns { display: flex; gap: 6px; }
+.ship-sel-btn {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 8px;
+  font-size: 18px;
+  padding: 0 12px;
+}
+.ship-campaign-toggle {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #f5f5f5;
+  font-size: 13px;
+  cursor: pointer;
+  min-height: 44px;
+  white-space: nowrap;
+}
+.ship-campaign-toggle.on {
+  background: #e8f5e9;
+  border-color: #4caf50;
+  color: #2e7d32;
+}
+
+/* Sub-Tabs */
+.ship-subtabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 18px;
+  border-bottom: 2px solid #e8e8e8;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.ship-subtab {
+  padding: 10px 14px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  min-height: 44px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.ship-subtab.active {
+  color: #667eea;
+  border-bottom-color: #667eea;
+}
+
+.ship-section { display: flex; flex-direction: column; gap: 14px; }
+.ship-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #555;
+  margin: 8px 0 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #eee;
+}
+.ship-empty {
+  color: #999;
+  font-style: italic;
+  margin: 8px 0;
+}
+
+/* Info Tab */
+.ship-info-layout {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.ship-portrait-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.ship-portrait {
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+}
+.ship-portrait-placeholder {
+  width: 120px;
+  height: 90px;
+  background: #f0f0f0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  border: 1px dashed #ccc;
+}
+.ship-img-label { cursor: pointer; }
+.ship-img-btn {
+  display: inline-block;
+  padding: 6px 10px;
+  background: #667eea;
+  color: white;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.ship-img-del {
+  font-size: 11px;
+  padding: 4px 8px;
+  background: none;
+  border: 1px solid #e53e3e;
+  color: #e53e3e;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.ship-info-fields { flex: 1; min-width: 0; }
+.ship-field-group {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 10px;
+  align-items: center;
+}
+.ship-field-lbl {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+}
+.ship-input {
+  padding: 7px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 36px;
+  background: #fff;
+}
+.ship-drives-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 10px;
+  align-items: center;
+}
+.ship-info-row {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+}
+.ship-info-lbl { font-weight: 600; color: #555; white-space: nowrap; }
+.ship-info-val { color: #333; }
+.ship-info-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 16px;
+}
+@media (max-width: 500px) { .ship-info-2col { grid-template-columns: 1fr; } }
+
+.ship-notes {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  resize: vertical;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.ship-notes-view {
+  font-size: 14px;
+  color: #444;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+/* Status Tab */
+.ship-status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 500px) { .ship-status-grid { grid-template-columns: 1fr; } }
+.ship-status-card {
+  background: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 12px;
+}
+.ship-status-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+.ship-status-edit-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr;
+  gap: 6px;
+  align-items: center;
+}
+.ship-status-sub { font-size: 12px; color: #666; white-space: nowrap; }
+.ship-status-inp { max-width: 70px; }
+
+/* Track */
+.ship-track-wrap { display: flex; flex-direction: column; gap: 6px; }
+.ship-track-bar {
+  height: 14px;
+  background: #e0e0e0;
+  border-radius: 7px;
+  overflow: hidden;
+}
+.ship-track-fill {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.2s;
+}
+.ship-track-green  { background: #4caf50; }
+.ship-track-yellow { background: #ff9800; }
+.ship-track-red    { background: #f44336; }
+.ship-track-blue   { background: #2196f3; }
+.ship-track-nums {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 18px;
+  font-weight: 700;
+}
+.ship-track-sep  { color: #aaa; }
+.ship-track-max  { color: #888; }
+.ship-track-btns { display: flex; gap: 8px; }
+.ship-track-btn {
+  flex: 1;
+  min-height: 40px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 8px;
+  font-size: 20px;
+  cursor: pointer;
+  font-weight: 700;
+}
+.ship-armor-display {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 0;
+}
+.ship-armor-val  { font-size: 28px; font-weight: 700; }
+.ship-armor-base { font-size: 13px; color: #888; }
+
+/* Kritische Treffer */
+.ship-crits-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.ship-crits-table {
+  border-collapse: collapse;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.ship-crits-table th {
+  padding: 6px 8px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #555;
+}
+.ship-crit-sys-hdr { text-align: left !important; min-width: 90px; }
+.ship-crits-table td { border: 1px solid #eee; }
+.ship-crit-label {
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+.ship-crit-cell { padding: 4px 6px; text-align: center; }
+.ship-crit-box {
+  width: 36px;
+  height: 36px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  color: transparent;
+  transition: background 0.1s, border-color 0.1s;
+}
+.ship-crit-box.hit {
+  background: #f44336;
+  border-color: #d32f2f;
+  color: white;
+}
+.ship-crits-hint {
+  font-size: 12px;
+  color: #999;
+  font-style: italic;
+  margin: 4px 0 0;
+}
+.ship-crits-mini .ship-crit-label { padding: 4px 8px; font-size: 12px; }
+.ship-crit-mini-cells { padding: 3px 6px; }
+.ship-crits-mini .ship-crit-box { width: 28px; height: 28px; font-size: 11px; }
+
+/* Bewaffnung */
+.ship-add-row { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.ship-weapon-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.ship-weapon-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.ship-weapon-table th {
+  padding: 8px;
+  background: #f5f5f5;
+  border-bottom: 2px solid #ddd;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+}
+.ship-weapon-table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.ship-weapon-table input, .ship-weapon-table select {
+  font-size: 13px;
+  padding: 4px 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+  min-width: 60px;
+  box-sizing: border-box;
+}
+.ship-empty-cell { color: #999; font-style: italic; padding: 12px !important; }
+.sw-nm { font-weight: 600; }
+.sw-traits-cell { max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+.ship-ammo-ctrl { display: flex; align-items: center; gap: 4px; }
+.ship-ammo-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+.ship-ammo-disp { font-weight: 700; min-width: 24px; text-align: center; }
+.ship-ammo-max  { font-size: 12px; color: #888; }
+
+/* Crew & Rollen */
+.ship-roles-hint { font-size: 12px; color: #888; margin: 0 0 8px; }
+.ship-roles-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ship-role-btn {
+  padding: 8px 14px;
+  border: 2px solid #ddd;
+  background: #f5f5f5;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 40px;
+  transition: all 0.15s;
+}
+.ship-role-btn.active {
+  background: #667eea;
+  border-color: #667eea;
+  color: white;
+}
+.ship-pos-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.ship-pos-view-row {
+  display: flex;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+}
+.ship-pos-role { font-weight: 600; min-width: 100px; }
+.ship-pos-name { color: #555; }
+.ship-cost-display { font-size: 14px; color: #444; margin: 0 0 8px; }
+
+/* ===== SCHIFFSKAMPF (Kampf-Tab) ===== */
+
+.ship-combat-section {
+  background: #f0f4ff;
+  border: 2px solid #667eea;
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 4px;
+}
+.ship-combat-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.ship-combat-icon { font-size: 20px; }
+.ship-combat-name { font-size: 16px; font-weight: 700; color: #2d3a8c; flex: 1; }
+.ship-combat-status {
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.scstat-red    { color: #c62828; }
+.scstat-yellow { color: #e65100; }
+.ship-combat-roles { display: flex; flex-direction: column; gap: 10px; }
+.ship-combat-role {
+  background: white;
+  border: 1px solid #c7d0f5;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.ship-combat-role-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #667eea;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+.ship-combat-lbl { font-size: 13px; font-weight: 600; color: #555; }
+.ship-range-row { display: flex; align-items: center; gap: 10px; margin: 4px 0; flex-wrap: wrap; }
+.ship-range-select {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  min-height: 36px;
+}
+.ship-combat-weapon-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid #f0f0f0;
+  flex-wrap: wrap;
+}
+.scwr-name { font-weight: 600; font-size: 14px; flex: 1; }
+.scwr-dmg  { font-size: 13px; color: #555; }
+.scwr-no-ammo { color: #bbb; }
+.ship-sensor-lock-btn {
+  padding: 6px 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background: #f5f5f5;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 36px;
+}
+.ship-sensor-lock-btn.active {
+  background: #e8f5e9;
+  border-color: #4caf50;
+  color: #2e7d32;
+}
+.ship-dm-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ship-dm-val {
+  font-size: 18px;
+  font-weight: 700;
+  min-width: 32px;
+  text-align: center;
+}
+
+/* ===== DARK MODE: SCHIFF ===== */
+body.dark-mode .ship-selector-select  { background: #1e2140; border-color: #3a3f6b; color: #dde; }
+body.dark-mode .ship-campaign-toggle  { background: #1e2140; border-color: #3a3f6b; color: #9095b8; }
+body.dark-mode .ship-campaign-toggle.on { background: #1a3a1a; border-color: #4caf50; color: #81c784; }
+body.dark-mode .ship-subtabs          { border-bottom-color: #2c3050; }
+body.dark-mode .ship-subtab           { color: #8890b0; }
+body.dark-mode .ship-subtab.active    { color: #a0a8f0; border-bottom-color: #a0a8f0; }
+body.dark-mode .ship-section-title    { color: #8890b0; border-bottom-color: #2c3050; }
+body.dark-mode .ship-status-card      { background: #1e2140; border-color: #2c3050; }
+body.dark-mode .ship-status-label     { color: #6068a0; }
+body.dark-mode .ship-status-sub       { color: #6068a0; }
+body.dark-mode .ship-track-bar        { background: #2c3050; }
+body.dark-mode .ship-track-btn        { background: #1e2140; border-color: #3a3f6b; color: #dde; }
+body.dark-mode .ship-armor-base       { color: #6068a0; }
+body.dark-mode .ship-crits-table th  { background: #1e2140; border-color: #2c3050; color: #8890b0; }
+body.dark-mode .ship-crits-table td  { border-color: #2c3050; }
+body.dark-mode .ship-crit-label       { color: #9095b8; }
+body.dark-mode .ship-crit-box         { background: #1e2140; border-color: #3a3f6b; }
+body.dark-mode .ship-crit-box.hit     { background: #c62828; border-color: #b71c1c; }
+body.dark-mode .ship-weapon-table th  { background: #1e2140; border-color: #2c3050; }
+body.dark-mode .ship-weapon-table td  { border-color: #2c3050; }
+body.dark-mode .ship-weapon-table input,
+body.dark-mode .ship-weapon-table select { background: #1e2140; border-color: #3a3f6b; color: #dde; }
+body.dark-mode .ship-ammo-btn         { background: #1e2140; border-color: #3a3f6b; color: #dde; }
+body.dark-mode .ship-empty-cell       { color: #6068a0; }
+body.dark-mode .ship-portrait-placeholder { background: #1e2140; border-color: #3a3f6b; }
+body.dark-mode .ship-input            { background: #1e2140; border-color: #3a3f6b; color: #dde; }
+body.dark-mode .ship-notes            { background: #1e2140; border-color: #3a3f6b; color: #dde; }
+body.dark-mode .ship-info-lbl         { color: #8890b0; }
+body.dark-mode .ship-info-val         { color: #dde; }
+body.dark-mode .ship-info-row         { color: #dde; }
+body.dark-mode .ship-role-btn         { background: #1e2140; border-color: #3a3f6b; color: #9095b8; }
+body.dark-mode .ship-role-btn.active  { background: #4a52aa; border-color: #667eea; color: #fff; }
+body.dark-mode .ship-pos-view-row     { border-bottom-color: #2c3050; }
+body.dark-mode .ship-pos-role         { color: #dde; }
+body.dark-mode .ship-pos-name         { color: #8890b0; }
+body.dark-mode .ship-cost-display     { color: #9095b8; }
+body.dark-mode .ship-combat-section   { background: #1a1f40; border-color: #4a52aa; }
+body.dark-mode .ship-combat-name      { color: #a0a8f0; }
+body.dark-mode .ship-combat-role      { background: #1e2140; border-color: #2c3050; }
+body.dark-mode .ship-combat-role-title{ color: #a0a8f0; }
+body.dark-mode .ship-dm-btn           { background: #1e2140; border-color: #3a3f6b; color: #dde; }
+body.dark-mode .ship-range-select     { background: #1e2140; border-color: #3a3f6b; color: #dde; }
+body.dark-mode .ship-sensor-lock-btn  { background: #1e2140; border-color: #3a3f6b; color: #9095b8; }
+body.dark-mode .ship-sensor-lock-btn.active { background: #1a3a1a; border-color: #4caf50; color: #81c784; }

@@ -12,6 +12,8 @@
  *   GET    /campaign/:id                   → Kampagne laden
  *   POST   /campaign/:id                   → Kampagne erstellen (409 wenn ID belegt)
  *   PUT    /campaign/:id/notes             → Kampagnen-Notizen aktualisieren (Mitglieder)
+ *   GET    /campaign/:id/ships             → Kampagnen-Schiffe laden
+ *   PUT    /campaign/:id/ships             → Kampagnen-Schiffe aktualisieren (last-write-wins)
  *   PUT    /campaign/:id/join              → Kampagne beitreten
  *   PUT    /campaign/:id/leave             → Kampagne verlassen
  *   DELETE /campaign/:id                   → Kampagne löschen (nur Owner)
@@ -110,10 +112,34 @@ export default {
           createdAt: new Date().toISOString(),
           members:   [{ charId: data.ownerId, joinedAt: new Date().toISOString() }],
           notes:     { sessions: [], persons: [], locations: [], quests: [] },
+          ships:     [],
         };
         await env.KV.put(`campaign:${id}`, JSON.stringify(campaign));
         await updateCampaignIndex(env, id, campaign.name, 1, false);
         return respondJSON(JSON.stringify(campaign));
+      }
+
+      // GET /campaign/:id/ships – Schiffe laden
+      if (request.method === 'GET' && sub === 'ships') {
+        const raw = await env.KV.get(`campaign:${id}`);
+        if (!raw) return respond(404, 'Not Found');
+        const campaign = JSON.parse(raw);
+        return respondJSON(JSON.stringify(campaign.ships || []));
+      }
+
+      // PUT /campaign/:id/ships – Schiffe aktualisieren (last-write-wins, Bilder ausgenommen)
+      if (request.method === 'PUT' && sub === 'ships') {
+        const raw = await env.KV.get(`campaign:${id}`);
+        if (!raw) return respond(404, 'Not Found');
+        const campaign = JSON.parse(raw);
+        const body = await request.text();
+        if (!body) return respond(400, 'Empty body');
+        let ships;
+        try { ships = JSON.parse(body); } catch { return respond(400, 'Invalid JSON'); }
+        // Strip images to keep KV size manageable
+        campaign.ships = ships.map(s => { const { image: _, ...rest } = s; return rest; });
+        await env.KV.put(`campaign:${id}`, JSON.stringify(campaign));
+        return respond(200, 'OK');
       }
 
       // PUT /campaign/:id/notes – Notizen aktualisieren (Mitglieder)

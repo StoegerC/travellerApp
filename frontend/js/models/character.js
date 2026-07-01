@@ -60,6 +60,9 @@ class Character {
     };
     this.career    = Character._migrateCareer(data.career);
     this.training  = Array.isArray(data.training) ? data.training : [];
+    this.ships        = Array.isArray(data.ships) ? data.ships.map(s => Character._migrateShip(s)) : [];
+    this.activeShipId = data.activeShipId || null;
+    this.shipRoles    = (data.shipRoles && typeof data.shipRoles === 'object' && !Array.isArray(data.shipRoles)) ? data.shipRoles : {};
   }
 
   /**
@@ -123,6 +126,39 @@ class Character {
    */
   removeEquipment(index) {
     this.equipment.splice(index, 1);
+  }
+
+  static _migrateShip(raw = {}) {
+    const id = raw.id || ('ship-' + Date.now() + '-' + Math.floor(Math.random() * 10000));
+    return {
+      id,
+      name:             raw.name         || 'Unbenannt',
+      class:            raw.class        || '',
+      tl:               raw.tl           || '',
+      tonnage:          raw.tonnage      || '',
+      owner:            raw.owner        || '',
+      isCampaign:       raw.isCampaign   !== false,
+      image:            raw.image        || null,
+      hullMax:          parseInt(raw.hullMax)           || 0,
+      hullCurrent:      raw.hullCurrent  != null ? parseInt(raw.hullCurrent)      : (parseInt(raw.hullMax) || 0),
+      structureMax:     parseInt(raw.structureMax)      || 0,
+      structureCurrent: raw.structureCurrent != null ? parseInt(raw.structureCurrent) : (parseInt(raw.structureMax) || 0),
+      armor:            parseInt(raw.armor)             || 0,
+      armorBase:        parseInt(raw.armorBase)         || 0,
+      mDrive:           raw.mDrive       || '',
+      jDrive:           raw.jDrive       || '',
+      powerPlant:       raw.powerPlant   || '',
+      computer:         raw.computer     || '',
+      sensors:          raw.sensors      || '',
+      fuelMax:          parseInt(raw.fuelMax)           || 0,
+      fuelCurrent:      raw.fuelCurrent  != null ? parseInt(raw.fuelCurrent)      : (parseInt(raw.fuelMax) || 0),
+      weapons:          Array.isArray(raw.weapons)          ? raw.weapons          : [],
+      critHits:         (raw.critHits && typeof raw.critHits === 'object') ? raw.critHits : {},
+      crewPositions:    Array.isArray(raw.crewPositions)    ? raw.crewPositions    : [],
+      operatingCost:    parseInt(raw.operatingCost)     || 0,
+      notes:            raw.notes        || '',
+      createdAt:        raw.createdAt    || new Date().toISOString(),
+    };
   }
 
   static _migrateCareer(raw) {
@@ -223,8 +259,11 @@ class Character {
       radiationDose: this.radiationDose,
       firstAidLog: this.firstAidLog,
       finances: this.finances,
-      career:   this.career,
-      training: this.training
+      career:       this.career,
+      training:     this.training,
+      ships:        this.ships,
+      activeShipId: this.activeShipId,
+      shipRoles:    this.shipRoles,
     };
   }
 

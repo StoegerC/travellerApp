@@ -3,6 +3,12 @@
  */
 const CombatPage = {
   _initiative: null,
+  _shipRangeBand: 3,
+  _sensorLock: false,
+  _ewDM: 0,
+  _tacticsDM: 0,
+
+  _RANGE_BANDS: ['Anliegend','Nah','Kurz','Mittel','Weit','Sehr Weit','Entfernt'],
 
   _esc(s) {
     return String(s || '')
@@ -298,7 +304,126 @@ const CombatPage = {
         <!-- Zeile 3: Strahlungsdosis (volle Breite) -->
         <div class="combat-col-span">${this._renderBlock4(character)}</div>
 
+        <!-- Schiffskampf (falls Schiff aktiv) -->
+        ${this._renderShipCombat(character)}
+
       </div>`;
+  },
+
+  // ── Schiffskampf ──────────────────────────────────────────────────────────
+
+  _renderShipCombat(character) {
+    if (!character.activeShipId) return '';
+    const ship = (character.ships || []).find(s => s.id === character.activeShipId);
+    if (!ship) return '';
+
+    const roles = (character.shipRoles || {})[ship.id] || [];
+    if (!roles.length) return '';
+
+    const hCur = parseInt(ship.hullCurrent)      ?? ship.hullMax ?? 0;
+    const sCur = parseInt(ship.structureCurrent) ?? ship.structureMax ?? 0;
+    const aCur = parseInt(ship.armor)            || 0;
+
+    let inner = '';
+
+    if (roles.includes('Pilot')) {
+      const opts = this._RANGE_BANDS.map((b, i) =>
+        `<option value="${i}"${this._shipRangeBand === i ? ' selected' : ''}>${b}</option>`
+      ).join('');
+      inner += `<div class="ship-combat-role">
+        <div class="ship-combat-role-title">Pilot</div>
+        <div class="ship-range-row">
+          <label class="ship-combat-lbl">Entfernung</label>
+          <select class="ship-range-select" id="shipRangeSelect">${opts}</select>
+        </div>
+      </div>`;
+    }
+
+    if (roles.includes('Schütze')) {
+      const weapons = (ship.weapons || []);
+      const wRows = weapons.length
+        ? weapons.map((w, i) => {
+            const hasMag = w.ammoMax != null && w.ammoMax !== '';
+            return `<div class="ship-combat-weapon-row">
+              <span class="scwr-name">${this._esc(w.name)}</span>
+              <span class="scwr-dmg">${this._esc(w.damage||'–')}</span>
+              ${hasMag
+                ? `<div class="ship-ammo-ctrl">
+                     <button class="ship-ammo-btn" data-idx="${i}" data-delta="-1">−</button>
+                     <span class="ship-ammo-disp" data-idx="${i}">${parseInt(w.ammo)||0}</span>
+                     <button class="ship-ammo-btn" data-idx="${i}" data-delta="1">+</button>
+                     <span class="ship-ammo-max">/ ${w.ammoMax}</span>
+                   </div>`
+                : '<span class="scwr-no-ammo">–</span>'}
+            </div>`;
+          }).join('')
+        : '<p class="ship-empty" style="margin:4px 0">Keine Waffen auf dem Schiff eingetragen.</p>';
+      inner += `<div class="ship-combat-role">
+        <div class="ship-combat-role-title">Schütze</div>
+        ${wRows}
+      </div>`;
+    }
+
+    if (roles.includes('Ingenieur')) {
+      const hits = ship.critHits || {};
+      const SYSTEMS = ShipPage._CRIT_SYSTEMS;
+      const rows = SYSTEMS.map(sys => {
+        const sysHits = hits[sys.key] || [false,false,false,false,false,false];
+        const cells = sysHits.map((on, i) =>
+          `<button class="ship-crit-box${on ? ' hit' : ''}" data-sys="${sys.key}" data-lvl="${i}">${on ? '✕' : ''}</button>`
+        ).join('');
+        return `<tr><td class="ship-crit-label">${sys.label}</td><td class="ship-crit-mini-cells">${cells}</td></tr>`;
+      }).join('');
+      inner += `<div class="ship-combat-role">
+        <div class="ship-combat-role-title">Ingenieur – Kritische Treffer</div>
+        <div class="ship-crits-scroll"><table class="ship-crits-table ship-crits-mini"><tbody>${rows}</tbody></table></div>
+      </div>`;
+    }
+
+    if (roles.includes('Sensor-Operator')) {
+      inner += `<div class="ship-combat-role">
+        <div class="ship-combat-role-title">Sensor-Operator</div>
+        <div class="ship-range-row">
+          <label class="ship-combat-lbl">Sensor Lock</label>
+          <button class="ship-sensor-lock-btn${this._sensorLock ? ' active' : ''}" id="sensorLockBtn">
+            ${this._sensorLock ? '🔒 Aktiv' : '○ Inaktiv'}
+          </button>
+        </div>
+        <div class="ship-range-row">
+          <label class="ship-combat-lbl">EW DM</label>
+          <button class="ship-dm-btn" id="ewDmMinus">−</button>
+          <span class="ship-dm-val" id="ewDmVal">${this._ewDM >= 0 ? '+' : ''}${this._ewDM || 0}</span>
+          <button class="ship-dm-btn" id="ewDmPlus">+</button>
+        </div>
+      </div>`;
+    }
+
+    if (roles.includes('Kapitän')) {
+      inner += `<div class="ship-combat-role">
+        <div class="ship-combat-role-title">Kapitän</div>
+        <div class="ship-range-row">
+          <label class="ship-combat-lbl">Taktik-DM</label>
+          <button class="ship-dm-btn" id="tacDmMinus">−</button>
+          <span class="ship-dm-val" id="tacDmVal">${this._tacticsDM >= 0 ? '+' : ''}${this._tacticsDM || 0}</span>
+          <button class="ship-dm-btn" id="tacDmPlus">+</button>
+        </div>
+      </div>`;
+    }
+
+    return `<div class="combat-col-span">
+      <div class="ship-combat-section">
+        <div class="ship-combat-header">
+          <span class="ship-combat-icon">🚀</span>
+          <span class="ship-combat-name">${this._esc(ship.name)}</span>
+          <div class="ship-combat-status">
+            <span class="${hCur === 0 ? 'scstat-red' : hCur < (ship.hullMax||0) ? 'scstat-yellow' : ''}">H: ${hCur}/${ship.hullMax||0}</span>
+            <span class="${sCur === 0 ? 'scstat-red' : sCur < (ship.structureMax||0) ? 'scstat-yellow' : ''}">S: ${sCur}/${ship.structureMax||0}</span>
+            <span>Pz: ${aCur}</span>
+          </div>
+        </div>
+        <div class="ship-combat-roles">${inner}</div>
+      </div>
+    </div>`;
   },
 
   save(character) {
@@ -419,6 +544,59 @@ const CombatPage = {
       Storage.saveCharacter(char);
       document.getElementById('combat-page').innerHTML = this.render(char);
       this.attachListeners();
+    });
+
+    // ── Schiffskampf ─────────────────────────────────────────────────────
+    document.getElementById('shipRangeSelect')?.addEventListener('change', e => {
+      this._shipRangeBand = parseInt(e.target.value);
+    });
+
+    document.getElementById('sensorLockBtn')?.addEventListener('click', () => {
+      this._sensorLock = !this._sensorLock;
+      document.getElementById('combat-page').innerHTML = this.render(window.currentCharacter);
+      this.attachListeners();
+    });
+
+    const ewDmVal = () => document.getElementById('ewDmVal');
+    document.getElementById('ewDmMinus')?.addEventListener('click', () => { this._ewDM = (this._ewDM||0) - 1; const el = ewDmVal(); if(el) el.textContent = (this._ewDM>=0?'+':'') + this._ewDM; });
+    document.getElementById('ewDmPlus')?.addEventListener('click',  () => { this._ewDM = (this._ewDM||0) + 1; const el = ewDmVal(); if(el) el.textContent = (this._ewDM>=0?'+':'') + this._ewDM; });
+
+    const tacDmVal = () => document.getElementById('tacDmVal');
+    document.getElementById('tacDmMinus')?.addEventListener('click', () => { this._tacticsDM = (this._tacticsDM||0) - 1; const el = tacDmVal(); if(el) el.textContent = (this._tacticsDM>=0?'+':'') + this._tacticsDM; });
+    document.getElementById('tacDmPlus')?.addEventListener('click',  () => { this._tacticsDM = (this._tacticsDM||0) + 1; const el = tacDmVal(); if(el) el.textContent = (this._tacticsDM>=0?'+':'') + this._tacticsDM; });
+
+    // Krit-Boxen im Schiffskampf-Block
+    document.querySelectorAll('.ship-combat-section .ship-crit-box').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const char = window.currentCharacter;
+        const ship = (char.ships||[]).find(s => s.id === char.activeShipId);
+        if (!ship) return;
+        const sys = btn.dataset.sys;
+        const lvl = parseInt(btn.dataset.lvl);
+        if (!ship.critHits) ship.critHits = {};
+        if (!ship.critHits[sys]) ship.critHits[sys] = [false,false,false,false,false,false];
+        ship.critHits[sys][lvl] = !ship.critHits[sys][lvl];
+        btn.classList.toggle('hit', ship.critHits[sys][lvl]);
+        btn.textContent = ship.critHits[sys][lvl] ? '✕' : '';
+        Storage.saveCharacter(char);
+      });
+    });
+
+    // Schiffswaffen-Munition im Schiffskampf-Block
+    document.querySelectorAll('.ship-combat-section .ship-ammo-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const char = window.currentCharacter;
+        const ship = (char.ships||[]).find(s => s.id === char.activeShipId);
+        if (!ship) return;
+        const idx   = parseInt(btn.dataset.idx);
+        const delta = parseInt(btn.dataset.delta);
+        const w     = ship.weapons[idx];
+        if (!w) return;
+        w.ammo = Math.max(0, Math.min(parseInt(w.ammoMax)||Infinity, (parseInt(w.ammo)||0) + delta));
+        const disp = document.querySelector(`.ship-combat-section .ship-ammo-disp[data-idx="${idx}"]`);
+        if (disp) disp.textContent = w.ammo;
+        Storage.saveCharacter(char);
+      });
     });
 
     // ── Block 3: Ammo-Buttons ────────────────────────────────────────────

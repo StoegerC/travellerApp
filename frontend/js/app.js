@@ -24,6 +24,7 @@ const App = {
     notes:      NotesPage,
     karte:      KartePage,
     combat:     CombatPage,
+    ship:       ShipPage,
   },
 
   init() {
