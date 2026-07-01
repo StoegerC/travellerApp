@@ -2087,8 +2087,11 @@ button {
 .attr-dm {
   -moz-appearance: textfield;
   cursor: default;
-  background: #f5f5f5;
-  color: #666;
+  background: transparent;
+  color: #888;
+  border-color: transparent;
+  pointer-events: none;
+  font-size: 0.95em;
 }
 
 .attr-max-skill-hint {
@@ -6366,9 +6369,9 @@ body.dark-mode .attribute-label {
 }
 body.dark-mode .attr-max-skill-hint { color: #8890b0; }
 body.dark-mode .attr-dm {
-  background: #1d2035;
-  color: #a0a8d0;
-  border-color: #2c3050;
+  background: transparent;
+  color: #7a82aa;
+  border-color: transparent;
 }
 body.dark-mode .dm-info-box {
   background: #161929;
