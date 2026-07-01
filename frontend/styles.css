@@ -2125,13 +2125,9 @@ button {
 
 /* ===== DM INFO BOX ===== */
 .dm-info-box {
-  background: #f9f9f9;
-  border: 1px solid #e0e0e0;
-  padding: 8px 12px;
-  border-radius: 6px;
   margin-bottom: 14px;
-  font-size: 13px;
-  color: #666;
+  font-size: 0.85em;
+  color: #999;
 }
 
 /* ===== MODALS ===== */
@@ -6374,9 +6370,7 @@ body.dark-mode .attr-dm {
   border-color: transparent;
 }
 body.dark-mode .dm-info-box {
-  background: #161929;
-  border-color: #2c3050;
-  color: #8890b0;
+  color: #666;
 }
 body.dark-mode .system-card {
   background: #161929;
@@ -6729,9 +6723,7 @@ body.dark-mode .card,
 body.dark-mode .panel,
 body.dark-mode .info-box,
 body.dark-mode .dm-info-box {
-  background: #161929;
-  border-color: #2c3050;
-  color: #c8cce8;
+  color: #666;
 }
 
 /* ── Status-Badges ── */
