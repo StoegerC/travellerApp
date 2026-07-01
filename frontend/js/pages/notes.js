@@ -1392,8 +1392,19 @@ const NotesPage = {
 
     this._attachLocAutocomplete();
 
-    // Listen-Items → Detail-Ansicht
-    document.querySelectorAll('.notes-list-item').forEach(item => {
+    // Listen-Items → Detail-Ansicht (Event-Delegation für Tabellen-Rows)
+    ['sessionList', 'locationList', 'questList'].forEach(tableId => {
+      document.getElementById(tableId)?.addEventListener('click', (e) => {
+        const row = e.target.closest('tr.notes-list-item');
+        if (row?.dataset.id) {
+          this._detailId = row.dataset.id;
+          this._editTags = null;
+          App.renderCurrentPage();
+        }
+      });
+    });
+    // Personen-Karten (div-basiert, kein Table)
+    document.querySelectorAll('.person-card.notes-list-item').forEach(item => {
       item.addEventListener('click', () => {
         this._detailId = item.dataset.id;
         this._editTags = null;
