@@ -6,7 +6,7 @@ VORBEREITUNG SCHIFF-FEATURE
 [ ] Ausrüstung-Tab + Finanzen-Tab zu „Ausrüstung & Finanzen" zusammenführen
     (ein Tab frei für Schiff; Finanzen als eigener Abschnitt unten auf der Seite)
 
-[ ] Notes-Sync: Refactoring auf geteilten Pool (shared pool, kein ownerId-Merge)
+[x] Notes-Sync: Refactoring auf geteilten Pool (shared pool, kein ownerId-Merge)
     – Alle Kampagnenmitglieder können alle geteilten Einträge sehen UND bearbeiten
     – Letzter Schreiber gewinnt (last-write-wins, analog zu Schiff-Sync)
     – ownerId auf Eintragsebene entfällt, _syncMyCampaignEntries() wird vereinfacht

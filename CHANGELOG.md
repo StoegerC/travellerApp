@@ -9,6 +9,18 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [1.8.0] – 2026-07-01
+
+### Geändert
+- Kampagnen-Notizen: Sync auf geteilten Pool umgestellt (shared pool, last-write-wins)
+- Alle Kampagnenmitglieder können geteilte Einträge jetzt sehen **und bearbeiten**
+- Merge-Logik: Einträge werden per ID identifiziert statt per ownerId — einfacher
+  und konsistent mit dem geplanten Schiffs-Sync
+- `_extEntries()`: zeigt Kampagnen-Einträge die lokal noch nicht vorhanden sind
+  (statt nur Einträge anderer anhand ownerId zu filtern)
+
+---
+
 ## [1.7.0] – 2026-07-01
 
 ### Neu

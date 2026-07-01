@@ -27,14 +27,14 @@ const NotesPage = {
     };
   },
 
-  // Einträge anderer Kampagnen-Mitglieder (read-only, mit _fromCampaign: true)
+  // Einträge aus dem geteilten Kampagnen-Pool die lokal noch nicht vorhanden sind
   _extEntries(tab) {
     const char = App.currentCharacter;
     if (!char?.campaignId || !App._campaignData) return [];
     const campNotes = App._campaignData.notes || {};
-    const myId = char.id;
+    const localIds  = new Set((char.notes?.[tab] || []).map(e => e.id));
     return (campNotes[tab] || [])
-      .filter(e => e.ownerId && e.ownerId !== myId)
+      .filter(e => !localIds.has(e.id))
       .map(e => ({ ...e, _fromCampaign: true }));
   },
 

@@ -760,23 +760,16 @@ const App = {
   async _syncMyCampaignEntries() {
     const char = this.currentCharacter;
     if (!char?.campaignId || char.syncMode !== 'cloud' || !CloudSync.isConfigured()) return;
-    const myId  = char.id;
-    const notes = char.notes || {};
-    const myShared = {
-      sessions:  (notes.sessions  || []).filter(e => e.isCampaign).map(e => ({ ...e, ownerId: myId })),
-      persons:   (notes.persons   || []).filter(e => e.isCampaign).map(e => ({ ...e, ownerId: myId })),
-      locations: (notes.locations || []).filter(e => e.isCampaign).map(e => ({ ...e, ownerId: myId })),
-      quests:    (notes.quests    || []).filter(e => e.isCampaign).map(e => ({ ...e, ownerId: myId })),
-    };
+    const notes  = char.notes || {};
     const result = await CampaignSync.getCampaign(char.campaignId);
     if (!result.ok) return;
-    const cur = result.data.notes || { sessions: [], persons: [], locations: [], quests: [] };
-    const merged = {
-      sessions:  [...(cur.sessions  || []).filter(e => e.ownerId !== myId), ...myShared.sessions],
-      persons:   [...(cur.persons   || []).filter(e => e.ownerId !== myId), ...myShared.persons],
-      locations: [...(cur.locations || []).filter(e => e.ownerId !== myId), ...myShared.locations],
-      quests:    [...(cur.quests    || []).filter(e => e.ownerId !== myId), ...myShared.quests],
-    };
+    const cur    = result.data.notes || { sessions: [], persons: [], locations: [], quests: [] };
+    const merged = {};
+    for (const tab of ['sessions', 'persons', 'locations', 'quests']) {
+      const myEntries = (notes[tab] || []).filter(e => e.isCampaign);
+      const myIds     = new Set(myEntries.map(e => e.id));
+      merged[tab]     = [...(cur[tab] || []).filter(e => !myIds.has(e.id)), ...myEntries];
+    }
     await CampaignSync.updateNotes(char.campaignId, merged);
     if (this._campaignData) this._campaignData.notes = merged;
   },
