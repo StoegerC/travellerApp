@@ -935,7 +935,7 @@ const NotesPage = {
         </div>
       </div>
       <div class="loc-filter-row">
-        ${App.editMode ? '<button id="addQuestBtn" class="btn-success">+ Quest</button>' : ''}
+        <button id="addQuestBtn" class="btn-success">+ Quest</button>
         ${this._sortChips('quests', [{ value: 'createdAt', label: 'Erstellungsdatum' }, { value: 'name', label: 'Name' }])}
       </div>
     </div><div class="notes-list" id="questList">`;
