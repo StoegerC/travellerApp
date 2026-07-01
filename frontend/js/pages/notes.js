@@ -1315,7 +1315,7 @@ const NotesPage = {
         const tab    = this._activeTab;
         this.save(App.currentCharacter);
         this._saveAndSync(App.currentCharacter);
-        if (wasNew && (tab === 'persons' || tab === 'sessions')) App.editMode = false;
+        if (wasNew && (tab === 'persons' || tab === 'sessions' || tab === 'quests')) App.editMode = false;
         App.renderCurrentPage();
       }
     });
@@ -1392,7 +1392,11 @@ const NotesPage = {
       this._detailId = 'new';
       App.renderCurrentPage();
     });
-    document.getElementById('addQuestBtn')?.addEventListener('click',    () => { this._detailId = 'new'; App.renderCurrentPage(); });
+    document.getElementById('addQuestBtn')?.addEventListener('click', () => {
+      if (!App.editMode) App.editMode = true;
+      this._detailId = 'new';
+      App.renderCurrentPage();
+    });
 
     // Person-Bild Upload (komprimiert auf max 320×320, JPEG 0.75)
     document.getElementById('personImgUpload')?.addEventListener('change', e => {
