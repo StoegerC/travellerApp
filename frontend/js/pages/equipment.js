@@ -35,13 +35,14 @@ const EquipmentPage = {
   render(character) {
     const data = this._d(character);
     const tabs = [
-      { id: 'melee',  label: 'Nahkampf',  n: data.melee.length  },
-      { id: 'ranged', label: 'Fernkampf', n: data.ranged.length },
-      { id: 'armor',  label: 'Rüstung',   n: data.armor.length  },
-      { id: 'misc',   label: 'Sonstiges', n: data.misc.length   },
+      { id: 'melee',    label: 'Nahkampf',  n: data.melee.length  },
+      { id: 'ranged',   label: 'Fernkampf', n: data.ranged.length },
+      { id: 'armor',    label: 'Rüstung',   n: data.armor.length  },
+      { id: 'misc',     label: 'Sonstiges', n: data.misc.length   },
+      { id: 'finances', label: 'Finanzen',  n: 0                  },
     ];
 
-    let html = '<h2>Ausrüstung</h2><div class="equip-subtabs">';
+    let html = '<h2>Ausrüstung & Finanzen</h2><div class="equip-subtabs">';
     tabs.forEach(t => {
       html += `<button class="equip-subtab${this._activeTab === t.id ? ' active' : ''}" data-tab="${t.id}">
         ${t.label}${t.n ? ` <span class="subtab-count">${t.n}</span>` : ''}
@@ -49,13 +50,11 @@ const EquipmentPage = {
     });
     html += '</div>';
 
-    if      (this._activeTab === 'melee')  html += this._meleeTab(data.melee, character);
-    else if (this._activeTab === 'ranged') html += this._rangedTab(data.ranged, character);
-    else if (this._activeTab === 'armor')  html += this._armorTab(data.armor);
-    else                                   html += this._miscTab(data.misc);
-
-    html += '<div class="equip-fin-divider"><h2>Finanzen</h2></div>';
-    html += '<div id="finances-section">' + FinancesPage.render(character) + '</div>';
+    if      (this._activeTab === 'melee')    html += this._meleeTab(data.melee, character);
+    else if (this._activeTab === 'ranged')   html += this._rangedTab(data.ranged, character);
+    else if (this._activeTab === 'armor')    html += this._armorTab(data.armor);
+    else if (this._activeTab === 'finances') html += FinancesPage.render(character);
+    else                                     html += this._miscTab(data.misc);
 
     return html;
   },
@@ -316,7 +315,8 @@ const EquipmentPage = {
     const data = this._d(character);
     let updated;
 
-    if      (tab === 'melee')  updated = this._readMelee(data.melee);
+    if      (tab === 'finances') return;
+    else if (tab === 'melee')  updated = this._readMelee(data.melee);
     else if (tab === 'ranged') updated = this._readRanged(data.ranged);
     else if (tab === 'armor')  updated = this._readArmor(data.armor);
     else                       updated = this._readMisc(data.misc);
@@ -490,7 +490,7 @@ const EquipmentPage = {
     // Ausgerüstet-Checkbox (edit mode) – exklusiv
     document.querySelectorAll('.eq-equipped').forEach(cb => this._bindEquippedCb(cb));
 
-    FinancesPage.attachListeners();
+    if (this._activeTab === 'finances') FinancesPage.attachListeners();
   },
 
   _bindAmmoBtn(btn) {
