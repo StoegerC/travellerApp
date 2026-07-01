@@ -47,6 +47,11 @@
   </script>
 </head>
 <body>
+  <div id="update-banner" class="update-banner" style="display:none">
+    <span>Neue Version verfügbar</span>
+    <button id="update-reload-btn" class="update-reload-btn">Neu laden</button>
+  </div>
+
   <div class="container">
 
     <!-- Header – nur App-Titel, aktueller Char-Name und globale Aktionen -->
@@ -327,7 +332,15 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
+        const hadController = !!navigator.serviceWorker.controller;
         navigator.serviceWorker.register('./sw.js');
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!hadController) return;
+          document.getElementById('update-banner').style.display = 'flex';
+        });
+        document.getElementById('update-reload-btn').addEventListener('click', () => {
+          window.location.reload();
+        });
       });
     }
   </script>

@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [1.7.0] – 2026-07-01
+
+### Neu
+- Update-Banner: Bei verfügbarer neuer Version erscheint ein Banner mit „Neu laden"-Button (keine automatischen Reloads am Spieltisch)
+
+---
+
 ## [1.6.1] – 2026-07-01
 
 ### Fixes
