@@ -69,6 +69,18 @@ const NotesPage = {
         if (!da) return 1; if (!db) return -1;
         return da.localeCompare(db) * mul;
       }
+      if (sort === 'title') return (a.title || a.name || '').localeCompare(b.title || b.name || '') * mul;
+      if (sort === 'inGameDate') {
+        const da = a.inGameDate || a.visitedDate || '', db = b.inGameDate || b.visitedDate || '';
+        if (!da && !db) return 0; if (!da) return mul; if (!db) return -mul;
+        return da.localeCompare(db) * mul;
+      }
+      if (sort === 'sessionDate') {
+        const da = a.sessionDate || '', db = b.sessionDate || '';
+        if (!da && !db) return 0; if (!da) return mul; if (!db) return -mul;
+        return da.localeCompare(db) * mul;
+      }
+      if (sort === 'isCampaign') return ((a.isCampaign ? 1 : 0) - (b.isCampaign ? 1 : 0)) * mul;
       const ca = a.createdAt || a.id || '', cb = b.createdAt || b.id || '';
       return (ca > cb ? 1 : ca < cb ? -1 : 0) * mul;
     });
@@ -86,6 +98,14 @@ const NotesPage = {
         <button class="sort-dir-btn${dir === 'desc' ? ' active' : ''}" data-tab="${tab}" data-dir="desc" title="Absteigend">↓</button>
       </div>
     </div>`;
+  },
+
+  _th(tab, sort, label, cls = '') {
+    if (!sort) return `<th class="nt-col-head${cls ? ' '+cls : ''}">${label}</th>`;
+    const active = this._notesSort[tab] === sort;
+    const dir    = active ? (this._notesDir[tab] || 'asc') : '';
+    const arrow  = active ? (dir === 'asc' ? ' ↑' : ' ↓') : ' ↕';
+    return `<th class="nt-col-head nt-sortable${active ? ' nt-sort-active' : ''}${cls ? ' '+cls : ''}" data-tab="${tab}" data-sort="${sort}">${label}${arrow}</th>`;
   },
 
   // ─────────────────────────────── Haupt-Render ────────────────────────────
@@ -163,47 +183,49 @@ const NotesPage = {
           </select>` : ''}
         </div>
       </div>` : ''}
-      <div class="pf-row">
-        ${this._sortChips('sessions', [{ value: 'createdAt', label: 'Erstellungsdatum' }, { value: 'name', label: 'Name' }])}
-      </div>
-    </div><div class="notes-list" id="sessionList">`;
+    </div><div class="notes-table-wrap"><table class="notes-table" id="sessionList">
+      <thead><tr>
+        ${this._th('sessions','inGameDate','In-Game','nt-date-col')}
+        ${this._th('sessions','title','Titel')}
+        <th class="nt-col-head nt-detail-head">Detail</th>
+        ${this._th('sessions','isCampaign','🏕','nt-camp-col')}
+        ${this._th('sessions','sessionDate','Real','nt-date-col')}
+        ${this._th('sessions','createdAt','Erstellt','nt-date-col')}
+      </tr></thead>
+      <tbody>`;
 
     if (data.sessions.length === 0) {
-      html += '<p class="notes-empty">Noch keine Session eingetragen. Tippe auf „+ Session".</p>';
+      html += `<tr><td colspan="6" class="nt-empty">Noch keine Session eingetragen. Tippe auf „+ Session".</td></tr>`;
     } else {
       this._sortedList(data.sessions, 'sessions').forEach(s => {
-        const tagCount = (s.tags?.persons?.length || 0) + (s.tags?.locations?.length || 0) + (s.tags?.quests?.length || 0);
-        const events = (s.tags?.events || []).map(e => `<span class="tag-chip event-chip">${this._esc(e)}</span>`).join('');
+        const events   = (s.tags?.events || []).join(', ');
+        const tagCount = (s.tags?.persons?.length||0)+(s.tags?.locations?.length||0)+(s.tags?.quests?.length||0);
+        const detail   = [events, tagCount ? `+${tagCount} Verknüpf.` : ''].filter(Boolean).join(' · ');
         const personIds   = (s.tags?.persons   || []).join(' ');
         const locationIds = (s.tags?.locations || []).join(' ');
-        html += `
-          <div class="notes-list-item"
-               data-id="${s.id}"
-               data-personids="${this._esc(personIds)}"
-               data-locationids="${this._esc(locationIds)}">
-            <div class="nli-meta">
-              ${s.isActive ? '<span class="session-active-badge">Aktiv</span>' : ''}
-              ${s.isCampaign ? '<span class="camp-share-badge" title="In Kampagne geteilt">🏕</span>' : ''}
-              ${s.sessionDate ? `<span class="nli-date">${this._esc(s.sessionDate)}</span>` : ''}
-              ${s.inGameDate  ? `<span class="nli-ingame">🗓 ${this._esc(s.inGameDate)}</span>` : ''}
-            </div>
-            <div class="nli-title">${this._esc(s.title || 'Ohne Titel')}</div>
-            <div class="nli-tags">${events}${tagCount ? `<span class="nli-tagcount">+${tagCount} Verknüpfungen</span>` : ''}</div>
-          </div>`;
+        html += `<tr class="notes-list-item" data-id="${s.id}"
+                  data-personids="${this._esc(personIds)}"
+                  data-locationids="${this._esc(locationIds)}">
+          <td class="nt-date-col">${this._esc(s.inGameDate || '')}</td>
+          <td><span class="nli-title-inline">${this._esc(s.title || 'Ohne Titel')}</span>${s.isActive ? ' <span class="session-active-badge">Aktiv</span>' : ''}</td>
+          <td class="nt-detail-col">${this._esc(detail)}</td>
+          <td class="nt-camp-col">${s.isCampaign ? '🏕' : ''}</td>
+          <td class="nt-date-col">${this._esc(s.sessionDate || '')}</td>
+          <td class="nt-date-col nt-created">${(s.createdAt||'').slice(0,10)}</td>
+        </tr>`;
       });
-      const extSessions = this._extEntries('sessions');
-      if (extSessions.length) {
-        html += `<div class="camp-ext-section"><span class="camp-ext-label">🏕 Von Mitspielern</span>`;
-        extSessions.forEach(s => {
-          html += `<div class="camp-ext-entry">
-            <span class="nli-title">${this._esc(s.title || 'Ohne Titel')}</span>
-            ${s.sessionDate ? `<span class="nli-date">${this._esc(s.sessionDate)}</span>` : ''}
-          </div>`;
-        });
-        html += '</div>';
-      }
+      this._extEntries('sessions').forEach(s => {
+        html += `<tr class="camp-ext-row">
+          <td class="nt-date-col">${this._esc(s.inGameDate || '')}</td>
+          <td><span class="nli-title-inline">${this._esc(s.title || 'Ohne Titel')}</span></td>
+          <td class="nt-detail-col"></td>
+          <td class="nt-camp-col">🏕</td>
+          <td class="nt-date-col">${this._esc(s.sessionDate || '')}</td>
+          <td></td>
+        </tr>`;
+      });
     }
-    html += '</div>';
+    html += '</tbody></table></div>';
     return html;
   },
 
@@ -693,47 +715,49 @@ const NotesPage = {
           </select>
         </div>
       </div>
-      <div class="loc-filter-row">
-        ${this._sortChips('locations', [{ value: 'name', label: 'Name' }, { value: 'createdAt', label: 'Erstellungsdatum' }, { value: 'visitedDate', label: 'Besuchsdatum' }])}
-      </div>
-    </div><div class="notes-list" id="locationList">`;
+    </div><div class="notes-table-wrap"><table class="notes-table" id="locationList">
+      <thead><tr>
+        ${this._th('locations','visitedDate','In-Game','nt-date-col')}
+        ${this._th('locations','name','Name')}
+        <th class="nt-col-head nt-detail-head">Sektor / UWP</th>
+        ${this._th('locations','isCampaign','🏕','nt-camp-col')}
+        <th class="nt-col-head nt-date-col">Real</th>
+        ${this._th('locations','createdAt','Erstellt','nt-date-col')}
+      </tr></thead>
+      <tbody>`;
 
     if (data.locations.length === 0) {
-      html += '<p class="notes-empty">Noch keine Orte eingetragen.</p>';
+      html += `<tr><td colspan="6" class="nt-empty">Noch keine Orte eingetragen.</td></tr>`;
     } else {
       this._sortedList(data.locations, 'locations').forEach(l => {
-        html += `
-          <div class="notes-list-item location-list-item"
-               data-id="${l.id}"
-               data-name="${this._esc(l.name).toLowerCase()}"
-               data-locstatus="${l.status || ''}">
-            <div class="loc-li-content">
-              <div class="nli-row">
-                <span class="nli-title">${this._esc(l.name || '(Kein Name)')}</span>
-                ${l.isCampaign ? '<span class="camp-share-badge" title="In Kampagne geteilt">🏕</span>' : ''}
-                ${l.status === 'visited' && l.visitedDate
-                  ? `<span class="loc-status-badge loc-visited">✓ ${this._esc(l.visitedDate)}</span>`
-                  : `<span class="loc-status-badge loc-${l.status || 'known'}">${this._locStatusLabel(l.status)}</span>`}
-              </div>
-              ${l.sector ? `<div class="nli-sub">${this._esc(l.sector)}</div>` : ''}
-            </div>
-            ${l.mapX != null ? `
-              <button class="loc-list-map-btn" data-locid="${l.id}" title="Auf Karte zeigen">🗺</button>` : ''}
-          </div>`;
+        const detail = [l.sector, l.uwp].filter(Boolean).join(' ');
+        html += `<tr class="notes-list-item location-list-item" data-id="${l.id}"
+                   data-name="${this._esc((l.name||'').toLowerCase())}"
+                   data-locstatus="${l.status || ''}">
+          <td class="nt-date-col">${this._esc(l.visitedDate || '')}</td>
+          <td>
+            <span class="nli-title-inline">${this._esc(l.name || '(Kein Name)')}</span>
+            <span class="loc-status-badge loc-${l.status||'known'}">${this._locStatusLabel(l.status)}</span>
+            ${l.mapX != null ? `<button class="loc-list-map-btn" data-locid="${l.id}" title="Auf Karte zeigen">🗺</button>` : ''}
+          </td>
+          <td class="nt-detail-col">${this._esc(detail)}</td>
+          <td class="nt-camp-col">${l.isCampaign ? '🏕' : ''}</td>
+          <td></td>
+          <td class="nt-date-col nt-created">${(l.createdAt||'').slice(0,10)}</td>
+        </tr>`;
       });
-      const extLocs = this._extEntries('locations');
-      if (extLocs.length) {
-        html += `<div class="camp-ext-section"><span class="camp-ext-label">🏕 Von Mitspielern</span>`;
-        extLocs.forEach(l => {
-          html += `<div class="camp-ext-entry">
-            <span class="nli-title">${this._esc(l.name || '(Kein Name)')}</span>
-            ${l.sector ? `<span class="nli-sub">${this._esc(l.sector)}</span>` : ''}
-          </div>`;
-        });
-        html += '</div>';
-      }
+      this._extEntries('locations').forEach(l => {
+        const detail = [l.sector, l.uwp].filter(Boolean).join(' ');
+        html += `<tr class="camp-ext-row">
+          <td></td>
+          <td><span class="nli-title-inline">${this._esc(l.name || '(Kein Name)')}</span></td>
+          <td class="nt-detail-col">${this._esc(detail)}</td>
+          <td class="nt-camp-col">🏕</td>
+          <td></td><td></td>
+        </tr>`;
+      });
     }
-    html += '</div>';
+    html += '</tbody></table></div>';
     return html;
   },
 
@@ -938,51 +962,55 @@ const NotesPage = {
           </select>
         </div>
       </div>
-      <div class="loc-filter-row">
-        ${this._sortChips('quests', [{ value: 'createdAt', label: 'Erstellungsdatum' }, { value: 'name', label: 'Name' }])}
-      </div>
-    </div><div class="notes-list" id="questList">`;
+    </div><div class="notes-table-wrap"><table class="notes-table" id="questList">
+      <thead><tr>
+        <th class="nt-col-head nt-date-col">In-Game</th>
+        ${this._th('quests','title','Titel')}
+        <th class="nt-col-head nt-detail-head">Auftraggeber / Belohnung</th>
+        ${this._th('quests','isCampaign','🏕','nt-camp-col')}
+        <th class="nt-col-head nt-date-col">Real</th>
+        ${this._th('quests','createdAt','Erstellt','nt-date-col')}
+      </tr></thead>
+      <tbody>`;
 
     const filtered = this._sortedList(data.quests, 'quests')
       .filter(q => !f || (q.status || 'active') === f);
 
     if (data.quests.length === 0) {
-      html += '<p class="notes-empty">Noch keine Quests eingetragen.</p>';
+      html += `<tr><td colspan="6" class="nt-empty">Noch keine Quests eingetragen.</td></tr>`;
     } else if (filtered.length === 0) {
-      html += '<p class="notes-hint">Keine Quests in dieser Kategorie.</p>';
+      html += `<tr><td colspan="6" class="nt-empty">Keine Quests in dieser Kategorie.</td></tr>`;
     }
 
     filtered.forEach(q => {
-      const giver = data.persons.find(p => p.id === q.questgiverId);
-      html += `
-        <div class="notes-list-item quest-list-item"
-             data-id="${q.id}" data-qstatus="${q.status || 'active'}" data-name="${this._esc((q.title || '').toLowerCase())}">
-          <div class="nli-row">
-            <span class="nli-title">${this._esc(q.title || 'Ohne Titel')}</span>
-            ${q.isCampaign ? '<span class="camp-share-badge" title="In Kampagne geteilt">🏕</span>' : ''}
-            <span class="quest-status-badge qst-${q.status || 'active'}">${this._questStatusLabel(q.status)}</span>
-          </div>
-          <div class="nli-sub">
-            ${giver  ? `Auftraggeber: ${this._esc(giver.name)} · ` : ''}
-            ${q.reward ? `Belohnung: ${this._esc(q.reward)}` : ''}
-          </div>
-        </div>`;
+      const giver  = data.persons.find(p => p.id === q.questgiverId);
+      const detail = [giver ? giver.name : '', q.reward].filter(Boolean).join(' · ');
+      html += `<tr class="notes-list-item quest-list-item" data-id="${q.id}"
+                  data-qstatus="${q.status || 'active'}"
+                  data-name="${this._esc((q.title||'').toLowerCase())}">
+        <td class="nt-date-col"></td>
+        <td>
+          <span class="nli-title-inline">${this._esc(q.title || 'Ohne Titel')}</span>
+          <span class="quest-status-badge qst-${q.status||'active'}">${this._questStatusLabel(q.status)}</span>
+        </td>
+        <td class="nt-detail-col">${this._esc(detail)}</td>
+        <td class="nt-camp-col">${q.isCampaign ? '🏕' : ''}</td>
+        <td></td>
+        <td class="nt-date-col nt-created">${(q.createdAt||'').slice(0,10)}</td>
+      </tr>`;
     });
 
-    const extQuests = this._extEntries('quests');
-    if (extQuests.length) {
-      html += `<div class="camp-ext-section"><span class="camp-ext-label">🏕 Von Mitspielern</span>`;
-      extQuests.forEach(q => {
-        html += `<div class="camp-ext-entry">
-          <div class="nli-row">
-            <span class="nli-title">${this._esc(q.title || 'Ohne Titel')}</span>
-            <span class="quest-status-badge qst-${q.status || 'active'}">${this._questStatusLabel(q.status)}</span>
-          </div>
-        </div>`;
-      });
-      html += '</div>';
-    }
-    html += '</div>';
+    this._extEntries('quests').forEach(q => {
+      html += `<tr class="camp-ext-row">
+        <td></td>
+        <td><span class="nli-title-inline">${this._esc(q.title || 'Ohne Titel')}</span>
+          <span class="quest-status-badge qst-${q.status||'active'}">${this._questStatusLabel(q.status)}</span></td>
+        <td class="nt-detail-col"></td>
+        <td class="nt-camp-col">🏕</td>
+        <td></td><td></td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
     return html;
   },
 
@@ -1289,7 +1317,22 @@ const NotesPage = {
       });
     });
 
-    // Sortier-Chips
+    // Sortierbare Tabellen-Header (Journal, Orte, Quests)
+    document.querySelectorAll('.nt-sortable').forEach(th => {
+      th.addEventListener('click', () => {
+        const tab  = th.dataset.tab;
+        const sort = th.dataset.sort;
+        if (this._notesSort[tab] === sort) {
+          this._notesDir[tab] = this._notesDir[tab] === 'asc' ? 'desc' : 'asc';
+        } else {
+          this._notesSort[tab] = sort;
+          this._notesDir[tab]  = 'asc';
+        }
+        App.renderCurrentPage();
+      });
+    });
+
+    // Sortier-Chips (Personen)
     document.querySelectorAll('.sort-chip').forEach(chip => {
       chip.addEventListener('click', () => {
         this._notesSort[chip.dataset.tab] = chip.dataset.sort;

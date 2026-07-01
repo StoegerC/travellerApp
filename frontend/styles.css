@@ -7682,3 +7682,44 @@ body.dark-mode .ship-dm-btn           { background: #1e2140; border-color: #3a3f
 body.dark-mode .ship-range-select     { background: #1e2140; border-color: #3a3f6b; color: #dde; }
 body.dark-mode .ship-sensor-lock-btn  { background: #1e2140; border-color: #3a3f6b; color: #9095b8; }
 body.dark-mode .ship-sensor-lock-btn.active { background: #1a3a1a; border-color: #4caf50; color: #81c784; }
+
+/* ===== NOTES TABLE ===== */
+.notes-table-wrap { overflow-x: auto; margin-top: 4px; }
+.notes-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.nt-col-head {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 2px solid #ddd;
+  font-weight: 600;
+  white-space: nowrap;
+  color: #666;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.nt-sortable { cursor: pointer; user-select: none; }
+.nt-sortable:hover { color: #2979ff; }
+.nt-sort-active { color: #2979ff; }
+.notes-table tbody tr.notes-list-item { cursor: pointer; }
+.notes-table tbody tr.notes-list-item:hover { background: #f5f7ff; }
+.notes-table tbody tr { border-bottom: 1px solid #eee; }
+.notes-table td { padding: 8px 10px; vertical-align: middle; }
+.nt-date-col { white-space: nowrap; color: #555; font-size: 0.85rem; }
+.nt-created { color: #999; }
+.nt-camp-col { width: 36px; text-align: center; }
+.nt-detail-col { color: #777; font-size: 0.85rem; max-width: 200px; }
+.nt-detail-head { color: #666; }
+.nt-empty { padding: 16px; color: #999; font-style: italic; }
+.nli-title-inline { font-weight: 500; }
+.camp-ext-row td { color: #888; font-style: italic; }
+.camp-ext-row .nli-title-inline { font-weight: normal; }
+
+body.dark-mode .nt-col-head { border-color: #444; color: #aaa; }
+body.dark-mode .nt-sortable:hover { color: #82b1ff; }
+body.dark-mode .nt-sort-active { color: #82b1ff; }
+body.dark-mode .notes-table tbody tr.notes-list-item:hover { background: #1e2a3a; }
+body.dark-mode .notes-table tbody tr { border-color: #333; }
+body.dark-mode .nt-date-col { color: #bbb; }
+body.dark-mode .nt-created { color: #666; }
+body.dark-mode .nt-detail-col { color: #999; }
+body.dark-mode .camp-ext-row td { color: #666; }
