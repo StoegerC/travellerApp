@@ -28,12 +28,13 @@ class Character {
     // Skills: Sammlung aller Skills mit Levels
     const baseSkills = this.initializeSkills();
     if (Array.isArray(data.skills) && data.skills.length > 0) {
+      const _lvl = l => { const n = parseInt(l); return isNaN(n) ? -3 : (n === -1 ? -3 : n); };
       // Mappe Basis-Skills und erhalte Level
       const mapped = baseSkills.map(skill => {
         const existing = data.skills.find(s => s.name === skill.name);
         return {
           name: skill.name,
-          level: existing ? (parseInt(existing.level) || 0) : 0
+          level: existing ? _lvl(existing.level) : -3
         };
       });
 
@@ -41,7 +42,7 @@ class Character {
       const baseNames = new Set(baseSkills.map(s => s.name));
       const extras = data.skills
         .filter(s => !baseNames.has(s.name))
-        .map(s => ({ name: s.name, level: parseInt(s.level) || 0 }));
+        .map(s => ({ name: s.name, level: _lvl(s.level) }));
 
       this.skills = mapped.concat(extras);
     } else {
@@ -72,7 +73,7 @@ class Character {
     if (typeof TravellerSkills !== 'undefined') {
       return TravellerSkills.getSkills().map(skillName => ({
         name: skillName,
-        level: -1
+        level: -3
       }));
     }
     return [];

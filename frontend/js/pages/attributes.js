@@ -132,7 +132,7 @@ const AttributesPage = {
           html += `
             <div class="skill-item">
               <label>${skill.name}</label>
-              <input type="number" class="skill-level skill-level-input" data-index="${globalIndex}" value="${level}" min="-1" max="9">
+              <input type="number" class="skill-level skill-level-input" data-index="${globalIndex}" value="${level}" min="-3" max="9">
             </div>
           `;
         } else {
@@ -278,7 +278,7 @@ const AttributesPage = {
         </div>
         <div class="training-modal-row">
           <div class="form-group"><label>Von Level</label>
-            <input type="number" id="tmFrom" value="0" min="-1" max="8">
+            <input type="number" id="tmFrom" value="0" min="-3" max="8">
           </div>
           <div class="form-group"><label>Zu Level</label>
             <input type="number" id="tmTo" value="1" min="0" max="9">
