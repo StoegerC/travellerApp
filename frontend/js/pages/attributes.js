@@ -173,13 +173,13 @@ const AttributesPage = {
     return { self: 'train-method-self', teacher: 'train-method-teacher', course: 'train-method-course' }[m] || '';
   },
 
-  _addTrainingMonths(dateStr, months) {
-    if (!dateStr || !months) return '';
+  _addTrainingWeeks(dateStr, weeks) {
+    if (!dateStr || !weeks) return '';
     const parts = String(dateStr).split('-');
     if (parts.length < 2) return '';
     let year = parseInt(parts[0]), month = parseInt(parts[1]);
     if (isNaN(year) || isNaN(month)) return '';
-    month += parseInt(months) || 0;
+    month += Math.round((parseInt(weeks) || 0) / 4);
     while (month > 12) { month -= 12; year++; }
     return `${year}-${String(month).padStart(2, '0')}`;
   },
@@ -201,8 +201,8 @@ const AttributesPage = {
     }
 
     active.forEach(t => {
-      const progress = Math.max(0, t.progressMonths || 0);
-      const total    = Math.max(1, t.durationMonths || 1);
+      const progress = Math.max(0, t.progressWeeks ?? ((t.progressMonths || 0) * 4));
+      const total    = Math.max(1, t.durationWeeks  ?? ((t.durationMonths  || 1) * 4));
       const pct      = Math.min(100, Math.round((progress / total) * 100));
       const ready    = progress >= total;
 
@@ -217,7 +217,7 @@ const AttributesPage = {
 
           <div class="training-card-counter">
             <button class="training-pm-btn" data-id="${t.id}" data-delta="-1" aria-label="Weniger">−</button>
-            <span class="training-counter" data-id="${t.id}">${progress} / ${total} Monate</span>
+            <span class="training-counter" data-id="${t.id}">${progress} / ${total} Wochen</span>
             <button class="training-pm-btn" data-id="${t.id}" data-delta="1" aria-label="Mehr">+</button>
             <button class="training-complete-btn${ready ? ' training-complete-ready' : ''}" data-id="${t.id}">
               ✓ Abschließen
@@ -287,14 +287,14 @@ const AttributesPage = {
         <div class="form-group">
           <label>Methode</label>
           <select id="tmMethod">
-            <option value="self">Selbststudium (4 Monate)</option>
-            <option value="teacher">Mit Lehrer (3 Monate)</option>
+            <option value="self">Selbststudium (8 Wochen)</option>
+            <option value="teacher">Mit Lehrer (8 Wochen)</option>
             <option value="course">Kurs / Schule</option>
           </select>
         </div>
         <div class="training-modal-row">
-          <div class="form-group"><label>Dauer (Monate)</label>
-            <input type="number" id="tmDuration" value="4" min="1" max="120">
+          <div class="form-group"><label>Dauer (Wochen)</label>
+            <input type="number" id="tmDuration" value="8" min="1" max="520">
           </div>
           <div class="form-group"><label>Start (In-Game)</label>
             <input type="text" id="tmStart" placeholder="z.B. 1105-03">
@@ -328,7 +328,7 @@ const AttributesPage = {
       }
     });
     methodSel.addEventListener('change', () => {
-      durInput.value = { self: 4, teacher: 3, course: 6 }[methodSel.value] ?? 4;
+      durInput.value = { self: 8, teacher: 8, course: 8 }[methodSel.value] ?? 8;
     });
 
     document.getElementById('tmCancel').onclick = () => overlay.remove();
@@ -340,17 +340,17 @@ const AttributesPage = {
 
       if (!Array.isArray(char.training)) char.training = [];
       char.training.push({
-        id:             'tr_' + Date.now(),
+        id:            'tr_' + Date.now(),
         skillName,
-        fromLevel:      parseInt(fromInput.value)  ?? 0,
-        toLevel:        parseInt(toInput.value)    ?? 1,
-        method:         methodSel.value,
-        durationMonths: parseInt(durInput.value)   || 4,
-        progressMonths: 0,
-        startDate:      document.getElementById('tmStart').value.trim(),
-        notes:          document.getElementById('tmNotes').value.trim(),
-        completed:      false,
-        completedDate:  ''
+        fromLevel:     parseInt(fromInput.value)  ?? 0,
+        toLevel:       parseInt(toInput.value)    ?? 1,
+        method:        methodSel.value,
+        durationWeeks: parseInt(durInput.value)   || 8,
+        progressWeeks: 0,
+        startDate:     document.getElementById('tmStart').value.trim(),
+        notes:         document.getElementById('tmNotes').value.trim(),
+        completed:     false,
+        completedDate: ''
       });
       Storage.saveCharacter(char);
       App.renderCurrentPage();
@@ -359,7 +359,8 @@ const AttributesPage = {
   },
 
   _showCompleteTrainingModal(t, char) {
-    const suggestedDate = this._addTrainingMonths(t.startDate, t.durationMonths);
+    const weeks         = t.durationWeeks ?? ((t.durationMonths || 1) * 4);
+    const suggestedDate = this._addTrainingWeeks(t.startDate, weeks);
     const overlay = document.createElement('div');
     overlay.className = 'fin-settle-overlay';
     overlay.innerHTML = `
@@ -482,16 +483,17 @@ const AttributesPage = {
         const t     = (App.currentCharacter.training || []).find(x => x.id === id);
         if (!t) return;
 
-        t.progressMonths = Math.max(0, (t.progressMonths || 0) + delta);
+        const curProg = t.progressWeeks ?? ((t.progressMonths || 0) * 4);
+        t.progressWeeks = Math.max(0, curProg + delta);
         Storage.saveCharacter(App.currentCharacter);
 
-        const total = Math.max(1, t.durationMonths || 1);
-        const prog  = t.progressMonths;
+        const total = Math.max(1, t.durationWeeks ?? ((t.durationMonths || 1) * 4));
+        const prog  = t.progressWeeks;
         const pct   = Math.min(100, Math.round((prog / total) * 100));
         const ready = prog >= total;
 
         const counter = document.querySelector(`.training-counter[data-id="${id}"]`);
-        if (counter) counter.textContent = `${prog} / ${total} Monate`;
+        if (counter) counter.textContent = `${prog} / ${total} Wochen`;
 
         const fill = document.querySelector(`.training-progress-fill[data-id="${id}"]`);
         if (fill) {
