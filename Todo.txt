@@ -2,35 +2,46 @@ Traveller Charsheet – Offene Aufgaben
 ======================================
 Abgeschlossene Features siehe CHANGELOG.md
 
+VORBEREITUNG SCHIFF-FEATURE
+[ ] Finanzen-Tab in Ausrüstung-Tab integrieren (Tab freimachen für Schiff)
+
+SCHIFF (MGT2)
+Datenmodell
+[ ] character.ships[] — lokale Schiffe des Charakters
+[ ] character.activeShipId — welches Schiff aktuell aktiv ist (max. 1)
+[ ] ship.isCampaign — analog zu Notiz-Einträgen: teilt Schiff in Kampagnendaten
+[ ] ship.myRoles[] — Rollen dieses Charakters auf diesem Schiff (Pilot, Schütze, …)
+[ ] Kampagnen-Sync: Schiffsdaten über CampaignSync (analog zu Notes-Sync)
+
+Schiff-Tab (immer sichtbar, unabhängig von Kampagne)
+[ ] Schiff-Auswahl: Dropdown + „+ Neu" / „Löschen" (analog zu Charakter-Auswahl)
+[ ] Kopf: Name, Klasse, TL, Tonnage, Besitzer, Schiffsbild (Upload analog Porträt)
+[ ] Hull / Struktur: aktuelle + maximale HP (getrennte Pools, MGT2)
+[ ] Panzerung: aktuell / Basis
+[ ] Kritische Treffer: 6 Hex-Boxen × 11 Systeme (Armour, Bridge, Cargo, Crew, Fuel,
+    Hull, J-Drive, M-Drive, Power Plant, Sensors, Weapons)
+[ ] Bewaffnung: Turrets + Bays-Tabelle, Munitionszähler pro Raketenwerfer
+[ ] Schiffsdaten aufklappbar: Antriebe (M/J/PP), Computer, Sensoren, Treibstoff
+[ ] Mannschaft & Kosten aufklappbar: Crew-Positionen, Betriebskosten (separat
+    von Charakter-Finanzen)
+[ ] Crew-Rollen: Charakter wählt seine Rolle(n) pro Schiff (Pilot, Schütze,
+    Ingenieur, Sensor-Operator, Kapitän — Mehrfachauswahl möglich)
+
+Kampf-Tab — Schiffskampf-Modus
+[ ] Mode-Toggle oben im Kampf-Tab: „Persönlich" / „Schiffskampf"
+[ ] Schiffskampf aktiv: zeigt kompakten Schiffs-Status (Hull, Struktur, Range
+    Band, Runde) — read-only aus aktivem Schiff
+[ ] Rollenfelder basierend auf ship.myRoles[] des aktiven Schiffs:
+    – Pilot:           Thrust-Pool (Bewegung / Manöver), Ausweich-Reaktionen
+    – Schütze:         Waffen-Liste mit Feuer-Button, Range-Modifier, Munition
+    – Ingenieur:       Crit-Hit-Tracks editierbar, Reparatur-Aktion pro System
+    – Sensor-Operator: Sensor Lock, EW-DM, Scan-Aktion
+    – Kapitän:         Taktik-Bonus, Koordinations-Aktion
+[ ] Runden-Tracker + Initiative im Schiffskampf-Modus
+
 KAMPAGNE
 [ ] Entfernen propagiert via Sync (entferntes Gerät erkennt Ausschluss beim Poll)
 [ ] Soft-Delete (_deleted + deletedAt) für Sync-sichere Löschungen
-
-DATENHALTUNG
-[ ] Charakter per QR-Code oder Link teilen (Base64-JSON)
-
-CHARAKTERVERWALTUNG
-[ ] Skill-Level -1 (nicht vorhanden) vs. 0 (Level 0) klar in der UI unterscheiden
-[ ] Regel-System-Switch (character.system wird gesetzt aber nie ausgewertet)
-
-NOTIZEN / VERKNÜPFUNGEN
-[ ] Person kann mehrere Orte haben (aktuell nur ein locationId)
-[ ] Quest: Ortsverknüpfung hinzufügen
-[ ] Quest: mehrere Auftraggeber ermöglichen
-[ ] Events in Session-Tags auswerten (werden gesammelt aber nirgendwo angezeigt)
-
-SCHIFF (MGT2) — geplant
-[ ] Datenmodell: ship{} in Kampagnendaten (Cloudflare), mehrere Schiffe pro Kampagne
-[ ] Charakter hat activeShipId (max. 1 aktives Schiff)
-[ ] Schiff-Tab: nur sichtbar wenn campaignId gesetzt
-[ ] Schiff-Tab Block 1: Kopf (Name, Klasse, TL, Tonnage, Hull/Struktur HP, Panzerung)
-[ ] Schiff-Tab Block 2: Kritische Treffer (6 Hex-Boxen × 11 Systeme, MGT2)
-[ ] Schiff-Tab Block 3: Bewaffnung (Turrets + Bays, Munitionszähler)
-[ ] Schiff-Tab Block 4: Schiffsdaten aufklappbar (Antriebe, Computer, Sensoren, Treibstoff)
-[ ] Schiff-Tab Block 5: Mannschaft & Kosten aufklappbar (separat von Finanzen-Tab)
-[ ] Kampfmodus-Toggle: Range Band (7), Thrust-Pool, Reaktionen, Runden-Tracker
-[ ] Kampagnen-Sync: Schiffsdaten über CampaignSync.updateShip() geteilt
-[ ] Schiff wechseln: Auswahl aus Kampagnenschiffen, activeShipId setzen
 
 DATENHALTUNG
 [ ] Cloudflare-Backup: nächtlicher GitHub Actions Export in privates Git-Repo
