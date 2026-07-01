@@ -3,7 +3,7 @@ Traveller Charsheet – Offene Aufgaben
 Abgeschlossene Features siehe CHANGELOG.md
 
 VORBEREITUNG SCHIFF-FEATURE
-[ ] Ausrüstung-Tab + Finanzen-Tab zu „Ausrüstung & Finanzen" zusammenführen
+[x] Ausrüstung-Tab + Finanzen-Tab zu „Ausrüstung & Finanzen" zusammenführen
     (ein Tab frei für Schiff; Finanzen als eigener Abschnitt unten auf der Seite)
 
 [x] Notes-Sync: Refactoring auf geteilten Pool (shared pool, kein ownerId-Merge)

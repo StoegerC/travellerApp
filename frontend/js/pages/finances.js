@@ -285,10 +285,7 @@ const FinancesPage = {
   attachListeners() {
     const char    = window.currentCharacter;
     const f       = this._f(char);
-    const rerender = () => {
-      document.getElementById('finances-page').innerHTML = this.render(char);
-      this.attachListeners();
-    };
+    const rerender = () => App.renderCurrentPage();
     const showModal = id => document.getElementById(id)?.classList.add('open');
     const hideModal = id => document.getElementById(id)?.classList.remove('open');
 

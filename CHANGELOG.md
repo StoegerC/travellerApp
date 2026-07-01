@@ -9,6 +9,15 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [1.9.0] – 2026-07-01
+
+### Geändert
+- Ausrüstung- und Finanzen-Tab zu einem gemeinsamen Tab „Ausrüstung" zusammengeführt
+- Finanzen erscheinen als eigener Abschnitt unterhalb der Ausrüstungslisten auf derselben Seite
+- Ein Tab-Slot wird damit für den kommenden Schiff-Tab frei
+
+---
+
 ## [1.8.0] – 2026-07-01
 
 ### Geändert

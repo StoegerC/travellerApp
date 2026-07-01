@@ -2307,6 +2307,12 @@ button {
   border-bottom-color: #667eea;
 }
 
+.equip-fin-divider {
+  margin: 32px 0 0;
+  border-top: 2px solid #e8e8e8;
+  padding-top: 20px;
+}
+
 .equip-section {
   display: flex;
   flex-direction: column;
@@ -3549,7 +3555,6 @@ button {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: 16px;
 }
 
 .fin-block {
@@ -6406,6 +6411,10 @@ body.dark-mode .view-mode .skill-level-input {
 }
 
 /* ── Ausrüstungs-Seite ── */
+body.dark-mode .equip-fin-divider {
+  border-top-color: #2c3050;
+}
+
 body.dark-mode .equip-subtabs {
   border-bottom-color: #2c3050;
 }
