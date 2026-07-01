@@ -501,7 +501,7 @@ const App = {
       Storage._suppressPush = false;
       this._setSyncState('ok');
       this._updateHeaderName();
-      this.renderCurrentPage();
+      if (!this.editMode) this.renderCurrentPage();
     } else if (r.notFound) {
       await this._pushToCloud();
     } else {
@@ -739,14 +739,14 @@ const App = {
     const local = await Storage.loadCampaign(campaignId);
     if (local) {
       this._campaignData = local;
-      this.renderCurrentPage();
+      if (!this.editMode) this.renderCurrentPage();
     }
     if (this.currentCharacter?.syncMode === 'cloud' && CloudSync.isConfigured()) {
       const r = await CampaignSync.getCampaign(campaignId);
       if (r.ok) {
         this._campaignData = r.data;
         Storage.saveCampaign(r.data);
-        this.renderCurrentPage();
+        if (!this.editMode) this.renderCurrentPage();
         this._startCampaignPoll(campaignId);
       }
     }
