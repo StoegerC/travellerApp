@@ -3,41 +3,52 @@ Traveller Charsheet – Offene Aufgaben
 Abgeschlossene Features siehe CHANGELOG.md
 
 VORBEREITUNG SCHIFF-FEATURE
-[ ] Finanzen-Tab in Ausrüstung-Tab integrieren (Tab freimachen für Schiff)
+[ ] Ausrüstung-Tab + Finanzen-Tab zu „Ausrüstung & Finanzen" zusammenführen
+    (ein Tab frei für Schiff; Finanzen als eigener Abschnitt unten auf der Seite)
 
 SCHIFF (MGT2)
 Datenmodell
-[ ] character.ships[] — lokale Schiffe des Charakters
+[ ] character.ships[]      — lokale Schiffe des Charakters (inkl. Schiffsdaten)
 [ ] character.activeShipId — welches Schiff aktuell aktiv ist (max. 1)
-[ ] ship.isCampaign — analog zu Notiz-Einträgen: teilt Schiff in Kampagnendaten
-[ ] ship.myRoles[] — Rollen dieses Charakters auf diesem Schiff (Pilot, Schütze, …)
-[ ] Kampagnen-Sync: Schiffsdaten über CampaignSync (analog zu Notes-Sync)
+[ ] character.shipRoles    — { [shipId]: ['Pilot', 'Schütze', …] }
+    Rollen werden pro Charakter pro Schiff gespeichert (nicht auf dem Schiff selbst),
+    damit mehrere Charaktere auf demselben Schiff verschiedene Rollen haben können
+[ ] ship.isCampaign        — ob Schiff in Kampagnendaten synchronisiert wird
+[ ] ship.image             — Base64-Bild, NUR lokal (nicht in Kampagnendaten),
+    um Cloudflare KV nicht aufzublähen
+[ ] _migrateShips() im Character-Modell für Rückwärtskompatibilität
+[ ] Kampagnen-Sync: eigener Worker-Endpunkt PUT /campaign/:id/ships
+    (last-write-wins, kein ownerId-Merge — Schiffszustand gehört allen gleichzeitig)
+[ ] Worker: GET /campaign/:id/ships + PUT /campaign/:id/ships Endpunkte
 
 Schiff-Tab (immer sichtbar, unabhängig von Kampagne)
 [ ] Schiff-Auswahl: Dropdown + „+ Neu" / „Löschen" (analog zu Charakter-Auswahl)
 [ ] Kopf: Name, Klasse, TL, Tonnage, Besitzer, Schiffsbild (Upload analog Porträt)
 [ ] Hull / Struktur: aktuelle + maximale HP (getrennte Pools, MGT2)
 [ ] Panzerung: aktuell / Basis
-[ ] Kritische Treffer: 6 Hex-Boxen × 11 Systeme (Armour, Bridge, Cargo, Crew, Fuel,
-    Hull, J-Drive, M-Drive, Power Plant, Sensors, Weapons)
+[ ] Kritische Treffer: 6 Hex-Boxen × 11 Systeme
+    (Armour, Bridge, Cargo, Crew, Fuel, Hull, J-Drive, M-Drive, Power Plant,
+    Sensors, Weapons)
 [ ] Bewaffnung: Turrets + Bays-Tabelle, Munitionszähler pro Raketenwerfer
 [ ] Schiffsdaten aufklappbar: Antriebe (M/J/PP), Computer, Sensoren, Treibstoff
-[ ] Mannschaft & Kosten aufklappbar: Crew-Positionen, Betriebskosten (separat
-    von Charakter-Finanzen)
-[ ] Crew-Rollen: Charakter wählt seine Rolle(n) pro Schiff (Pilot, Schütze,
-    Ingenieur, Sensor-Operator, Kapitän — Mehrfachauswahl möglich)
+[ ] Mannschaft & Kosten aufklappbar: Crew-Positionen, Betriebskosten
+[ ] Crew-Rollen: Charakter wählt seine Rolle(n) auf diesem Schiff
+    (Pilot, Schütze, Ingenieur, Sensor-Operator, Kapitän — Mehrfachauswahl)
+    → gespeichert in character.shipRoles[ship.id]
 
-Kampf-Tab — Schiffskampf-Modus
-[ ] Mode-Toggle oben im Kampf-Tab: „Persönlich" / „Schiffskampf"
-[ ] Schiffskampf aktiv: zeigt kompakten Schiffs-Status (Hull, Struktur, Range
-    Band, Runde) — read-only aus aktivem Schiff
-[ ] Rollenfelder basierend auf ship.myRoles[] des aktiven Schiffs:
-    – Pilot:           Thrust-Pool (Bewegung / Manöver), Ausweich-Reaktionen
+Kampf-Tab — rollenbasierte Schiffsfelder
+[ ] Wenn activeShipId gesetzt: Abschnitt „Schiffskampf" erscheint automatisch
+    am Ende des Kampf-Tabs (kein Toggle, immer sichtbar wenn Schiff aktiv)
+[ ] Kompakter Schiffs-Status-Block: Hull, Struktur, Panzerung (read-only)
+[ ] Rollenfelder aus character.shipRoles[activeShipId]:
+    – Pilot:           Thrust-Pool (Bewegung / Manöver), Ausweich-Reaktionen,
+                       Range Band (7 Bänder), Runden-Tracker
     – Schütze:         Waffen-Liste mit Feuer-Button, Range-Modifier, Munition
     – Ingenieur:       Crit-Hit-Tracks editierbar, Reparatur-Aktion pro System
-    – Sensor-Operator: Sensor Lock, EW-DM, Scan-Aktion
-    – Kapitän:         Taktik-Bonus, Koordinations-Aktion
-[ ] Runden-Tracker + Initiative im Schiffskampf-Modus
+    – Sensor-Operator: Sensor Lock Toggle, EW-DM, Scan-Aktion
+    – Kapitän:         Taktik-Bonus (Crew DM), Koordinations-Aktion
+[ ] App._combatShipMode nicht nötig — Felder erscheinen render-stabil
+    da sie auf character.shipRoles basieren (persistente Daten)
 
 KAMPAGNE
 [ ] Entfernen propagiert via Sync (entferntes Gerät erkennt Ausschluss beim Poll)
