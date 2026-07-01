@@ -485,6 +485,11 @@ const App = {
   async _syncCloud() {
     if (!this.currentCharacter || this.currentCharacter.syncMode !== 'cloud') return;
     if (this.editMode) return;
+    if (Storage._pushTimer) {
+      clearTimeout(Storage._pushTimer);
+      Storage._pushTimer = null;
+      await this._pushToCloud();
+    }
     this._setSyncState('syncing');
     const r = await CloudSync.pullCharacter(this.currentCharacter.id);
     if (r.ok) {
