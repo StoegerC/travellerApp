@@ -9,6 +9,30 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [2.0.0] – 2026-07-01
+
+### Neu — Schiff-Feature (MGT2)
+- Neuer Tab „Schiff" mit fünf Sub-Tabs: Übersicht, Status, Krit. Treffer, Bewaffnung, Crew & Rollen
+- Datenmodell: `character.ships[]`, `character.activeShipId`, `character.shipRoles[shipId]`
+- Schiff anlegen, wechseln, löschen — analog zur Charakterverwaltung
+- Schiffsbild: Upload als Base64 (nur lokal, nicht in Kampagnen-Sync)
+- **Übersicht**: Name, Klasse, TL, Tonnage, Antriebe (M/J/PP), Computer, Sensoren, Betriebskosten, Notizen
+- **Status**: Hull und Struktur als Fortschrittsbalken mit +/−, Panzerung, Treibstoff — alles persistiert
+- **Krit. Treffer**: 11 MGT2-Systeme × 6 Schadensstufen als interaktives Grid (kein Re-Render bei Toggle)
+- **Bewaffnung**: Turrets/Bays/Barbettes mit Munitionszähler
+- **Crew & Rollen**: Character wählt Rollen (Pilot, Schütze, Ingenieur, …) für dieses Schiff; Crew-Positionen editierbar
+- **Kampf-Tab**: Schiffskampf-Sektion erscheint automatisch wenn `activeShipId` gesetzt und Rollen zugewiesen:
+  - Pilot: Entfernungsband (7 Reichweiten)
+  - Schütze: Waffenliste mit Munition
+  - Ingenieur: Krit-Treffer-Mini-Grid direkt im Kampf-Tab bearbeitbar
+  - Sensor-Operator: Sensor Lock Toggle, EW-DM
+  - Kapitän: Taktik-DM
+- **Kampagnen-Sync**: Worker-Endpunkte `GET/PUT /campaign/:id/ships` bereitgestellt (Bilder werden serverseitig gestripped)
+- isCampaign-Flag pro Schiff (Toggle im Schiff-Tab wenn Kampagne aktiv)
+- `_migrateShip()` für Rückwärtskompatibilität
+
+---
+
 ## [1.9.0] – 2026-07-01
 
 ### Geändert
