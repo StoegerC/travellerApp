@@ -5914,6 +5914,11 @@ button {
 }
 
 /* ===== KARTE-VOLLBILD ===== */
+body.page-karte .container {
+  height: 100vh;
+  height: 100dvh;
+}
+
 body.page-karte .content {
   padding: 0;
   padding-bottom: env(safe-area-inset-bottom);
