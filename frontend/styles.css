@@ -7700,8 +7700,17 @@ body.dark-mode .ship-sensor-lock-btn.active { background: #1a3a1a; border-color:
 .nt-sortable { cursor: pointer; user-select: none; }
 .nt-sortable:hover { color: #2979ff; }
 .nt-sort-active { color: #2979ff; }
-.notes-table tbody tr.notes-list-item { cursor: pointer; }
-.notes-table tbody tr.notes-list-item:hover { background: #f5f7ff; }
+.notes-table tbody tr.notes-list-item,
+.notes-table tbody tr.location-list-item {
+  display: table-row;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.notes-table tbody tr.notes-list-item:hover,
+.notes-table tbody tr.location-list-item:hover { background: #f5f7ff; }
 .notes-table tbody tr { border-bottom: 1px solid #eee; }
 .notes-table td { padding: 8px 10px; vertical-align: middle; }
 .nt-date-col { white-space: nowrap; color: #555; font-size: 0.85rem; }
@@ -7718,7 +7727,8 @@ body.dark-mode .ship-sensor-lock-btn.active { background: #1a3a1a; border-color:
 body.dark-mode .nt-col-head { border-color: #444; color: #aaa; }
 body.dark-mode .nt-sortable:hover { color: #82b1ff; }
 body.dark-mode .nt-sort-active { color: #82b1ff; }
-body.dark-mode .notes-table tbody tr.notes-list-item:hover { background: #1e2a3a; }
+body.dark-mode .notes-table tbody tr.notes-list-item:hover,
+body.dark-mode .notes-table tbody tr.location-list-item:hover { background: #1e2a3a; }
 body.dark-mode .notes-table tbody tr { border-color: #333; }
 body.dark-mode .nt-date-col { color: #bbb; }
 body.dark-mode .nt-created { color: #666; }
