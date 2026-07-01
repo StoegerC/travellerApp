@@ -21,6 +21,8 @@ const Storage = {
   lastError:       null,
   _db:             null,
   _cache:          [], // rohe JSON-Objekte aller Charaktere
+  _suppressPush:   false, // gesetzt während _syncCloud()-Pull, um Ping-Pong zu verhindern
+  _pushTimer:      null,
 
   // ── Initialisierung ────────────────────────────────────────────────────
   async init() {
@@ -105,6 +107,10 @@ const Storage = {
         console.error('IndexedDB Schreibfehler:', e);
         this.lastError = e;
       });
+      if (!this._suppressPush && character.syncMode === 'cloud' && typeof App !== 'undefined') {
+        clearTimeout(this._pushTimer);
+        this._pushTimer = setTimeout(() => App._pushToCloud(), 500);
+      }
       return true;
     } catch (e) {
       console.error('Fehler beim Speichern:', e);

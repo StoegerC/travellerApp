@@ -491,7 +491,9 @@ const App = {
       const cloudChar = Character.fromJSON(r.data);
       this.currentCharacter = cloudChar;
       window.currentCharacter = cloudChar;
+      Storage._suppressPush = true;
       Storage.saveCharacter(cloudChar);
+      Storage._suppressPush = false;
       this._setSyncState('ok');
       this._updateHeaderName();
       this.renderCurrentPage();
