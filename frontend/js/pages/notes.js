@@ -1358,7 +1358,7 @@ const NotesPage = {
         const tab    = this._activeTab;
         this.save(App.currentCharacter);
         this._saveAndSync(App.currentCharacter);
-        if (wasNew && (tab === 'persons' || tab === 'sessions' || tab === 'quests')) App.editMode = false;
+        if (tab === 'quests' || (wasNew && (tab === 'persons' || tab === 'sessions'))) App.editMode = false;
         App.renderCurrentPage();
       }
     });
@@ -1393,7 +1393,7 @@ const NotesPage = {
     this._attachLocAutocomplete();
 
     // Listen-Items → Detail-Ansicht (Event-Delegation für Tabellen-Rows)
-    ['sessionList', 'locationList', 'questList'].forEach(tableId => {
+    ['sessionList', 'locationList'].forEach(tableId => {
       document.getElementById(tableId)?.addEventListener('click', (e) => {
         const row = e.target.closest('tr.notes-list-item');
         if (row?.dataset.id) {
@@ -1402,6 +1402,16 @@ const NotesPage = {
           App.renderCurrentPage();
         }
       });
+    });
+    // Quests: Klick öffnet direkt im Bearbeitungsmodus
+    document.getElementById('questList')?.addEventListener('click', (e) => {
+      const row = e.target.closest('tr.notes-list-item');
+      if (row?.dataset.id) {
+        if (!App.editMode) App.editMode = true;
+        this._detailId = row.dataset.id;
+        this._editTags = null;
+        App.renderCurrentPage();
+      }
     });
     // Personen-Karten (div-basiert, kein Table)
     document.querySelectorAll('.person-card.notes-list-item').forEach(item => {
