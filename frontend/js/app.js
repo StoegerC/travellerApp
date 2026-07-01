@@ -758,7 +758,7 @@ const App = {
     if (r.ok) {
       this._campaignData = r.data;
       Storage.saveCampaign(r.data);
-      if (this.currentPage === 'notes' || this.currentPage === 'metadata') {
+      if (!this.editMode && (this.currentPage === 'notes' || this.currentPage === 'metadata')) {
         this.renderCurrentPage();
       }
     }
