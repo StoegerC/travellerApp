@@ -7707,6 +7707,7 @@ body.dark-mode .ship-sensor-lock-btn.active { background: #1a3a1a; border-color:
 .nt-date-col { white-space: nowrap; color: #555; font-size: 0.85rem; }
 .nt-created { color: #999; }
 .nt-camp-col { width: 36px; text-align: center; }
+.nt-status-col { white-space: nowrap; }
 .nt-detail-col { color: #777; font-size: 0.85rem; max-width: 200px; }
 .nt-detail-head { color: #666; }
 .nt-empty { padding: 16px; color: #999; font-style: italic; }

@@ -720,8 +720,8 @@ const NotesPage = {
         ${this._th('locations','visitedDate','In-Game','nt-date-col')}
         ${this._th('locations','name','Name')}
         <th class="nt-col-head nt-detail-head">Sektor / UWP</th>
+        ${this._th('locations','status','Status','nt-status-col')}
         ${this._th('locations','isCampaign','🏕','nt-camp-col')}
-        <th class="nt-col-head nt-date-col">Real</th>
         ${this._th('locations','createdAt','Erstellt','nt-date-col')}
       </tr></thead>
       <tbody>`;
@@ -737,12 +737,11 @@ const NotesPage = {
           <td class="nt-date-col">${this._esc(l.visitedDate || '')}</td>
           <td>
             <span class="nli-title-inline">${this._esc(l.name || '(Kein Name)')}</span>
-            <span class="loc-status-badge loc-${l.status||'known'}">${this._locStatusLabel(l.status)}</span>
             ${l.mapX != null ? `<button class="loc-list-map-btn" data-locid="${l.id}" title="Auf Karte zeigen">🗺</button>` : ''}
           </td>
           <td class="nt-detail-col">${this._esc(detail)}</td>
+          <td class="nt-status-col"><span class="loc-status-badge loc-${l.status||'known'}">${this._locStatusLabel(l.status)}</span></td>
           <td class="nt-camp-col">${l.isCampaign ? '🏕' : ''}</td>
-          <td></td>
           <td class="nt-date-col nt-created">${(l.createdAt||'').slice(0,10)}</td>
         </tr>`;
       });
@@ -752,8 +751,9 @@ const NotesPage = {
           <td></td>
           <td><span class="nli-title-inline">${this._esc(l.name || '(Kein Name)')}</span></td>
           <td class="nt-detail-col">${this._esc(detail)}</td>
+          <td></td>
           <td class="nt-camp-col">🏕</td>
-          <td></td><td></td>
+          <td></td>
         </tr>`;
       });
     }
