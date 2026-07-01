@@ -233,7 +233,7 @@ const NotesPage = {
     const isNew = id === 'new';
     const s = isNew
       ? { id: 'new', title: '', sessionDate: '', inGameDate: '', content: '', tags: { persons: [], locations: [], quests: [], events: [] } }
-      : data.sessions.find(x => x.id === id);
+      : data.sessions.find(x => String(x.id) === String(id));
     if (!s) return '<p class="notes-empty">Session nicht gefunden.</p>';
 
     // Init edit tags when entering edit for first time
@@ -453,7 +453,7 @@ const NotesPage = {
     const isNew = id === 'new';
     const p = isNew
       ? { id: 'new', name: '', role: '', race: 'Mensch', description: '', status: 'alive', relation: 'neutral', image: null }
-      : data.persons.find(x => x.id === id);
+      : data.persons.find(x => String(x.id) === String(id));
     if (!p) return '<p class="notes-empty">Person nicht gefunden.</p>';
 
     window._personCurrentImage = undefined; // undefined = unverändert; null = explizit entfernt; string = neu gesetzt
@@ -770,7 +770,7 @@ const NotesPage = {
           description: '', notes: '', status: 'visited', visitedDate: '',
           mapX: prefill?.mapX ?? null, mapY: prefill?.mapY ?? null,
           mapSector: prefill?.mapSector || null, mapHex: prefill?.mapHex || null }
-      : data.locations.find(x => x.id === id);
+      : data.locations.find(x => String(x.id) === String(id));
     if (!l) return '<p class="notes-empty">Ort nicht gefunden.</p>';
 
     const linkedSessions = data.sessions.filter(s => s.tags?.locations?.includes(l.id));
@@ -1018,7 +1018,7 @@ const NotesPage = {
     const isNew = id === 'new';
     const q = isNew
       ? { id: 'new', title: '', description: '', objective: '', reward: '', questgiverId: '', status: 'active' }
-      : data.quests.find(x => x.id === id);
+      : data.quests.find(x => String(x.id) === String(id));
     if (!q) return '<p class="notes-empty">Quest nicht gefunden.</p>';
 
     const giver = data.persons.find(p => p.id === q.questgiverId);
@@ -1192,7 +1192,7 @@ const NotesPage = {
       if (isNew) {
         if (entry.title) { data.sessions.push(entry); this._detailId = entry.id; }
       } else {
-        const idx = data.sessions.findIndex(s => s.id === id);
+        const idx = data.sessions.findIndex(s => String(s.id) === String(id));
         if (idx >= 0) data.sessions[idx] = entry;
       }
       // _editTags intentionally NOT cleared here: autosave calls save() without
@@ -1230,7 +1230,7 @@ const NotesPage = {
           }
         }
       } else {
-        const idx = data.persons.findIndex(p => p.id === id);
+        const idx = data.persons.findIndex(p => String(p.id) === String(id));
         if (idx >= 0) data.persons[idx] = entry;
       }
 
@@ -1268,7 +1268,7 @@ const NotesPage = {
           }
         }
       } else {
-        const idx = data.locations.findIndex(l => l.id === id);
+        const idx = data.locations.findIndex(l => String(l.id) === String(id));
         if (idx >= 0) data.locations[idx] = entry;
       }
 
@@ -1288,7 +1288,7 @@ const NotesPage = {
       if (isNew) {
         if (entry.title) { data.quests.push(entry); this._detailId = entry.id; }
       } else {
-        const idx = data.quests.findIndex(q => q.id === id);
+        const idx = data.quests.findIndex(q => String(q.id) === String(id));
         if (idx >= 0) data.quests[idx] = entry;
       }
     }
@@ -1369,7 +1369,7 @@ const NotesPage = {
       const id = e.currentTarget.dataset.id;
       const data = this._d(App.currentCharacter);
       const key = { sessions: 'sessions', persons: 'persons', locations: 'locations', quests: 'quests' }[this._activeTab];
-      data[key] = data[key].filter(x => x.id !== id);
+      data[key] = data[key].filter(x => String(x.id) !== String(id));
       App.currentCharacter.notes = data;
       this._saveAndSync(App.currentCharacter);
       this._detailId = null;
