@@ -43,6 +43,10 @@ UI / UX
 BACKLOG
 ════════════════════════════
 
+INFRASTRUKTUR
+[x] LICENSE: MIT durch Mongoose Publishing Traveller Fair Use Policy ersetzt
+[x] GitHub Issue-Template für Feature Requests angelegt
+
 CLOUD-SYNC & KAMPAGNE  (geplant für v1.1)
 [x] Cloudflare Worker + KV: GET/PUT/DELETE für char:{id}, Auth via Bearer-Key
 [x] cloudsync.js: push/pull, API-Key + Worker-URL in localStorage
