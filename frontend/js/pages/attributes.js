@@ -2,7 +2,8 @@
  * Attribute & Skills Seite
  */
 const AttributesPage = {
-  _addWeeksId: null,
+  _addWeeksId:           null,
+  _addWeeksPrevEditMode: false,
 
   attributeLabels: {
     strength: 'Stärke',
@@ -527,8 +528,10 @@ const AttributesPage = {
         if (!t) return;
 
         if (delta > 0) {
+          AttributesPage._addWeeksPrevEditMode = App.editMode;
           AttributesPage._addWeeksId = id;
-          App.renderCurrentPage(); // Dialog wird Teil des gerenderten Outputs
+          App.editMode = true;
+          App.renderCurrentPage();
         } else {
           if (t.sessions && t.sessions.length > 0) {
             const last = t.sessions.pop();
@@ -561,10 +564,13 @@ const AttributesPage = {
       document.getElementById('awWeeks')?.focus();
       document.getElementById('awWeeks')?.select();
 
-      document.getElementById('awCancel')?.addEventListener('click', () => {
+      const closeDialog = () => {
         AttributesPage._addWeeksId = null;
+        App.editMode = AttributesPage._addWeeksPrevEditMode;
         App.renderCurrentPage();
-      });
+      };
+
+      document.getElementById('awCancel')?.addEventListener('click', closeDialog);
       document.getElementById('awConfirm')?.addEventListener('click', () => {
         const id = AttributesPage._addWeeksId;
         const t  = (App.currentCharacter.training || []).find(x => x.id === id);
@@ -577,10 +583,17 @@ const AttributesPage = {
           t.progressWeeks = (t.progressWeeks ?? 0) + weeks;
           Storage.saveCharacter(App.currentCharacter);
         }
-        AttributesPage._addWeeksId = null;
-        App.renderCurrentPage();
+        closeDialog();
       });
       document.getElementById('awWeeks')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter')  document.getElementById('awConfirm')?.click();
+        if (e.key === 'Escape') document.getElementById('awCancel')?.click();
+      });
+      document.getElementById('awFrom')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter')  document.getElementById('awConfirm')?.click();
+        if (e.key === 'Escape') document.getElementById('awCancel')?.click();
+      });
+      document.getElementById('awTo')?.addEventListener('keydown', e => {
         if (e.key === 'Enter')  document.getElementById('awConfirm')?.click();
         if (e.key === 'Escape') document.getElementById('awCancel')?.click();
       });
