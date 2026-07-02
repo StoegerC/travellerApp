@@ -1,0 +1,27 @@
+# Vorlage für ~/.cloudflared/config.yml (oder ein beliebiger Pfad, den
+# `cloudflared tunnel run --config <pfad> ...` referenziert).
+#
+# Diese Datei NICHT mit echten UUID/Zertifikatspfaden ins Repo committen —
+# als .example hier nur zur Doku. Die reale config.yml lebt außerhalb des Repos
+# (z.B. ~/.cloudflared/config.yml).
+#
+# Einmalige, interaktive Einrichtung (Browser-Login nötig, nicht scriptbar):
+#   1. cloudflared tunnel login
+#   2. cloudflared tunnel create traveller-backend
+#        → erzeugt <UUID> + Credentials-Datei ~/.cloudflared/<UUID>.json
+#   3. cloudflared tunnel route dns traveller-backend sync.<deine-domain>
+#        (oder per Dashboard: Zero Trust → Networks → Tunnels)
+#   4. Diese config.yml mit der echten UUID ausfüllen und nach
+#      ~/.cloudflared/config.yml kopieren
+#   5. Laufen lassen:
+#        - Test/Vordergrund: cloudflared tunnel run traveller-backend
+#        - Dauerhaft (systemd, `cloudflared` bringt seine eigene Unit mit):
+#          sudo cloudflared service install
+
+tunnel: <UUID-hier-einsetzen>
+credentials-file: /home/<user>/.cloudflared/<UUID-hier-einsetzen>.json
+
+ingress:
+  - hostname: sync.<deine-domain>
+    service: http://localhost:3000
+  - service: http_status:404

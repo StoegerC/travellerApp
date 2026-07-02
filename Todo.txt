@@ -15,7 +15,14 @@ KAMPAGNE
     Transaktionslisten noch nachzuziehen.
 
 DATENHALTUNG
-[ ] Cloudflare-Backup: nächtlicher GitHub Actions Export in privates Git-Repo
+[ ] Selbst gehostetes Backend (Plan: ~/.claude/plans/lively-moseying-jellyfish.md) —
+    Phase 1 (Server + SQLite + Endpunkt-Parität + Migrationsscript) ist implementiert und
+    lokal getestet. Noch offen: cloudflared-Tunnel interaktiv einrichten (Login, DNS),
+    echte KV-Migration gegen den produktiven Worker fahren, mindestens ein Gerät auf die
+    neue Server-URL umstellen und verifizieren, danach Cloudflare Worker/KV abschalten.
+[ ] Backup-Strategie für die neue SQLite-DB (ersetzt den alten „Cloudflare-Backup
+    nach GitHub Actions"-Punkt — z.B. nächtliches Kopieren von backend/data/traveller.db
+    + backend/uploads/ an einen zweiten Ort)
 [ ] Charakter per QR-Code oder Link teilen (Base64-JSON)
 
 CHARAKTERVERWALTUNG
@@ -36,7 +43,8 @@ UI / UX
 [ ] Journal in Listenansicht
 
 FEATURE REQUESTS
-[ ] Dateien hochladen
+[ ] Dateien hochladen (Phase 2 der Backend-Migration, siehe DATENHALTUNG — Endpunkte/Tabelle
+    liegen schon bereit in backend/db.js, Routen + Frontend-UI fehlen noch)
 [ ] Privatsphäre bei Charakteren
 [ ] Private Notizen nur für GM einsehbar
 [ ] Datum / Kalender (Zahlungen, Journal)
