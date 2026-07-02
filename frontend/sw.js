@@ -1,4 +1,4 @@
-const CACHE = 'traveller-v10';
+const CACHE = 'traveller-v11';
 
 const ASSETS = [
   './',
@@ -42,8 +42,10 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
-  // Travellermap API-Anfragen nicht cachen
-  if (e.request.url.includes('travellermap.com')) return;
+  // Nur Same-Origin-Requests cachen (App-Assets).
+  // API-Aufrufe (CloudSync, CampaignSync, Travellermap) laufen direkt ums Netz –
+  // sonst liefert der Cache veraltete Charakterdaten zurück.
+  if (new URL(e.request.url).origin !== self.location.origin) return;
   e.respondWith(
     caches.match(e.request).then(cached => cached || fetch(e.request))
   );
