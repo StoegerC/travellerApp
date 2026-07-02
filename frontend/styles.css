@@ -4937,6 +4937,52 @@ button {
   margin-top: 8px;
 }
 
+/* ===== TRAINING SESSIONS LOG ===== */
+.training-sessions {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.training-session-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #555;
+}
+.training-session-item::before {
+  content: '↳';
+  color: #aaa;
+  flex-shrink: 0;
+}
+.training-session-weeks {
+  font-weight: 600;
+  color: #444;
+  white-space: nowrap;
+}
+.training-session-range {
+  color: #777;
+}
+.training-session-del {
+  margin-left: auto;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 4px;
+  color: #aaa;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.training-session-del:hover {
+  color: #e53e3e;
+  background: #fff0f0;
+}
+.training-modal--small {
+  max-width: 340px;
+}
+
 /* Abgeschlossen-Bereich */
 .training-done-details {
   margin-top: 14px;
@@ -6801,6 +6847,12 @@ body.dark-mode .training-card--ready {
 }
 body.dark-mode .training-card-top   { color: #dde0f5; }
 body.dark-mode .training-card-notes { background: #1d2035; border-color: #2c3050; color: #c8cce8; }
+body.dark-mode .training-session-item { color: #888; }
+body.dark-mode .training-session-item::before { color: #555; }
+body.dark-mode .training-session-weeks { color: #aaa; }
+body.dark-mode .training-session-range { color: #666; }
+body.dark-mode .training-session-del { color: #555; }
+body.dark-mode .training-session-del:hover { color: #fc8181; background: #2d1515; }
 body.dark-mode .training-empty      { color: #4a5070; }
 body.dark-mode .train-method-self   { background: #0d1e35; color: #60a5fa; }
 body.dark-mode .train-method-teacher { background: #0d2218; color: #34d399; }

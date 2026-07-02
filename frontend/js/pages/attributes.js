@@ -227,6 +227,16 @@ const AttributesPage = {
                  style="width:${pct}%"></div>
           </div>
 
+          ${(t.sessions && t.sessions.length > 0) ? `
+            <div class="training-sessions">
+              ${t.sessions.map((s, i) => `
+                <div class="training-session-item">
+                  <span class="training-session-weeks">${s.weeks} Wo.</span>
+                  ${(s.from || s.to) ? `<span class="training-session-range">${e(s.from || '?')}${s.to ? ` – ${e(s.to)}` : ''}</span>` : ''}
+                  ${App.editMode ? `<button class="training-session-del btn-icon" data-tid="${e(t.id)}" data-sidx="${i}" aria-label="Eintrag löschen">×</button>` : ''}
+                </div>`).join('')}
+            </div>` : ''}
+
           ${t.notes ? `<div class="training-card-notes md-content">${Md.render(t.notes)}</div>` : ''}
         </div>`;
     });
@@ -400,6 +410,61 @@ const AttributesPage = {
     };
   },
 
+  _showAddWeeksDialog(char, trainingId) {
+    const t = (char.training || []).find(x => x.id === trainingId);
+    if (!t) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'fin-settle-overlay';
+    overlay.innerHTML = `
+      <div class="training-modal training-modal--small">
+        <h3>Wochen eintragen</h3>
+        <p class="training-modal-info"><strong>${this._esc(t.skillName)}</strong></p>
+        <div class="form-group">
+          <label>Anzahl Wochen</label>
+          <input type="number" id="awWeeks" value="1" min="1" max="260">
+        </div>
+        <div class="training-modal-row">
+          <div class="form-group">
+            <label>Von (In-Game)</label>
+            <input type="text" id="awFrom" placeholder="z.B. 1105-03">
+          </div>
+          <div class="form-group">
+            <label>Bis (In-Game)</label>
+            <input type="text" id="awTo" placeholder="z.B. 1105-04">
+          </div>
+        </div>
+        <div class="training-modal-actions">
+          <button id="awConfirm" class="btn-success">Eintragen</button>
+          <button id="awCancel"  class="btn-secondary">Abbrechen</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('awWeeks').focus();
+    document.getElementById('awWeeks').select();
+
+    const confirm = () => {
+      const weeks = Math.max(1, parseInt(document.getElementById('awWeeks').value) || 1);
+      const from  = document.getElementById('awFrom').value.trim();
+      const to    = document.getElementById('awTo').value.trim();
+
+      if (!t.sessions) t.sessions = [];
+      t.sessions.push({ id: 'ts_' + Date.now(), weeks, from, to });
+      t.progressWeeks = (t.progressWeeks ?? 0) + weeks;
+
+      Storage.saveCharacter(char);
+      App.renderCurrentPage();
+      overlay.remove();
+    };
+
+    document.getElementById('awCancel').onclick  = () => overlay.remove();
+    document.getElementById('awConfirm').onclick = confirm;
+    overlay.addEventListener('keydown', e => {
+      if (e.key === 'Enter') confirm();
+      if (e.key === 'Escape') overlay.remove();
+    });
+  },
+
   getData() {
     const attributes = {};
     
@@ -480,29 +545,32 @@ const AttributesPage = {
         const t     = (App.currentCharacter.training || []).find(x => x.id === id);
         if (!t) return;
 
-        const curProg = t.progressWeeks ?? ((t.progressMonths || 0) * 4);
-        t.progressWeeks = Math.max(0, curProg + delta);
-        Storage.saveCharacter(App.currentCharacter);
-
-        const total = Math.max(1, t.durationWeeks ?? ((t.durationMonths || 1) * 4));
-        const prog  = t.progressWeeks;
-        const pct   = Math.min(100, Math.round((prog / total) * 100));
-        const ready = prog >= total;
-
-        const counter = document.querySelector(`.training-counter[data-id="${id}"]`);
-        if (counter) counter.textContent = `${prog} / ${total} Wochen`;
-
-        const fill = document.querySelector(`.training-progress-fill[data-id="${id}"]`);
-        if (fill) {
-          fill.style.width = `${pct}%`;
-          fill.classList.toggle('training-progress-fill--done', ready);
+        if (delta > 0) {
+          this._showAddWeeksDialog(App.currentCharacter, id);
+        } else {
+          if (t.sessions && t.sessions.length > 0) {
+            const last = t.sessions.pop();
+            t.progressWeeks = Math.max(0, (t.progressWeeks ?? 0) - (last.weeks || 0));
+          } else {
+            const curProg = t.progressWeeks ?? ((t.progressMonths || 0) * 4);
+            t.progressWeeks = Math.max(0, curProg - 1);
+          }
+          Storage.saveCharacter(App.currentCharacter);
+          App.renderCurrentPage();
         }
+      });
+    });
 
-        const card = btn.closest('.training-card');
-        if (card) card.classList.toggle('training-card--ready', ready);
-
-        const completeBtn = document.querySelector(`.training-complete-btn[data-id="${id}"]`);
-        if (completeBtn) completeBtn.classList.toggle('training-complete-ready', ready);
+    document.querySelectorAll('.training-session-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tid  = btn.dataset.tid;
+        const sidx = parseInt(btn.dataset.sidx);
+        const t    = (App.currentCharacter.training || []).find(x => x.id === tid);
+        if (!t || !t.sessions) return;
+        const removed = t.sessions.splice(sidx, 1)[0];
+        t.progressWeeks = Math.max(0, (t.progressWeeks ?? 0) - (removed?.weeks || 0));
+        Storage.saveCharacter(App.currentCharacter);
+        App.renderCurrentPage();
       });
     });
 
