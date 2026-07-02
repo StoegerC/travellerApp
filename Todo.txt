@@ -2,26 +2,7 @@ Traveller Charsheet – Offene Aufgaben
 ======================================
 Abgeschlossene Features siehe CHANGELOG.md
 
-VORBEREITUNG SCHIFF-FEATURE
-[x] Ausrüstung-Tab + Finanzen-Tab zu „Ausrüstung & Finanzen" zusammenführen
-    (ein Tab frei für Schiff; Finanzen als eigener Abschnitt unten auf der Seite)
-
-[x] Notes-Sync: Refactoring auf geteilten Pool (shared pool, kein ownerId-Merge)
-    – Alle Kampagnenmitglieder können alle geteilten Einträge sehen UND bearbeiten
-    – Letzter Schreiber gewinnt (last-write-wins, analog zu Schiff-Sync)
-    – ownerId auf Eintragsebene entfällt, _syncMyCampaignEntries() wird vereinfacht
-    – Worker-Endpunkt PUT /campaign/:id/notes bleibt, Logik client-seitig vereinfacht
-    – Sicherheitsnetz gegen versehentliches Überschreiben: GitHub-Backup-Mechanismus
-      (nächtlicher Export nach privates Git-Repo — siehe DATENHALTUNG)
-
-SCHIFF (MGT2) — v2.0.0 implementiert
-[x] character.ships[], activeShipId, shipRoles, _migrateShip()
-[x] ship.isCampaign, ship.image (lokal)
-[x] Worker: GET/PUT /campaign/:id/ships
-[x] Schiff-Tab: Übersicht, Status, Krit. Treffer, Bewaffnung, Crew & Rollen
-[x] Kampf-Tab: Schiffskampf-Sektion (Pilot, Schütze, Ingenieur, Sensor-Op, Kapitän)
-
-Schiff (offen)
+SCHIFF (offen)
 [ ] Kampagnen-Sync: client-seitige Logik für Ship-Sync (_syncMyCampaignShips)
     Analog Notes-Sync: isCampaign-Schiffe per PUT /campaign/:id/ships hochladen
 
@@ -44,8 +25,14 @@ NOTIZEN / VERKNÜPFUNGEN
 [ ] Events in Session-Tags auswerten (werden gesammelt aber nirgendwo angezeigt)
 
 UI / UX
-[ ] Weiterbildung: automatisches Datum-Tracking statt manuellem +/- Monatszähler
 [ ] Würfelwurf-Widget: 2d6 + Modifikator direkt in der App
 [ ] Schnellsuche global im Header (Personen, Orte, Quests, Sessions)
 [ ] Timeline-Ansicht: Sessions chronologisch als Zeitstrahl
 [ ] Druckansicht / PDF-Export des Charakterbogens
+[ ] Journal in Listenansicht
+
+FEATURE REQUESTS
+[ ] Dateien hochladen
+[ ] Privatsphäre bei Charakteren
+[ ] Private Notizen nur für GM einsehbar
+[ ] Datum / Kalender (Zahlungen, Journal)
