@@ -397,15 +397,6 @@ const App = {
     const page = this.pages[this.currentPage];
     if (!page) return;
 
-    // DEBUG – temporär: zeigt in der Konsole, wer renderCurrentPage aufruft
-    // wenn eine Notiz gerade bearbeitet wird (Stack Trace hilft bei der Ursachensuche)
-    if (this.editMode && this.currentPage === 'notes' &&
-        typeof NotesPage !== 'undefined' && NotesPage._detailId) {
-      console.warn('[Debug] renderCurrentPage während Notiz-Bearbeitung aufgerufen!\n' +
-        'editMode=' + this.editMode + ' detailId=' + NotesPage._detailId +
-        ' tab=' + NotesPage._activeTab, new Error('Aufrufer-Stack'));
-    }
-
     // Beim Re-Render während einer aktiven Notiz-Bearbeitung den DOM-Stand zuerst
     // sichern, damit ungespeicherter Text nicht durch den Render überschrieben wird.
     // Nur wenn das passende Formular-Element auch wirklich im DOM existiert
@@ -786,12 +777,10 @@ const App = {
 
   async _syncCampaign() {
     if (!this.currentCharacter?.campaignId || !CloudSync.isConfigured()) return;
-    console.log('[Debug] _syncCampaign START editMode=' + this.editMode + ' page=' + this.currentPage);
     const r = await CampaignSync.getCampaign(this.currentCharacter.campaignId);
     if (r.ok) {
       this._campaignData = r.data;
       Storage.saveCampaign(r.data);
-      console.log('[Debug] _syncCampaign DONE editMode=' + this.editMode + ' willRender=' + (!this.editMode && (this.currentPage === 'notes' || this.currentPage === 'metadata')));
       if (!this.editMode && (this.currentPage === 'notes' || this.currentPage === 'metadata')) {
         this.renderCurrentPage();
       }
