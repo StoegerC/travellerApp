@@ -11,7 +11,8 @@ class Character {
       name: data.metadata?.name || '',
       title: data.metadata?.title || '',
       homeworld: data.metadata?.homeworld || '',
-      age: data.metadata?.age || 18,
+      age:       data.metadata?.age       || 18,
+      birthdate: data.metadata?.birthdate || '',
       // Mehrere Porträts; Rückwärtskompatibilität: altes portraitImage → portraits[0]
       portraits:      data.metadata?.portraits      || (data.metadata?.portraitImage ? [data.metadata.portraitImage] : []),
       portraitIndex:  data.metadata?.portraitIndex  || 0

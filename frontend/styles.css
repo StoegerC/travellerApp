@@ -2607,6 +2607,40 @@ button {
   padding: 10px 0 20px;
 }
 
+/* ===== META-AGE-ROW ===== */
+.meta-age-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.meta-age-field {
+  flex: 1;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.meta-age-field label {
+  font-size: 0.9em;
+  color: #555;
+  font-weight: 500;
+}
+.meta-age-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95em;
+  background: #fff;
+  color: #1a1a2e;
+}
+.meta-birthdate {
+  font-size: 0.88em;
+  color: #666;
+  margin-left: 4px;
+}
+
 /* ===== PORTRAIT-WIDGET ===== */
 .portrait-widget {
   display: flex;
@@ -7725,3 +7759,8 @@ body.dark-mode .nt-date-col { color: #bbb; }
 body.dark-mode .nt-created { color: #666; }
 body.dark-mode .nt-detail-col { color: #999; }
 body.dark-mode .camp-ext-row td { color: #666; }
+
+/* ===== DARK MODE: META-AGE-ROW ===== */
+body.dark-mode .meta-age-field label { color: #aaa; }
+body.dark-mode .meta-age-field input { background: #1e2140; border-color: #3a3f6b; color: #dde; }
+body.dark-mode .meta-birthdate { color: #888; }

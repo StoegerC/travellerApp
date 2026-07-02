@@ -84,9 +84,15 @@ const MetadataPage = {
               <label for="charTitle">Titel / Rang:</label>
               <input type="text" id="charTitle" value="${this._esc(meta.title)}" placeholder="z.B. Captain, Dr.">
             </div>
-            <div class="form-group">
-              <label for="charAge">Alter:</label>
-              <input type="number" id="charAge" value="${meta.age || 18}" min="18" max="120">
+            <div class="form-group meta-age-row">
+              <div class="meta-age-field">
+                <label for="charAge">Alter:</label>
+                <input type="number" id="charAge" value="${meta.age || 18}" min="18" max="120">
+              </div>
+              <div class="meta-age-field">
+                <label for="charBirthdate">Geburtsdatum:</label>
+                <input type="text" id="charBirthdate" value="${this._esc(meta.birthdate)}" placeholder="z.B. 1100-001">
+              </div>
             </div>
             <div class="form-group">
               <label for="charHomeworld">Heimatplanet:</label>
@@ -107,7 +113,7 @@ const MetadataPage = {
             <div style="display:grid;gap:12px;">
               <div><strong>Name:</strong> ${this._esc(meta.name) || '–'}</div>
               <div><strong>Titel / Rang:</strong> ${this._esc(meta.title) || '–'}</div>
-              <div><strong>Alter:</strong> ${meta.age || 18} Jahre</div>
+              <div><strong>Alter:</strong> ${meta.age || 18} Jahre${meta.birthdate ? ` <span class="meta-birthdate">(geb. ${this._esc(meta.birthdate)})</span>` : ''}</div>
               <div><strong>Heimatplanet:</strong> ${this._esc(meta.homeworld) || '–'}</div>
             </div>
           </div>
@@ -159,7 +165,8 @@ const MetadataPage = {
       name:      document.getElementById('charName')?.value      || '',
       title:     document.getElementById('charTitle')?.value     || '',
       age:       parseInt(document.getElementById('charAge')?.value) || 18,
-      homeworld: document.getElementById('charHomeworld')?.value || '',
+      birthdate: document.getElementById('charBirthdate')?.value   || '',
+      homeworld: document.getElementById('charHomeworld')?.value   || '',
     };
   },
 
