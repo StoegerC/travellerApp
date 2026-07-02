@@ -317,7 +317,7 @@ const CombatPage = {
     const ship = (character.ships || []).find(s => s.id === character.activeShipId);
     if (!ship) return '';
 
-    const roles = (character.shipRoles || {})[ship.id] || [];
+    const roles = (ship.crewRoles || {})[character.id]?.roles || [];
     if (!roles.length) return '';
 
     const hCur = parseInt(ship.hullCurrent)      ?? ship.hullMax ?? 0;

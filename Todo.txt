@@ -2,13 +2,17 @@ Traveller Charsheet – Offene Aufgaben
 ======================================
 Abgeschlossene Features siehe CHANGELOG.md
 
-SCHIFF (offen)
-[ ] Kampagnen-Sync: client-seitige Logik für Ship-Sync (_syncMyCampaignShips)
-    Analog Notes-Sync: isCampaign-Schiffe per PUT /campaign/:id/ships hochladen
-
 KAMPAGNE
 [ ] Entfernen propagiert via Sync (entferntes Gerät erkennt Ausschluss beim Poll)
 [ ] Soft-Delete (_deleted + deletedAt) für Sync-sichere Löschungen
+[ ] Schiffs-Sync ist last-write-wins auf dem ganzen Schiffs-Objekt (PUT /campaign/:id/ships
+    ersetzt komplett). Wenn zwei Crew-Mitglieder gleichzeitig Transaktionen in die
+    Schiffskasse (ship.finances) eintragen oder Statuswerte/Ausrüstung ändern, kann die
+    später synchronisierte Version die andere überschreiben — analog zum Notes-Sync, aber
+    ohne dessen Id-basiertes Merging innerhalb von Listen (Transaktionen, Waffen, …).
+    Einzige Ausnahme: ship.crewRoles wird beim Push gezielt pro charId gemergt (eigener
+    Eintrag gewinnt, fremde bleiben erhalten) — das gleiche Muster wäre für Finanzen/
+    Transaktionslisten noch nachzuziehen.
 
 DATENHALTUNG
 [ ] Cloudflare-Backup: nächtlicher GitHub Actions Export in privates Git-Repo

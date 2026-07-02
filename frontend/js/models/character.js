@@ -156,10 +156,18 @@ class Character {
       fuelCurrent:      raw.fuelCurrent  != null ? parseInt(raw.fuelCurrent)      : (parseInt(raw.fuelMax) || 0),
       weapons:          Array.isArray(raw.weapons)          ? raw.weapons          : [],
       critHits:         (raw.critHits && typeof raw.critHits === 'object') ? raw.critHits : {},
+      critNotes:        (raw.critNotes && typeof raw.critNotes === 'object') ? raw.critNotes : {},
+      crewRoles:        (raw.crewRoles && typeof raw.crewRoles === 'object') ? raw.crewRoles : {},
       crewPositions:    Array.isArray(raw.crewPositions)    ? raw.crewPositions    : [],
       operatingCost:    parseInt(raw.operatingCost)     || 0,
       notes:            raw.notes        || '',
       createdAt:        raw.createdAt    || new Date().toISOString(),
+      finances: {
+        cashCredits:    typeof raw.finances?.cashCredits === 'number' ? raw.finances.cashCredits : 0,
+        transactions:   Array.isArray(raw.finances?.transactions)     ? raw.finances.transactions   : [],
+        recurringItems: Array.isArray(raw.finances?.recurringItems)   ? raw.finances.recurringItems : [],
+        debts:          Array.isArray(raw.finances?.debts)            ? raw.finances.debts           : [],
+      },
     };
   }
 

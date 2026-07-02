@@ -284,6 +284,7 @@ const App = {
       this._updateHeaderName();
       if (saveVersion) this._saveVersion();
       if (this.currentCharacter.syncMode === 'cloud') this._pushToCloud();
+      if (this.currentPage === 'ship' && this.currentCharacter.campaignId) this._syncMyCampaignShips();
     } else {
       const e = Storage.lastError;
       const isQuota = e instanceof DOMException &&
@@ -781,10 +782,25 @@ const App = {
     if (r.ok) {
       this._campaignData = r.data;
       Storage.saveCampaign(r.data);
-      if (!this.editMode && (this.currentPage === 'notes' || this.currentPage === 'metadata')) {
+      this._mergeCampaignShipRoles();
+      if (!this.editMode && (this.currentPage === 'notes' || this.currentPage === 'metadata' || this.currentPage === 'ship')) {
         this.renderCurrentPage();
       }
     }
+  },
+
+  // Übernimmt crewRoles anderer Charaktere aus dem Kampagnen-Stand in lokal bekannte Schiffe,
+  // ohne den eigenen (noch nicht zwingend hochgeladenen) Eintrag zu überschreiben.
+  _mergeCampaignShipRoles() {
+    const char        = this.currentCharacter;
+    const remoteShips = this._campaignData?.ships;
+    if (!char?.ships?.length || !Array.isArray(remoteShips)) return;
+    char.ships.forEach(local => {
+      if (!local.isCampaign) return;
+      const remote = remoteShips.find(r => r.id === local.id);
+      if (!remote?.crewRoles) return;
+      local.crewRoles = { ...remote.crewRoles, ...(local.crewRoles?.[char.id] ? { [char.id]: local.crewRoles[char.id] } : {}) };
+    });
   },
 
   async _syncMyCampaignEntries() {
@@ -802,6 +818,35 @@ const App = {
     }
     await CampaignSync.updateNotes(char.campaignId, merged);
     if (this._campaignData) this._campaignData.notes = merged;
+  },
+
+  async _syncMyCampaignShips() {
+    const char = this.currentCharacter;
+    if (!char?.campaignId || char.syncMode !== 'cloud' || !CloudSync.isConfigured()) return;
+    const result = await CampaignSync.getCampaign(char.campaignId);
+    if (!result.ok) return;
+    const cur = Array.isArray(result.data.ships) ? result.data.ships : [];
+
+    // crewRoles gezielt zusammenführen: fremde Einträge (andere charId) vom Server übernehmen,
+    // nur den eigenen Eintrag aus der lokalen Version durchsetzen — verhindert, dass gleichzeitige
+    // Rollenwahl anderer Crew-Mitglieder beim eigenen Push überschrieben wird.
+    const myShips = (char.ships || []).filter(s => s.isCampaign).map(s => {
+      const remote = cur.find(c => c.id === s.id);
+      if (!remote?.crewRoles) return s;
+      const crewRoles = { ...remote.crewRoles, ...(s.crewRoles?.[char.id] ? { [char.id]: s.crewRoles[char.id] } : {}) };
+      return { ...s, crewRoles };
+    });
+
+    const myIds  = new Set(myShips.map(s => s.id));
+    const merged = [...cur.filter(s => !myIds.has(s.id)), ...myShips];
+    await CampaignSync.updateShips(char.campaignId, merged);
+    if (this._campaignData) this._campaignData.ships = merged;
+
+    // Gemergte crewRoles auch lokal übernehmen, statt auf den nächsten Poll zu warten
+    myShips.forEach(s => {
+      const local = char.ships.find(cs => cs.id === s.id);
+      if (local) local.crewRoles = s.crewRoles;
+    });
   },
 
   _startCampaignPoll(campaignId) {

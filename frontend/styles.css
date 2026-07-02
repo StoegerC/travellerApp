@@ -4151,20 +4151,6 @@ button {
 }
 .fin-btn-cancel:active { background: #e2e6ea; }
 
-/* ── Responsive ab 1024px ── */
-@media (min-width: 1024px) {
-  .fin-page {
-    display: grid;
-    grid-template-columns: 60% 1fr;
-    grid-template-rows: auto auto;
-    gap: 20px;
-  }
-
-  .fin-block-balance   { grid-column: 1 / -1; }
-  .fin-page > .fin-block:nth-child(2) { grid-column: 1; }
-  .fin-page > .fin-block:nth-child(3),
-  .fin-page > .fin-block:nth-child(4) { grid-column: 2; }
-}
 
 /* ═══════════════════════════════════════════
    WERDEGANG-SEITE
@@ -5964,14 +5950,6 @@ button {
     padding: 10px 20px;
   }
 
-  /* Finanz-Grid früher aktiv */
-  .fin-page {
-    display: grid;
-    grid-template-columns: 60% 1fr;
-    gap: 24px;
-  }
-  .fin-block-balance { grid-column: 1 / -1; }
-
   /* Werdegang-Grid */
   .cr-page {
     display: grid;
@@ -7192,6 +7170,26 @@ body.dark-mode .update-reload-btn   { background: #dde0f5; color: #1a1d2e; }
 
 /* ===== SCHIFF-SEITE ===== */
 
+.ship-page-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #667eea;
+}
+.ship-page-title h2 {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.ship-name-subtitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #667eea;
+  opacity: 0.85;
+}
+
 .ship-selector-bar {
   display: flex;
   align-items: center;
@@ -7515,6 +7513,10 @@ body.dark-mode .update-reload-btn   { background: #dde0f5; color: #1a1d2e; }
   font-style: italic;
   margin: 4px 0 0;
 }
+.ship-crit-note-cell { padding: 4px 6px; text-align: center; }
+.ship-crit-note-btn.has-note {
+  font-weight: 700;
+}
 .ship-crits-mini .ship-crit-label { padding: 4px 8px; font-size: 12px; }
 .ship-crit-mini-cells { padding: 3px 6px; }
 .ship-crits-mini .ship-crit-box { width: 28px; height: 28px; font-size: 11px; }
@@ -7555,6 +7557,8 @@ body.dark-mode .update-reload-btn   { background: #dde0f5; color: #1a1d2e; }
 .ship-empty-cell { color: #999; font-style: italic; padding: 12px !important; }
 .sw-nm { font-weight: 600; }
 .sw-traits-cell { max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+.ship-weapon-note-cell { text-align: center; }
+.sw-details.has-note { font-weight: 700; }
 .ship-ammo-ctrl { display: flex; align-items: center; gap: 4px; }
 .ship-ammo-btn {
   width: 30px;
@@ -7708,6 +7712,8 @@ body.dark-mode .update-reload-btn   { background: #dde0f5; color: #1a1d2e; }
 }
 
 /* ===== DARK MODE: SCHIFF ===== */
+body.dark-mode .ship-page-title       { border-bottom-color: #4a4f8b; }
+body.dark-mode .ship-name-subtitle    { color: #a0a8f0; }
 body.dark-mode .ship-selector-select  { background: #1e2140; border-color: #3a3f6b; color: #dde; }
 body.dark-mode .ship-campaign-toggle  { background: #1e2140; border-color: #3a3f6b; color: #9095b8; }
 body.dark-mode .ship-campaign-toggle.on { background: #1a3a1a; border-color: #4caf50; color: #81c784; }

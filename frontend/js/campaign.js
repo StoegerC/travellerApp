@@ -68,6 +68,20 @@ const CampaignSync = {
     }
   },
 
+  async updateShips(id, ships) {
+    try {
+      const res = await fetch(this._url(`/campaign/${id}/ships`), {
+        method:  'PUT',
+        headers: { ...this._headers(), 'Content-Type': 'application/json' },
+        body:    JSON.stringify(ships),
+      });
+      if (!res.ok) return { ok: false, status: res.status };
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
   async join(id, charId) {
     try {
       const res = await fetch(this._url(`/campaign/${id}/join`), {

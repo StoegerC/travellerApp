@@ -47,9 +47,9 @@ const FinancesPage = {
     return `
       <div class="fin-page">
         ${this._block1(f, totalDebt, netto)}
-        ${this._block2(f)}
         ${this._block3(f)}
         ${this._block4(f)}
+        ${this._block2(f)}
       </div>
       ${this._modalTx()}
       ${this._modalRecurring()}
