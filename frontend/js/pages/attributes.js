@@ -43,9 +43,9 @@ const AttributesPage = {
         <thead>
           <tr>
             <th style="text-align: left; padding: 12px; border-bottom: 2px solid #ddd;">Attribut</th>
-            <th style="padding: 12px; border-bottom: 2px solid #ddd; width: 120px;">Wert</th>
-            <th style="padding: 12px; border-bottom: 2px solid #ddd; width: 120px;">Aktuell</th>
-            <th style="padding: 12px; border-bottom: 2px solid #ddd; width: 120px; color: #888; font-weight: normal; font-size: 0.9em;">DM</th>
+            <th style="padding: 12px; border-bottom: 2px solid #ddd; width: 120px; text-align: center;">Wert</th>
+            <th style="padding: 12px; border-bottom: 2px solid #ddd; width: 120px; text-align: center;">Aktuell</th>
+            <th style="padding: 12px; border-bottom: 2px solid #ddd; width: 120px; color: #888; font-weight: normal; font-size: 0.9em; text-align: center;">DM</th>
           </tr>
         </thead>
         <tbody>
@@ -73,14 +73,14 @@ const AttributesPage = {
         html += `
           <tr style="border-bottom: 1px solid #eee;">
             <td style="padding: 12px; vertical-align: middle;">${label}</td>
-            <td style="padding: 12px;">
-              <input type="number" class="attr-value" data-attr="${key}" value="${value}" min="${isPsi ? -1 : 0}" max="15" style="width: 100%; padding: 6px; font-weight: 600;">
+            <td style="padding: 12px; text-align: center;">
+              <input type="number" class="attr-value" data-attr="${key}" value="${value}" min="${isPsi ? -1 : 0}" max="15" style="width: 100%; padding: 6px; font-weight: 600; text-align: center;">
             </td>
-            <td style="padding: 12px;">
-              <input type="number" class="attr-current" data-attr="${key}" value="${current}" min="${isPsi ? -1 : 0}" max="15" style="width: 100%; padding: 6px;">
+            <td style="padding: 12px; text-align: center;">
+              <input type="number" class="attr-current" data-attr="${key}" value="${current}" min="${isPsi ? -1 : 0}" max="15" style="width: 100%; padding: 6px; text-align: center;">
             </td>
-            <td style="padding: 12px;">
-              <input type="number" class="attr-dm" data-attr="${key}" value="${dmValue}" min="-10" max="10" readonly style="width: 100%; padding: 6px;">
+            <td style="padding: 12px; text-align: center;">
+              <input type="number" class="attr-dm" data-attr="${key}" value="${dmValue}" min="-10" max="10" readonly style="width: 100%; padding: 6px; text-align: center;">
             </td>
           </tr>
         `;
