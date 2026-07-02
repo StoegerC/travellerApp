@@ -786,10 +786,12 @@ const App = {
 
   async _syncCampaign() {
     if (!this.currentCharacter?.campaignId || !CloudSync.isConfigured()) return;
+    console.log('[Debug] _syncCampaign START editMode=' + this.editMode + ' page=' + this.currentPage);
     const r = await CampaignSync.getCampaign(this.currentCharacter.campaignId);
     if (r.ok) {
       this._campaignData = r.data;
       Storage.saveCampaign(r.data);
+      console.log('[Debug] _syncCampaign DONE editMode=' + this.editMode + ' willRender=' + (!this.editMode && (this.currentPage === 'notes' || this.currentPage === 'metadata')));
       if (!this.editMode && (this.currentPage === 'notes' || this.currentPage === 'metadata')) {
         this.renderCurrentPage();
       }
