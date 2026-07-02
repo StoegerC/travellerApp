@@ -2124,11 +2124,6 @@ button {
 }
 
 /* ===== DM INFO BOX ===== */
-.dm-info-box {
-  color: #666;
-  font-size: 0.9em;
-  margin-bottom: 15px;
-}
 
 /* ===== MODALS ===== */
 .modal-overlay {
@@ -6403,7 +6398,6 @@ body.dark-mode .attr-dm {
   color: #7a82aa;
   border-color: transparent;
 }
-body.dark-mode .dm-info-box { color: #8890b0; }
 body.dark-mode .system-card {
   background: #161929;
   border-left-color: #667eea;
@@ -6753,8 +6747,7 @@ body.dark-mode .char-selector-select {
 /* ── Generische Cards / Panels ── */
 body.dark-mode .card,
 body.dark-mode .panel,
-body.dark-mode .info-box,
-body.dark-mode .dm-info-box { color: #8890b0; }
+body.dark-mode .info-box { color: #8890b0; }
 
 /* ── Status-Badges ── */
 body.dark-mode .rel-friendly   { background: #0d1e35; color: #60a5fa; }

@@ -35,9 +35,6 @@ const AttributesPage = {
     // Attribute Section
     html += '<h3>Attribute</h3>';
     
-    // DM-Berechnungsreferenz (klein und grau)
-    html += `<div class="dm-info-box">DM: 0=−3 &nbsp;1-2=−2 &nbsp;3-5=−1 &nbsp;6-8=0 &nbsp;9-11=+1 &nbsp;12-14=+2 &nbsp;15+=+3</div>`;
-    
     html += `
       <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
         <thead>
