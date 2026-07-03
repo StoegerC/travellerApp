@@ -21,9 +21,13 @@ db.exec('PRAGMA journal_mode = WAL');
 db.exec('PRAGMA foreign_keys = ON');
 
 db.exec(`
+  -- owner_id: vorbereitet für Phase 3 (Nutzerverwaltung/Login), aktuell noch
+  -- ungenutzt und nullable. Erst wenn echte User-Accounts existieren, füllen
+  -- Routen dieses Feld und Leseabfragen filtern danach.
   CREATE TABLE IF NOT EXISTS characters (
     id         TEXT PRIMARY KEY,
     name       TEXT NOT NULL DEFAULT '',
+    owner_id   TEXT,
     data       TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );
@@ -54,6 +58,13 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_files_owner ON files (owner_type, owner_id);
 `);
+
+// Nachrüst-Migration: falls eine ältere DB-Datei ohne owner_id existiert
+// (CREATE TABLE IF NOT EXISTS legt die Spalte dann nicht nachträglich an).
+const hasOwnerId = db.prepare("SELECT 1 FROM pragma_table_info('characters') WHERE name = 'owner_id'").get();
+if (!hasOwnerId) {
+  db.exec('ALTER TABLE characters ADD COLUMN owner_id TEXT');
+}
 
 // node:sqlite kennt kein db.transaction(fn) wie better-sqlite3 – manuell mit
 // BEGIN/COMMIT/ROLLBACK nachgebaut.
