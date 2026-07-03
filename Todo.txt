@@ -16,10 +16,12 @@ KAMPAGNE
 
 DATENHALTUNG
 [ ] Selbst gehostetes Backend (Plan: ~/.claude/plans/lively-moseying-jellyfish.md) —
-    Phase 1 (Server + SQLite + Endpunkt-Parität + Migrationsscript) ist implementiert und
-    lokal getestet. Noch offen: cloudflared-Tunnel interaktiv einrichten (Login, DNS),
-    echte KV-Migration gegen den produktiven Worker fahren, mindestens ein Gerät auf die
-    neue Server-URL umstellen und verifizieren, danach Cloudflare Worker/KV abschalten.
+    Phase 1 läuft live: Server + SQLite + Endpunkt-Parität + Tailscale-Funnel-Tunnel +
+    macOS-Autostart (launchd) stehen, echte Migration gegen den produktiven Worker
+    gefahren, erstes Gerät umgestellt und Sync verifiziert. Noch offen: restliche Geräte
+    umstellen, ein paar Tage beobachten, dann Cloudflare Worker/KV abschalten.
+    Phase 2 (Datei-Uploads) und Phase 3 (Nutzerverwaltung/Login, owner_id-Spalte schon
+    vorbereitet) folgen danach, siehe Plan-Datei.
 [ ] Backup-Strategie für die neue SQLite-DB (ersetzt den alten „Cloudflare-Backup
     nach GitHub Actions"-Punkt — z.B. nächtliches Kopieren von backend/data/traveller.db
     + backend/uploads/ an einen zweiten Ort)
