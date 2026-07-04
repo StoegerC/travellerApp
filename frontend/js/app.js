@@ -283,7 +283,10 @@ const App = {
     if (Storage.saveCharacter(this.currentCharacter)) {
       this._updateHeaderName();
       if (saveVersion) this._saveVersion();
-      if (this.currentCharacter.syncMode === 'cloud') this._pushToCloud();
+      // Kein direkter _pushToCloud()-Aufruf hier: Storage.saveCharacter() plant
+      // selbst schon einen (dirty-geprüften) Push, sobald sich wirklich etwas
+      // geändert hat. Ein zweiter, unconditional Push hier würde genau den
+      // Bug zurückbringen, den der Dirty-Check beheben soll (siehe storage.js).
       if (this.currentPage === 'ship' && this.currentCharacter.campaignId) this._syncMyCampaignShips();
     } else {
       const e = Storage.lastError;
@@ -493,11 +496,38 @@ const App = {
   },
 
   // ── Cloud-Sync ──────────────────────────────────────────────────────────
-  async _pushToCloud() {
+  // retriesLeft begrenzt die Merge-und-erneut-Versuchen-Schleife bei 409-Konflikten
+  // (siehe SyncMerge) auf max. 3 Versuche insgesamt, ohne Backoff — der Konfliktfall
+  // ist menschen-zeitskaliert (zwei Geräte editieren im Sekundenbereich), keine
+  // Serie von Retries mit Wartezeit nötig.
+  async _pushToCloud(retriesLeft = 3) {
     if (!this.currentCharacter || this.currentCharacter.syncMode !== 'cloud') return;
     this._setSyncState('syncing');
-    const r = await CloudSync.pushCharacter(this.currentCharacter);
-    this._setSyncState(r.ok ? 'ok' : 'error', r.ok ? null : (r.error || 'Push-Fehler'));
+
+    const expected = this.currentCharacter._syncMeta?.updatedAt || null;
+    const r = await CloudSync.pushCharacter(this.currentCharacter, expected);
+
+    if (r.ok) {
+      this.currentCharacter._syncMeta.updatedAt = r.updatedAt;
+      Storage._suppressPush = true;
+      Storage.saveCharacter(this.currentCharacter);
+      Storage._suppressPush = false;
+      this._setSyncState('ok');
+      return;
+    }
+
+    if (r.conflict && retriesLeft > 0) {
+      // Jemand anderes hat zwischenzeitlich einen neueren Stand gespeichert –
+      // lokal mergen (nicht blind überschreiben) und erneut versuchen.
+      const mergedJson = SyncMerge.mergeCharacter(this.currentCharacter.toJSON(), r.serverData);
+      this.currentCharacter = Character.fromJSON(mergedJson);
+      this.currentCharacter._syncMeta.updatedAt = r.serverUpdatedAt;
+      window.currentCharacter = this.currentCharacter;
+      if (!this.editMode) this.renderCurrentPage();
+      return this._pushToCloud(retriesLeft - 1);
+    }
+
+    this._setSyncState('error', r.conflict ? 'Sync-Konflikt, bitte erneut versuchen' : (r.error || 'Push-Fehler'));
   },
 
   async _syncCloud() {
@@ -517,7 +547,12 @@ const App = {
         this._setSyncState('ok');
         return;
       }
-      const cloudChar = Character.fromJSON(r.data);
+      // Gemergt statt blind ersetzt: falls hier noch nicht gepushte lokale
+      // Änderungen liegen (z.B. der Flush oben ist fehlgeschlagen), gehen sie
+      // nicht verloren, sondern werden mit dem frischen Server-Stand vereint.
+      const mergedJson = SyncMerge.mergeCharacter(this.currentCharacter.toJSON(), r.data);
+      const cloudChar = Character.fromJSON(mergedJson);
+      cloudChar._syncMeta.updatedAt = r.updatedAt;
       this.currentCharacter = cloudChar;
       window.currentCharacter = cloudChar;
       Storage._suppressPush = true;

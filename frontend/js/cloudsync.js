@@ -41,16 +41,25 @@ const CloudSync = {
 
   // ── Charakter ─────────────────────────────────────────────────────────────
 
-  async pushCharacter(character) {
+  // expectedUpdatedAt: zuletzt bekannter Server-Stand (Character._syncMeta.updatedAt).
+  // Weicht der aktuelle Serverstand davon ab, antwortet der Server mit 409 statt zu
+  // überschreiben (optimistische Sperre) — Aufrufer muss dann mergen und erneut pushen.
+  async pushCharacter(character, expectedUpdatedAt = null) {
     if (!this.isConfigured()) return { ok: false, error: 'Nicht konfiguriert' };
     try {
+      const headers = { ...this._headers(), 'Content-Type': 'application/json' };
+      if (expectedUpdatedAt) headers['If-Unmodified-Since-Version'] = expectedUpdatedAt;
       const res = await fetch(`${this.getWorkerUrl()}/char/${character.id}`, {
         method:  'PUT',
-        headers: { ...this._headers(), 'Content-Type': 'application/json' },
+        headers,
         body:    JSON.stringify(character.toJSON()),
       });
+      if (res.status === 409) {
+        const body = await res.json();
+        return { ok: false, conflict: true, serverData: body.data, serverUpdatedAt: body.updatedAt };
+      }
       if (!res.ok) return { ok: false, error: `HTTP ${res.status}` };
-      return { ok: true };
+      return { ok: true, updatedAt: res.headers.get('X-Updated-At') };
     } catch (e) {
       return { ok: false, error: e.message };
     }
@@ -65,7 +74,7 @@ const CloudSync = {
       if (res.status === 404) return { ok: false, notFound: true };
       if (!res.ok)            return { ok: false, status: res.status };
       const data = await res.json();
-      return { ok: true, data };
+      return { ok: true, data, updatedAt: res.headers.get('X-Updated-At') };
     } catch (e) {
       return { ok: false, error: e.message };
     }

@@ -98,8 +98,15 @@ const Storage = {
   saveCharacter(character) {
     this.lastError = null;
     try {
-      const json = character.toJSON();
-      const idx  = this._cache.findIndex(c => c.id === json.id);
+      const json     = character.toJSON();
+      const idx      = this._cache.findIndex(c => c.id === json.id);
+      const prevJson = idx >= 0 ? this._cache[idx] : null;
+      // Dirty-Check: nur pushen wenn sich wirklich was geändert hat. Zentraler
+      // Ort, weil praktisch jede Mutation im Code (auch Button-Klicks ohne
+      // input/change-Event) über diese Funktion läuft. Verhindert u.a., dass
+      // ein bloßer Tab-Wechsel im Lese-Modus eine veraltete lokale Kopie
+      // ungefragt hochlädt und frischere Änderungen anderer Geräte überschreibt.
+      const changed  = !prevJson || JSON.stringify(prevJson) !== JSON.stringify(json);
       if (idx >= 0) this._cache[idx] = json;
       else          this._cache.push(json);
 
@@ -107,7 +114,7 @@ const Storage = {
         console.error('IndexedDB Schreibfehler:', e);
         this.lastError = e;
       });
-      if (!this._suppressPush && character.syncMode === 'cloud' && typeof App !== 'undefined') {
+      if (changed && !this._suppressPush && character.syncMode === 'cloud' && typeof App !== 'undefined') {
         clearTimeout(this._pushTimer);
         this._pushTimer = setTimeout(() => App._pushToCloud(), 500);
       }

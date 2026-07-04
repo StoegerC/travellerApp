@@ -17,3 +17,9 @@ Medien/
 # Charakter-Backups (JSON-Exporte)
 traveller_*.json
 Charbackup/
+
+# Backend: lokale Daten & Secrets (siehe backend/.env.example)
+backend/data/
+backend/uploads/
+backend/.env
+backend/node_modules/

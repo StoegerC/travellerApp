@@ -1,0 +1,26 @@
+# Vorlage für den späteren Raspberry-Pi-Einsatz (systemd, Linux).
+# Auf dem Mac heute nicht nutzbar (kein systemd) — dort läuft der Server
+# übergangsweise manuell per `npm start`.
+#
+# Installation auf dem Pi:
+#   sudo cp backend/systemd/traveller-backend.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now traveller-backend
+#
+# Pfade/User unten an die tatsächliche Installation anpassen.
+
+[Unit]
+Description=Traveller Charsheet Backend
+After=network.target
+
+[Service]
+Type=simple
+User=traveller
+WorkingDirectory=/opt/traveller-charsheet/backend
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+EnvironmentFile=/opt/traveller-charsheet/backend/.env
+
+[Install]
+WantedBy=multi-user.target

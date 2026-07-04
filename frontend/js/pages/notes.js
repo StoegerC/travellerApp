@@ -17,6 +17,8 @@ const NotesPage = {
   _questFilterVal:  'active',
 
   // ─────────────────────────────── Datenzugriff ────────────────────────────
+  // Roh-Zugriff (inkl. Tombstones) – nötig für save(), damit gelöschte
+  // Einträge beim Zurückschreiben nicht aus character.notes verschwinden.
   _d(char) {
     const n = char.notes || {};
     return {
@@ -24,6 +26,18 @@ const NotesPage = {
       persons:   Array.isArray(n.persons)   ? n.persons   : [],
       locations: Array.isArray(n.locations) ? n.locations : [],
       quests:    Array.isArray(n.quests)    ? n.quests    : []
+    };
+  },
+
+  // Für die Anzeige: Tombstones (_deleted) ausgeblendet. Wird nur beim
+  // Rendern verwendet, nie beim Schreiben.
+  _dVisible(char) {
+    const raw = this._d(char);
+    return {
+      sessions:  raw.sessions.filter(x => !x._deleted),
+      persons:   raw.persons.filter(x => !x._deleted),
+      locations: raw.locations.filter(x => !x._deleted),
+      quests:    raw.quests.filter(x => !x._deleted),
     };
   },
 
@@ -110,7 +124,7 @@ const NotesPage = {
 
   // ─────────────────────────────── Haupt-Render ────────────────────────────
   render(character) {
-    const data = this._d(character);
+    const data = this._dVisible(character);
     let html = '<h2>Log</h2>';
     html += this._subTabs(data);
 
@@ -1188,6 +1202,7 @@ const NotesPage = {
         isActive:    existing?.isActive || false,
         isCampaign:  !!(document.getElementById('entryCampaignToggle')?.checked ?? existing?.isCampaign),
         createdAt:   existing?.createdAt || createdAt,
+        updatedAt:   new Date().toISOString(),
       };
       if (isNew) {
         if (entry.title) { data.sessions.push(entry); this._detailId = entry.id; }
@@ -1215,6 +1230,7 @@ const NotesPage = {
         isFavorite:  existing?.isFavorite || false,
         isCampaign:  !!(document.getElementById('entryCampaignToggle')?.checked ?? existing?.isCampaign),
         createdAt:   existing?.createdAt || createdAt,
+        updatedAt:   new Date().toISOString(),
       };
       if (isNew) {
         if (entry.name) {
@@ -1253,6 +1269,7 @@ const NotesPage = {
         mapHex:      document.getElementById('locMapHex')?.value    || null,
         isCampaign:  !!(document.getElementById('entryCampaignToggle')?.checked ?? existing?.isCampaign),
         createdAt:   existing?.createdAt || createdAt,
+        updatedAt:   new Date().toISOString(),
       };
       if (isNew) {
         if (entry.name) {
@@ -1284,6 +1301,7 @@ const NotesPage = {
         description:  document.getElementById('questDescription')?.value || '',
         isCampaign:   !!(document.getElementById('entryCampaignToggle')?.checked ?? existing?.isCampaign),
         createdAt:    existing?.createdAt || createdAt,
+        updatedAt:    new Date().toISOString(),
       };
       if (isNew) {
         if (entry.title) { data.quests.push(entry); this._detailId = entry.id; }
@@ -1363,13 +1381,19 @@ const NotesPage = {
       }
     });
 
-    // Löschen
+    // Löschen (Tombstone statt Entfernen, damit die Löschung über Sync-Merge propagiert)
     document.getElementById('deleteItemBtn')?.addEventListener('click', (e) => {
       if (!confirm('Eintrag wirklich löschen?')) return;
       const id = e.currentTarget.dataset.id;
       const data = this._d(App.currentCharacter);
       const key = { sessions: 'sessions', persons: 'persons', locations: 'locations', quests: 'quests' }[this._activeTab];
-      data[key] = data[key].filter(x => String(x.id) !== String(id));
+      const item = data[key].find(x => String(x.id) === String(id));
+      if (item) {
+        const now = new Date().toISOString();
+        item._deleted  = true;
+        item.deletedAt = now;
+        item.updatedAt = now;
+      }
       App.currentCharacter.notes = data;
       this._saveAndSync(App.currentCharacter);
       this._detailId = null;

@@ -13,9 +13,11 @@ const EquipmentPage = {
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   },
 
-  // Normalize + migrate old 'weapon' type → 'ranged'
+  // Normalize + migrate old 'weapon' type → 'ranged'. Tombstones (_deleted)
+  // ausgeblendet — die einzige Roh-Quelle ist character.equipment selbst,
+  // siehe save() für den Diff, der Löschungen in Tombstones umwandelt.
   _d(character) {
-    const eq = character.equipment || [];
+    const eq = (character.equipment || []).filter(e => !e._deleted);
     return {
       melee:  eq.filter(e => e.type === 'melee'),
       ranged: eq.filter(e => e.type === 'ranged' || e.type === 'weapon'),
@@ -323,8 +325,30 @@ const EquipmentPage = {
 
     if (updated === null) return;
 
+    // Zeilen, die aus der Tabelle entfernt wurden (✕-Button), als Tombstone
+    // erhalten statt komplett zu löschen, damit die Löschung über den
+    // Sync-Merge zu anderen Geräten propagiert.
+    const survivingIds = new Set(updated.map(u => u.id));
+    const now = new Date().toISOString();
+    const tombstoned = data[tab]
+      .filter(item => !survivingIds.has(item.id))
+      .map(item => ({ ...item, _deleted: true, deletedAt: now, updatedAt: now }));
+
     const others = character.equipment.filter(e => !this._tabOwns(tab, e.type));
-    character.equipment = [...others, ...updated];
+    character.equipment = [...others, ...updated, ...tombstoned];
+  },
+
+  // Bumpt updatedAt nur, wenn sich der Inhalt gegenueber dem vorherigen Stand
+  // wirklich geaendert hat. save() liest bei JEDEM _doSave() (auch reinen
+  // Tab-Wechseln im Edit-Modus) die komplette Tabelle neu ein - ohne diesen
+  // Vergleich wuerde jede Zeile bei jedem Aufruf einen frischen Zeitstempel
+  // bekommen und den Dirty-Check dauerhaft "changed" melden.
+  _stampUpdatedAt(item, existing) {
+    if (!existing) return { ...item, updatedAt: new Date().toISOString() };
+    const { updatedAt: _u1, _deleted: _d1, deletedAt: _da1, ...itemRest } = item;
+    const { updatedAt: _u2, _deleted: _d2, deletedAt: _da2, ...existingRest } = existing;
+    const changed = JSON.stringify(itemRest) !== JSON.stringify(existingRest);
+    return { ...item, updatedAt: changed ? new Date().toISOString() : existing.updatedAt };
   },
 
   _readMelee(existing) {
@@ -333,10 +357,12 @@ const EquipmentPage = {
     return Array.from(body.querySelectorAll('tr')).flatMap((tr, i) => {
       const name = tr.querySelector('.m-name')?.value?.trim();
       if (!name) return [];
-      return [{
+      const item = {
         type: 'melee',
         id:         existing[i]?.id || ('mel' + Date.now() + i),
         createdAt:  existing[i]?.createdAt || new Date().toISOString(),
+        _deleted:   false,
+        deletedAt:  null,
         equipped:   tr.querySelector('.eq-equipped')?.checked || false,
         name,
         attribute:  tr.querySelector('.m-attr')?.value   || '',
@@ -347,7 +373,8 @@ const EquipmentPage = {
         weight:     tr.querySelector('.m-weight')?.value || '',
         traits:  tr.querySelector('.m-traits')?.value?.trim() || '',
         details: existing[i]?.details ?? (typeof existing[i]?.traits === 'object' ? existing[i].traits : {}),
-      }];
+      };
+      return [this._stampUpdatedAt(item, existing[i])];
     });
   },
 
@@ -357,10 +384,12 @@ const EquipmentPage = {
     return Array.from(body.querySelectorAll('tr')).flatMap((tr, i) => {
       const name = tr.querySelector('.r-name')?.value?.trim();
       if (!name) return [];
-      return [{
+      const item = {
         type: 'ranged',
         id:         existing[i]?.id || ('rng' + Date.now() + i),
         createdAt:  existing[i]?.createdAt || new Date().toISOString(),
+        _deleted:   false,
+        deletedAt:  null,
         equipped:   tr.querySelector('.eq-equipped')?.checked || false,
         name,
         attribute:  tr.querySelector('.r-attr')?.value   || '',
@@ -375,7 +404,8 @@ const EquipmentPage = {
         weight:     tr.querySelector('.r-weight')?.value || '',
         traits:  tr.querySelector('.r-traits')?.value?.trim() || '',
         details: existing[i]?.details ?? (typeof existing[i]?.traits === 'object' ? existing[i].traits : {}),
-      }];
+      };
+      return [this._stampUpdatedAt(item, existing[i])];
     });
   },
 
@@ -385,10 +415,12 @@ const EquipmentPage = {
     return Array.from(body.querySelectorAll('tr:not(.armor-total)')).flatMap((tr, i) => {
       const name = tr.querySelector('.a-name')?.value?.trim();
       if (!name) return [];
-      return [{
+      const item = {
         type: 'armor',
         id:            existing[i]?.id || ('arm' + Date.now() + i),
         createdAt:     existing[i]?.createdAt || new Date().toISOString(),
+        _deleted:   false,
+        deletedAt:  null,
         equipped:      tr.querySelector('.eq-equipped')?.checked  || false,
         name,
         protection:    tr.querySelector('.a-prot')?.value   || '',
@@ -399,7 +431,8 @@ const EquipmentPage = {
         sealed:        tr.querySelector('.a-sealed')?.checked    || false,
         layerable:     tr.querySelector('.a-layerable')?.checked || false,
         details: existing[i]?.details ?? (typeof existing[i]?.traits === 'object' ? existing[i].traits : {}),
-      }];
+      };
+      return [this._stampUpdatedAt(item, existing[i])];
     });
   },
 
@@ -409,17 +442,20 @@ const EquipmentPage = {
     return Array.from(body.querySelectorAll('tr')).flatMap((tr, i) => {
       const name = tr.querySelector('.mi-name')?.value?.trim();
       if (!name) return [];
-      return [{
+      const item = {
         type: 'misc',
         id:          existing[i]?.id || ('misc' + Date.now() + i),
         createdAt:   existing[i]?.createdAt || new Date().toISOString(),
+        _deleted:   false,
+        deletedAt:  null,
         name,
         quantity:    parseInt(tr.querySelector('.mi-qty')?.value)  || 1,
         tl:          tr.querySelector('.mi-tl')?.value             || '',
         weight:      tr.querySelector('.mi-wt')?.value             || '',
         description: tr.querySelector('.mi-desc')?.value           || '',
         details: existing[i]?.details ?? (typeof existing[i]?.traits === 'object' ? existing[i].traits : {}),
-      }];
+      };
+      return [this._stampUpdatedAt(item, existing[i])];
     });
   },
 
@@ -464,11 +500,13 @@ const EquipmentPage = {
         const item  = items[idx];
         if (!item) return;
         const wasOn = !!item.equipped;
+        const now   = new Date().toISOString();
+        const bump  = it => { it.updatedAt = now; };
 
         if (type === 'armor') {
           if (!wasOn) {
             if (!item.layerable) {
-              items.forEach((a, j) => { if (j !== idx && !a.layerable) a.equipped = false; });
+              items.forEach((a, j) => { if (j !== idx && !a.layerable && a.equipped) { a.equipped = false; bump(a); } });
             }
             item.equipped = true;
           } else {
@@ -476,9 +514,10 @@ const EquipmentPage = {
           }
         } else {
           // Waffen: exklusiv
-          items.forEach(it => { it.equipped = false; });
+          items.forEach(it => { if (it.equipped) { it.equipped = false; bump(it); } });
           if (!wasOn) item.equipped = true;
         }
+        bump(item);
 
         const others = window.currentCharacter.equipment.filter(e => !this._tabOwns(type, e.type));
         window.currentCharacter.equipment = [...others, ...items];
@@ -511,6 +550,7 @@ const EquipmentPage = {
         const data = this._d(window.currentCharacter);
         if (data.ranged[idx]) {
           data.ranged[idx].ammo = val;
+          data.ranged[idx].updatedAt = new Date().toISOString();
           const others = window.currentCharacter.equipment.filter(e => e.type !== 'ranged' && e.type !== 'weapon');
           window.currentCharacter.equipment = [...others, ...data.ranged];
           Storage.saveCharacter(window.currentCharacter);
@@ -676,6 +716,7 @@ const EquipmentPage = {
       document.getElementById('traitsSaveBtn').addEventListener('click', () => {
         traits.description = document.getElementById('traitsDesc').value;
         item.details = traits;
+        item.updatedAt = new Date().toISOString();
         const others = window.currentCharacter.equipment.filter(e => !this._tabOwns(type, e.type));
         window.currentCharacter.equipment = [...others, ...items];
         Storage.saveCharacter(window.currentCharacter);
