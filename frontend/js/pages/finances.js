@@ -99,9 +99,10 @@ const FinancesPage = {
       { key: 'other',     label: 'Sonstiges'  },
     ];
 
+    const visible = f.transactions.filter(t => !t._deleted);
     const list = (this._filter === 'all'
-      ? f.transactions
-      : f.transactions.filter(t => t.category === this._filter)
+      ? visible
+      : visible.filter(t => t.category === this._filter)
     ).slice().sort((a, b) => b.createdAt - a.createdAt);
 
     const filterBar = `<div class="fin-filter-bar">${
@@ -138,6 +139,7 @@ const FinancesPage = {
   _block3(f) {
     let rows = '';
     f.recurringItems.forEach((item, i) => {
+      if (item._deleted) return; // Index i bleibt roh (siehe data-idx-Nutzung)
       const amtCls      = item.amount >= 0 ? 'fin-pos' : 'fin-neg';
       const intervalLbl = { monthly: 'Monatlich', bimonthly: 'Alle 2 Monate', semiannual: 'Alle 6 Monate', weekly: 'Wöchentlich', yearly: 'Jährlich' }[item.interval] || item.interval;
       rows += `<div class="fin-rec-row">
@@ -169,6 +171,7 @@ const FinancesPage = {
   _block4(f) {
     let cards = '';
     f.debts.forEach((d, i) => {
+      if (d._deleted) return; // Index i bleibt roh (siehe data-idx-Nutzung)
       const paid = (d.totalAmount || 0) - (d.remainingAmount || 0);
       const pct  = d.totalAmount > 0 ? Math.min(100, Math.max(0, Math.round((paid / d.totalAmount) * 100))) : 0;
       const done = (d.remainingAmount || 0) <= 0;
@@ -320,6 +323,7 @@ const FinancesPage = {
         amount:      this._txSign * amount,
         category:    document.getElementById('txCat').value,
         createdAt:   Date.now(),
+        updatedAt:   new Date().toISOString(),
       };
       f.transactions.push(tx);
       f.cashCredits += tx.amount;
@@ -339,8 +343,13 @@ const FinancesPage = {
         if (!window.confirm('Transaktion löschen und Kassenstand korrigieren?')) return;
         const idx = parseInt(btn.dataset.idx);
         const tx  = f.transactions[idx];
-        if (tx) f.cashCredits -= tx.amount;
-        f.transactions.splice(idx, 1);
+        if (tx) {
+          f.cashCredits -= tx.amount;
+          const now = new Date().toISOString();
+          tx._deleted  = true;
+          tx.deletedAt = now;
+          tx.updatedAt = now;
+        }
         Storage.saveCharacter(char);
         rerender();
       });
@@ -349,7 +358,9 @@ const FinancesPage = {
     // ── Wiederkehrende: Toggle ────────────────────────────────────────────
     document.querySelectorAll('.fin-rec-toggle').forEach(cb => {
       cb.addEventListener('change', () => {
-        f.recurringItems[parseInt(cb.dataset.idx)].isActive = cb.checked;
+        const item = f.recurringItems[parseInt(cb.dataset.idx)];
+        item.isActive  = cb.checked;
+        item.updatedAt = new Date().toISOString();
         Storage.saveCharacter(char);
       });
     });
@@ -358,7 +369,13 @@ const FinancesPage = {
     document.querySelectorAll('.fin-rec-del').forEach(btn => {
       btn.addEventListener('click', () => {
         if (!window.confirm('Posten löschen?')) return;
-        f.recurringItems.splice(parseInt(btn.dataset.idx), 1);
+        const item = f.recurringItems[parseInt(btn.dataset.idx)];
+        if (item) {
+          const now = new Date().toISOString();
+          item._deleted  = true;
+          item.deletedAt = now;
+          item.updatedAt = now;
+        }
         Storage.saveCharacter(char);
         rerender();
       });
@@ -378,6 +395,7 @@ const FinancesPage = {
         amount:      parseInt(document.getElementById('recSign').value) * amount,
         interval:    document.getElementById('recInterval').value,
         isActive:    true,
+        updatedAt:   new Date().toISOString(),
       });
       Storage.saveCharacter(char);
       hideModal('recModal');
@@ -405,6 +423,7 @@ const FinancesPage = {
         remainingAmount: total,
         monthlyPayment:  parseFloat(document.getElementById('debtMonthly').value) || 0,
         notes:           document.getElementById('debtNotes').value.trim(),
+        updatedAt:       new Date().toISOString(),
       });
       Storage.saveCharacter(char);
       hideModal('debtModal');
@@ -420,8 +439,9 @@ const FinancesPage = {
         if (!debt) return;
         const actual = Math.min(payment, debt.remainingAmount);
         debt.remainingAmount = Math.max(0, debt.remainingAmount - actual);
+        debt.updatedAt = new Date().toISOString();
         f.cashCredits -= actual;
-        f.transactions.push({ id: 'tx-' + Date.now(), ingameDate: '', description: `Rate: ${debt.name}`, amount: -actual, category: 'ship', createdAt: Date.now() });
+        f.transactions.push({ id: 'tx-' + Date.now(), ingameDate: '', description: `Rate: ${debt.name}`, amount: -actual, category: 'ship', createdAt: Date.now(), updatedAt: new Date().toISOString() });
         Storage.saveCharacter(char);
         rerender();
       });
@@ -431,7 +451,13 @@ const FinancesPage = {
     document.querySelectorAll('.fin-debt-del').forEach(btn => {
       btn.addEventListener('click', () => {
         if (!window.confirm('Schuld löschen?')) return;
-        f.debts.splice(parseInt(btn.dataset.idx), 1);
+        const debt = f.debts[parseInt(btn.dataset.idx)];
+        if (debt) {
+          const now = new Date().toISOString();
+          debt._deleted  = true;
+          debt.deletedAt = now;
+          debt.updatedAt = now;
+        }
         Storage.saveCharacter(char);
         rerender();
       });
@@ -445,12 +471,14 @@ const FinancesPage = {
   },
 
   _showSettleModal(char, f, rerender) {
-    if (!f.recurringItems.length) { window.alert('Keine wiederkehrenden Posten vorhanden.'); return; }
+    const activeCount = f.recurringItems.filter(r => !r._deleted).length;
+    if (!activeCount) { window.alert('Keine wiederkehrenden Posten vorhanden.'); return; }
 
     const overlay = document.createElement('div');
     overlay.className = 'fin-settle-overlay';
 
     const rows = f.recurringItems.map((r, i) => {
+      if (r._deleted) return ''; // Index i bleibt roh (siehe data-idx-Nutzung)
       const lbl    = this._intervalLabel(r.interval);
       const amtCls = r.amount >= 0 ? 'fin-pos' : 'fin-neg';
       return `<label class="fin-settle-item${r.isActive ? '' : ' fin-settle-inactive'}">
@@ -510,6 +538,7 @@ const FinancesPage = {
           amount:      r.amount,
           category:    'other',
           createdAt:   now,
+          updatedAt:   new Date(now).toISOString(),
         });
         f.cashCredits += r.amount;
       });

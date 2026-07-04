@@ -36,13 +36,26 @@ const ShipPage = {
 
   _ship(character) {
     if (!character.activeShipId) return null;
-    return (character.ships || []).find(s => s.id === character.activeShipId) || null;
+    return (character.ships || []).find(s => s.id === character.activeShipId && !s._deleted) || null;
+  },
+
+  // Bumpt updatedAt nur, wenn sich der Inhalt gegenueber dem vorherigen Stand
+  // wirklich geaendert hat. save() liest bei JEDEM _doSave() (auch reinen
+  // Tab-Wechseln im Edit-Modus) die komplette Tabelle neu ein - ohne diesen
+  // Vergleich wuerde jede Zeile bei jedem Aufruf einen frischen Zeitstempel
+  // bekommen und den Dirty-Check dauerhaft "changed" melden.
+  _stampUpdatedAt(item, existing) {
+    if (!existing) return { ...item, updatedAt: new Date().toISOString() };
+    const { updatedAt: _u1, _deleted: _d1, deletedAt: _da1, ...itemRest } = item;
+    const { updatedAt: _u2, _deleted: _d2, deletedAt: _da2, ...existingRest } = existing;
+    const changed = JSON.stringify(itemRest) !== JSON.stringify(existingRest);
+    return { ...item, updatedAt: changed ? new Date().toISOString() : existing.updatedAt };
   },
 
   // ── Render ───────────────────────────────────────────────────────────────
 
   render(character) {
-    const ships = character.ships || [];
+    const ships = (character.ships || []).filter(s => !s._deleted);
     const ship  = this._ship(character);
 
     let html = `<div class="ship-page-title">
@@ -386,13 +399,14 @@ const ShipPage = {
     const char   = window.currentCharacter;
     const ship   = this._ship(char);
     if (!ship) return;
-    const weapon = (ship.weapons || [])[idx];
+    const weapon = (ship.weapons || []).filter(w => !w._deleted)[idx];
     if (!weapon) return;
 
     this._showNoteModal(`${weapon.name || 'Waffe'} – Merkmale`, 'Merkmale',
       () => weapon.details,
       (value) => {
         weapon.details = value;
+        weapon.updatedAt = new Date().toISOString();
         this._saveAndSync(char);
       });
   },
@@ -400,7 +414,7 @@ const ShipPage = {
   // ── Bewaffnung ────────────────────────────────────────────────────────────
 
   _renderWeapons(ship) {
-    const weapons = ship.weapons || [];
+    const weapons = (ship.weapons || []).filter(w => !w._deleted);
 
     if (App.editMode) {
       let rows = weapons.map((w, i) => {
@@ -541,7 +555,8 @@ const ShipPage = {
     if (!f.debts)          f.debts          = [];
     const balCls = f.cashCredits >= 0 ? 'fin-pos' : 'fin-neg';
 
-    const list = f.transactions.slice().sort((a, b) => b.createdAt - a.createdAt);
+    const visibleTx = f.transactions.filter(t => !t._deleted);
+    const list = visibleTx.slice().sort((a, b) => b.createdAt - a.createdAt);
     let rows = '';
     if (!list.length) {
       rows = `<p class="fin-empty">Noch keine Transaktionen.</p>`;
@@ -560,6 +575,7 @@ const ShipPage = {
 
     let recRows = '';
     f.recurringItems.forEach((item, i) => {
+      if (item._deleted) return; // Index i bleibt roh (siehe data-idx-Nutzung)
       const amtCls      = item.amount >= 0 ? 'fin-pos' : 'fin-neg';
       const intervalLbl = { monthly: 'Monatlich', bimonthly: 'Alle 2 Monate', semiannual: 'Alle 6 Monate', weekly: 'Wöchentlich', yearly: 'Jährlich' }[item.interval] || item.interval;
       recRows += `<div class="fin-rec-row">
@@ -577,6 +593,7 @@ const ShipPage = {
 
     let debtCards = '';
     f.debts.forEach((d, i) => {
+      if (d._deleted) return; // Index i bleibt roh (siehe data-idx-Nutzung)
       const paid = (d.totalAmount || 0) - (d.remainingAmount || 0);
       const pct  = d.totalAmount > 0 ? Math.min(100, Math.max(0, Math.round((paid / d.totalAmount) * 100))) : 0;
       const done = (d.remainingAmount || 0) <= 0;
@@ -702,12 +719,14 @@ const ShipPage = {
   },
 
   _showShipSettleModal(char, f) {
-    if (!f.recurringItems.length) { window.alert('Keine wiederkehrenden Posten vorhanden.'); return; }
+    const activeCount = f.recurringItems.filter(r => !r._deleted).length;
+    if (!activeCount) { window.alert('Keine wiederkehrenden Posten vorhanden.'); return; }
 
     const overlay = document.createElement('div');
     overlay.className = 'fin-settle-overlay';
 
     const rows = f.recurringItems.map((r, i) => {
+      if (r._deleted) return ''; // Index i bleibt roh (siehe data-idx-Nutzung)
       const lbl    = this._finIntervalLabel(r.interval);
       const amtCls = r.amount >= 0 ? 'fin-pos' : 'fin-neg';
       return `<label class="fin-settle-item${r.isActive ? '' : ' fin-settle-inactive'}">
@@ -766,6 +785,7 @@ const ShipPage = {
           description: r.description,
           amount:      r.amount,
           createdAt:   now,
+          updatedAt:   new Date(now).toISOString(),
         });
         f.cashCredits += r.amount;
       });
@@ -780,6 +800,13 @@ const ShipPage = {
   save(character) {
     const ship = this._ship(character);
     if (!ship) return;
+    // Ship-weites updatedAt: nur bumpen wenn sich am Ende wirklich etwas
+    // geaendert hat (Vergleich schliesst nur das updatedAt-Feld selbst aus -
+    // verschachtelte Aenderungen wie neue/geaenderte Waffen zaehlen mit, weil
+    // deren eigenes _stampUpdatedAt bereits korrekt zwischen echten und
+    // unveraenderten Zeilen unterscheidet). Noetig fuer die Tombstone-vs-Edit
+    // Entscheidung in SyncMerge._mergeShip.
+    const _before = JSON.stringify({ ...ship, updatedAt: undefined });
 
     if (this._activeTab === 'info' && App.editMode) {
       ship.name         = document.getElementById('si-name')?.value?.trim()   || ship.name;
@@ -807,13 +834,18 @@ const ShipPage = {
     } else if (this._activeTab === 'weapons' && App.editMode) {
       const body = document.getElementById('shipWeaponBody');
       if (body) {
-        ship.weapons = Array.from(body.querySelectorAll('tr')).flatMap((tr, i) => {
+        // existing = exakt die Liste, aus der die Tabellenzeilen gerendert wurden
+        // (Tombstones ausgeblendet, siehe _renderWeapons) — nötig, damit der
+        // Zeilenindex i korrekt auf existing[i] passt.
+        const existing = (ship.weapons || []).filter(w => !w._deleted);
+        const now = new Date().toISOString();
+        const updated = Array.from(body.querySelectorAll('tr')).flatMap((tr, i) => {
           const name = tr.querySelector('.sw-name')?.value?.trim();
           if (!name) return [];
           const ammoRaw    = tr.querySelector('.sw-ammo')?.value;
           const ammoMaxRaw = tr.querySelector('.sw-ammomax')?.value;
-          return [{
-            id:      ship.weapons[i]?.id || ('swp-' + Date.now() + i),
+          const item = {
+            id:      existing[i]?.id || ('swp-' + Date.now() + i),
             name,
             type:    tr.querySelector('.sw-type')?.value   || 'turret',
             damage:  tr.querySelector('.sw-dmg')?.value    || '',
@@ -821,9 +853,20 @@ const ShipPage = {
             traits:  tr.querySelector('.sw-traits')?.value || '',
             ammo:    ammoRaw    !== '' && ammoRaw    != null ? parseInt(ammoRaw)    : undefined,
             ammoMax: ammoMaxRaw !== '' && ammoMaxRaw != null ? parseInt(ammoMaxRaw) : undefined,
-            details: ship.weapons[i]?.details || '',
-          }];
+            details: existing[i]?.details || '',
+            _deleted: false,
+            deletedAt: null,
+          };
+          return [this._stampUpdatedAt(item, existing[i])];
         });
+        // Zeilen, die aus der Tabelle entfernt wurden (✕-Button), als Tombstone
+        // erhalten statt komplett zu löschen, damit die Löschung über den
+        // Sync-Merge propagiert.
+        const survivingIds = new Set(updated.map(u => u.id));
+        const tombstoned = existing
+          .filter(w => !survivingIds.has(w.id))
+          .map(w => ({ ...w, _deleted: true, deletedAt: now, updatedAt: now }));
+        ship.weapons = [...updated, ...tombstoned];
       }
     } else if (this._activeTab === 'crew' && App.editMode) {
       ship.crewPositions = Array.from(document.querySelectorAll('.ship-pos-row')).flatMap(row => {
@@ -832,6 +875,9 @@ const ShipPage = {
         return [{ position: pos, person: row.querySelector('.sp-pos-person')?.value?.trim() || '' }];
       });
     }
+
+    const _after = JSON.stringify({ ...ship, updatedAt: undefined });
+    if (_before !== _after) ship.updatedAt = new Date().toISOString();
   },
 
   // ── Kampagnen-Sync ────────────────────────────────────────────────────────
@@ -870,7 +916,8 @@ const ShipPage = {
     document.getElementById('shipNewBtn')?.addEventListener('click', () => {
       const name = window.prompt('Name des neuen Schiffes:', 'Neues Schiff');
       if (name === null) return;
-      const ship = Character._migrateShip({ name: name.trim() || 'Neues Schiff', createdAt: new Date().toISOString() });
+      const now  = new Date().toISOString();
+      const ship = Character._migrateShip({ name: name.trim() || 'Neues Schiff', createdAt: now, updatedAt: now });
       ship.isCampaign = !!char.campaignId;
       if (!char.ships) char.ships = [];
       char.ships.push(ship);
@@ -884,8 +931,12 @@ const ShipPage = {
       const ship = this._ship(char);
       if (!ship) return;
       if (!window.confirm(`Schiff „${ship.name}" wirklich löschen?`)) return;
-      char.ships = char.ships.filter(s => s.id !== ship.id);
-      char.activeShipId = char.ships[0]?.id || null;
+      const now = new Date().toISOString();
+      ship._deleted  = true;
+      ship.deletedAt = now;
+      ship.updatedAt = now;
+      const remaining = char.ships.filter(s => !s._deleted);
+      char.activeShipId = remaining[0]?.id || null;
       this._saveAndSync(char);
       App.renderCurrentPage();
     });
@@ -895,6 +946,7 @@ const ShipPage = {
       const ship = this._ship(char);
       if (!ship) return;
       ship.isCampaign = !ship.isCampaign;
+      ship.updatedAt  = new Date().toISOString();
       this._saveAndSync(char);
       App.renderCurrentPage();
     });
@@ -1015,10 +1067,11 @@ const ShipPage = {
         if (!ship) return;
         const idx   = parseInt(btn.dataset.idx);
         const delta = parseInt(btn.dataset.delta);
-        const w     = ship.weapons[idx];
+        const w     = (ship.weapons || []).filter(x => !x._deleted)[idx];
         if (!w) return;
         const max = parseInt(w.ammoMax) || Infinity;
         w.ammo = Math.max(0, Math.min(max, (parseInt(w.ammo) || 0) + delta));
+        w.updatedAt = new Date().toISOString();
         const disp = document.querySelector(`.ship-ammo-disp[data-idx="${idx}"]`);
         if (disp) disp.textContent = w.ammo;
         this._saveAndSync(char);
@@ -1093,6 +1146,7 @@ const ShipPage = {
         description: document.getElementById('shipTxDesc').value.trim(),
         amount:      shipTxSign * amount,
         createdAt:   Date.now(),
+        updatedAt:   new Date().toISOString(),
       };
       ship.finances.transactions.push(tx);
       ship.finances.cashCredits += tx.amount;
@@ -1109,8 +1163,13 @@ const ShipPage = {
         if (!window.confirm('Transaktion löschen und Kassenstand korrigieren?')) return;
         const idx = parseInt(btn.dataset.idx);
         const tx  = ship.finances.transactions[idx];
-        if (tx) ship.finances.cashCredits -= tx.amount;
-        ship.finances.transactions.splice(idx, 1);
+        if (tx) {
+          ship.finances.cashCredits -= tx.amount;
+          const now = new Date().toISOString();
+          tx._deleted  = true;
+          tx.deletedAt = now;
+          tx.updatedAt = now;
+        }
         this._saveAndSync(char);
         App.renderCurrentPage();
       });
@@ -1134,6 +1193,7 @@ const ShipPage = {
         amount:      parseInt(document.getElementById('shipRecSign').value) * amount,
         interval:    document.getElementById('shipRecInterval').value,
         isActive:    true,
+        updatedAt:   new Date().toISOString(),
       });
       this._saveAndSync(char);
       hideModal('shipRecModal');
@@ -1145,7 +1205,9 @@ const ShipPage = {
       cb.addEventListener('change', () => {
         const ship = this._ship(char);
         if (!ship) return;
-        ship.finances.recurringItems[parseInt(cb.dataset.idx)].isActive = cb.checked;
+        const item = ship.finances.recurringItems[parseInt(cb.dataset.idx)];
+        item.isActive  = cb.checked;
+        item.updatedAt = new Date().toISOString();
         this._saveAndSync(char);
       });
     });
@@ -1156,7 +1218,13 @@ const ShipPage = {
         const ship = this._ship(char);
         if (!ship) return;
         if (!window.confirm('Posten löschen?')) return;
-        ship.finances.recurringItems.splice(parseInt(btn.dataset.idx), 1);
+        const item = ship.finances.recurringItems[parseInt(btn.dataset.idx)];
+        if (item) {
+          const now = new Date().toISOString();
+          item._deleted  = true;
+          item.deletedAt = now;
+          item.updatedAt = now;
+        }
         this._saveAndSync(char);
         App.renderCurrentPage();
       });
@@ -1189,6 +1257,7 @@ const ShipPage = {
         remainingAmount: total,
         monthlyPayment:  parseFloat(document.getElementById('shipDebtMonthly').value) || 0,
         notes:           document.getElementById('shipDebtNotes').value.trim(),
+        updatedAt:       new Date().toISOString(),
       });
       this._saveAndSync(char);
       hideModal('shipDebtModal');
@@ -1206,8 +1275,9 @@ const ShipPage = {
         if (!debt) return;
         const actual = Math.min(payment, debt.remainingAmount);
         debt.remainingAmount = Math.max(0, debt.remainingAmount - actual);
+        debt.updatedAt = new Date().toISOString();
         ship.finances.cashCredits -= actual;
-        ship.finances.transactions.push({ id: 'stx-' + Date.now(), ingameDate: '', description: `Rate: ${debt.name}`, amount: -actual, createdAt: Date.now() });
+        ship.finances.transactions.push({ id: 'stx-' + Date.now(), ingameDate: '', description: `Rate: ${debt.name}`, amount: -actual, createdAt: Date.now(), updatedAt: new Date().toISOString() });
         this._saveAndSync(char);
         App.renderCurrentPage();
       });
@@ -1219,7 +1289,13 @@ const ShipPage = {
         const ship = this._ship(char);
         if (!ship) return;
         if (!window.confirm('Schuld löschen?')) return;
-        ship.finances.debts.splice(parseInt(btn.dataset.idx), 1);
+        const debt = ship.finances.debts[parseInt(btn.dataset.idx)];
+        if (debt) {
+          const now = new Date().toISOString();
+          debt._deleted  = true;
+          debt.deletedAt = now;
+          debt.updatedAt = now;
+        }
         this._saveAndSync(char);
         App.renderCurrentPage();
       });

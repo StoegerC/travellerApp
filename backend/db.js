@@ -82,7 +82,7 @@ function transaction(fn) {
 
 // ── Charaktere ────────────────────────────────────────────────────────────
 
-const stmtGetChar    = db.prepare('SELECT data FROM characters WHERE id = ?');
+const stmtGetChar    = db.prepare('SELECT data, updated_at FROM characters WHERE id = ?');
 const stmtListChars  = db.prepare('SELECT id, name FROM characters ORDER BY name');
 const stmtUpsertChar = db.prepare(`
   INSERT INTO characters (id, name, data, updated_at) VALUES (@id, @name, @data, @updatedAt)
@@ -91,19 +91,34 @@ const stmtUpsertChar = db.prepare(`
 const stmtDeleteChar = db.prepare('DELETE FROM characters WHERE id = ?');
 const stmtDeleteCharFiles = db.prepare("DELETE FROM files WHERE owner_type = 'character' AND owner_id = ?");
 
+// Rückgabe { data, updatedAt } statt nur des Blobs, damit die Route den
+// X-Updated-At-Header setzen kann (Basis der optimistischen Sperre beim Push).
 function getCharacter(id) {
   const row = stmtGetChar.get(id);
-  return row ? row.data : null;
+  return row ? { data: row.data, updatedAt: row.updated_at } : null;
 }
 
 function listCharacters() {
   return stmtListChars.all();
 }
 
-function putCharacter(id, jsonBody) {
-  let name = '';
-  try { name = JSON.parse(jsonBody)?.metadata?.name || ''; } catch { /* keep empty */ }
-  stmtUpsertChar.run({ id, name, data: jsonBody, updatedAt: new Date().toISOString() });
+// expectedUpdatedAt: opaker String, wie ihn der Client zuletzt vom Server
+// gesehen hat (siehe Character._syncMeta.updatedAt im Frontend). Weicht er
+// vom aktuell gespeicherten Stand ab, wird NICHT geschrieben, sondern der
+// aktuelle Serverstand zum Mergen zurückgegeben — reiner String-Vergleich,
+// kein Datums-Parsing, der Server bleibt strukturunwissend.
+function putCharacter(id, jsonBody, expectedUpdatedAt = null) {
+  return transaction(() => {
+    const row = stmtGetChar.get(id);
+    if (row && expectedUpdatedAt != null && row.updated_at !== expectedUpdatedAt) {
+      return { ok: false, conflict: true, data: row.data, updatedAt: row.updated_at };
+    }
+    let name = '';
+    try { name = JSON.parse(jsonBody)?.metadata?.name || ''; } catch { /* keep empty */ }
+    const updatedAt = new Date().toISOString();
+    stmtUpsertChar.run({ id, name, data: jsonBody, updatedAt });
+    return { ok: true, updatedAt };
+  });
 }
 
 function deleteCharacter(id) {

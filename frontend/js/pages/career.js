@@ -65,7 +65,7 @@ const CareerPage = {
 
   // ── Block 1: Karriere-Timeline ────────────────────────────────────────────
   _block1(career) {
-    const terms = career.terms;
+    const terms = career.terms.filter(t => !t._deleted);
 
     let dots = '';
     terms.forEach((t, i) => {
@@ -125,7 +125,7 @@ const CareerPage = {
 
   // ── Block 2: Prägende Ereignisse ──────────────────────────────────────────
   _block2(career, character) {
-    const events = [...career.keyEvents].sort((a, b) =>
+    const events = [...career.keyEvents].filter(e => !e._deleted).sort((a, b) =>
       this._sortImportance
         ? (b.importance || 1) - (a.importance || 1)
         : 0
@@ -378,8 +378,13 @@ const CareerPage = {
     });
     document.querySelector('.cr-detail-del')?.addEventListener('click', function() {
       if (!window.confirm('Term löschen?')) return;
-      const idx = career.terms.findIndex(t => t.id === this.dataset.termid);
-      if (idx >= 0) career.terms.splice(idx, 1);
+      const t = career.terms.find(t => t.id === this.dataset.termid);
+      if (t) {
+        const now = new Date().toISOString();
+        t._deleted  = true;
+        t.deletedAt = now;
+        t.updatedAt = now;
+      }
       CareerPage._selectedTermId = null;
       Storage.saveCharacter(char);
       rerender();
@@ -411,11 +416,11 @@ const CareerPage = {
 
       const isNew = this._editTermId === null;
       if (isNew) {
-        career.terms.push({ id: this._uid(), createdAt: new Date().toISOString(), service, rank, events, skills, benefits, musteredOut: mo, musterOutReason: moR });
+        career.terms.push({ id: this._uid(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), service, rank, events, skills, benefits, musteredOut: mo, musterOutReason: moR });
         this._selectedTermId = career.terms[career.terms.length-1].id;
       } else {
         const t = career.terms.find(x => x.id === this._editTermId);
-        if (t) Object.assign(t, { service, rank, events, skills, benefits, musteredOut: mo, musterOutReason: moR });
+        if (t) Object.assign(t, { service, rank, events, skills, benefits, musteredOut: mo, musterOutReason: moR, updatedAt: new Date().toISOString() });
       }
       this._editTermId = undefined;
       Storage.saveCharacter(char);
@@ -436,7 +441,7 @@ const CareerPage = {
       btn.addEventListener('click', e => {
         e.stopPropagation();
         const ev = career.keyEvents.find(x => x.id === btn.dataset.eventid);
-        if (ev) { ev.importance = parseInt(btn.dataset.val); Storage.saveCharacter(char); rerender(); }
+        if (ev) { ev.importance = parseInt(btn.dataset.val); ev.updatedAt = new Date().toISOString(); Storage.saveCharacter(char); rerender(); }
       });
     });
 
@@ -459,7 +464,13 @@ const CareerPage = {
       btn.addEventListener('click', e => {
         e.stopPropagation();
         if (!window.confirm('Ereignis löschen?')) return;
-        career.keyEvents.splice(parseInt(btn.dataset.idx), 1);
+        const ev = career.keyEvents[parseInt(btn.dataset.idx)];
+        if (ev) {
+          const now = new Date().toISOString();
+          ev._deleted  = true;
+          ev.deletedAt = now;
+          ev.updatedAt = now;
+        }
         this._expandedEventId = null;
         Storage.saveCharacter(char);
         rerender();
@@ -503,6 +514,7 @@ const CareerPage = {
         importance:        this._modalImportance,
         linkedPersonIds:   linkedP,
         linkedLocationIds: linkedL,
+        updatedAt:         new Date().toISOString(),
       };
       if (this._editEventId === null) {
         career.keyEvents.push(entry);

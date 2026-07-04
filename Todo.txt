@@ -4,7 +4,10 @@ Abgeschlossene Features siehe CHANGELOG.md
 
 KAMPAGNE
 [ ] Entfernen propagiert via Sync (entferntes Gerät erkennt Ausschluss beim Poll)
-[ ] Soft-Delete (_deleted + deletedAt) für Sync-sichere Löschungen
+[ ] Soft-Delete/Item-Merge auch für Kampagnen-geteilte Notizen (aktuell weiterhin
+    last-write-wins auf dem ganzen Kampagnen-Dokument). Für persönliche Charakterdaten
+    (Notizen, Ausrüstung, Finanzen, Werdegang, Training, Schiffe) bereits erledigt,
+    siehe CHANGELOG.md.
 [ ] Schiffs-Sync ist last-write-wins auf dem ganzen Schiffs-Objekt (PUT /campaign/:id/ships
     ersetzt komplett). Wenn zwei Crew-Mitglieder gleichzeitig Transaktionen in die
     Schiffskasse (ship.finances) eintragen oder Statuswerte/Ausrüstung ändern, kann die

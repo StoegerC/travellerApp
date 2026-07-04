@@ -185,7 +185,7 @@ const AttributesPage = {
   },
 
   _renderTraining(character) {
-    const training = Array.isArray(character.training) ? character.training : [];
+    const training = (Array.isArray(character.training) ? character.training : []).filter(t => !t._deleted);
     const active = training.filter(t => !t.completed);
     const done   = training.filter(t =>  t.completed).reverse();
     const e = s => this._esc(s);
@@ -394,7 +394,8 @@ const AttributesPage = {
         startDate:     document.getElementById('tmStart').value.trim(),
         notes:         document.getElementById('tmNotes').value.trim(),
         completed:     false,
-        completedDate: ''
+        completedDate: '',
+        updatedAt:     new Date().toISOString(),
       });
       Storage.saveCharacter(char);
       App.renderCurrentPage();
@@ -434,11 +435,11 @@ const AttributesPage = {
       const updateSkill    = document.getElementById('tcUpdateSkill').checked;
 
       const entry = char.training.find(x => x.id === t.id);
-      if (entry) { entry.completed = true; entry.completedDate = completedDate; }
+      if (entry) { entry.completed = true; entry.completedDate = completedDate; entry.updatedAt = new Date().toISOString(); }
 
       if (updateSkill) {
         const skill = char.skills.find(s => s.name === t.skillName);
-        if (skill) skill.level = t.toLevel;
+        if (skill) { skill.level = t.toLevel; skill.updatedAt = new Date().toISOString(); }
       }
 
       Storage.saveCharacter(char);
@@ -477,7 +478,12 @@ const AttributesPage = {
     document.querySelectorAll('.skill-level').forEach(input => {
       const index = parseInt(input.getAttribute('data-index'));
       if (index >= 0 && index < window.currentCharacter.skills.length) {
-        window.currentCharacter.skills[index].level = parseInt(input.value) || 0;
+        const skill    = window.currentCharacter.skills[index];
+        const newLevel = parseInt(input.value) || 0;
+        if (skill.level !== newLevel) {
+          skill.level     = newLevel;
+          skill.updatedAt = new Date().toISOString();
+        }
       }
     });
 
@@ -540,6 +546,7 @@ const AttributesPage = {
             const curProg = t.progressWeeks ?? ((t.progressMonths || 0) * 4);
             t.progressWeeks = Math.max(0, curProg - 1);
           }
+          t.updatedAt = new Date().toISOString();
           Storage.saveCharacter(App.currentCharacter);
           App.renderCurrentPage();
         }
@@ -554,6 +561,7 @@ const AttributesPage = {
         if (!t || !t.sessions) return;
         const removed = t.sessions.splice(sidx, 1)[0];
         t.progressWeeks = Math.max(0, (t.progressWeeks ?? 0) - (removed?.weeks || 0));
+        t.updatedAt = new Date().toISOString();
         Storage.saveCharacter(App.currentCharacter);
         App.renderCurrentPage();
       });
@@ -581,6 +589,7 @@ const AttributesPage = {
           if (!t.sessions) t.sessions = [];
           t.sessions.push({ id: 'ts_' + Date.now(), weeks, from, to });
           t.progressWeeks = (t.progressWeeks ?? 0) + weeks;
+          t.updatedAt = new Date().toISOString();
           Storage.saveCharacter(App.currentCharacter);
         }
         closeDialog();
@@ -609,7 +618,13 @@ const AttributesPage = {
     document.querySelectorAll('.training-del-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (!confirm('Eintrag löschen?')) return;
-        App.currentCharacter.training = (App.currentCharacter.training || []).filter(t => t.id !== btn.dataset.id);
+        const t = (App.currentCharacter.training || []).find(x => x.id === btn.dataset.id);
+        if (t) {
+          const now = new Date().toISOString();
+          t._deleted  = true;
+          t.deletedAt = now;
+          t.updatedAt = now;
+        }
         Storage.saveCharacter(App.currentCharacter);
         App.renderCurrentPage();
       });

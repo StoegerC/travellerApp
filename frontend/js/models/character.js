@@ -24,7 +24,7 @@ class Character {
       intelligence: data.attributes?.intelligence || { value: 6, current: 6, dm: 0 },
       education: data.attributes?.education || { value: 6, current: 6, dm: 0 },
       socialStatus: data.attributes?.socialStatus || { value: 6, current: 6, dm: 0 },
-      psi: data.attributes?.psi || { value: -1, current: -1, dm: 0 }
+      psi: data.attributes?.psi || { value: -1, current: -1, dm: -2 }
     };
     // Skills: Sammlung aller Skills mit Levels
     const baseSkills = this.initializeSkills();
@@ -49,22 +49,45 @@ class Character {
     } else {
       this.skills = baseSkills;
     }
-    this.equipment = data.equipment || [];
+    this.skills = Character._withSyncFields(this.skills);
+    this.equipment = Character._withSyncFields(data.equipment || []);
     this.notes = Character._migrateNotes(data.notes);
+    for (const k of ['sessions', 'persons', 'locations', 'quests']) {
+      this.notes[k] = Character._withSyncFields(this.notes[k]);
+    }
     this.radiationDose = typeof data.radiationDose === 'number' ? data.radiationDose : 0;
     this.firstAidLog = Array.isArray(data.firstAidLog) ? data.firstAidLog : [];
     this.finances = {
       cashCredits:    typeof data.finances?.cashCredits === 'number' ? data.finances.cashCredits : 0,
       pension:        typeof data.finances?.pension     === 'number' ? data.finances.pension     : 0,
-      transactions:   Array.isArray(data.finances?.transactions)   ? data.finances.transactions   : [],
-      recurringItems: Array.isArray(data.finances?.recurringItems) ? data.finances.recurringItems : [],
-      debts:          Array.isArray(data.finances?.debts)          ? data.finances.debts          : [],
+      transactions:   Character._withSyncFields(data.finances?.transactions),
+      recurringItems: Character._withSyncFields(data.finances?.recurringItems),
+      debts:          Character._withSyncFields(data.finances?.debts),
     };
-    this.career    = Character._migrateCareer(data.career);
-    this.training  = Array.isArray(data.training) ? data.training : [];
+    this.career = Character._migrateCareer(data.career);
+    this.career.terms     = Character._withSyncFields(this.career.terms);
+    this.career.keyEvents = Character._withSyncFields(this.career.keyEvents);
+    this.training  = Character._withSyncFields(data.training);
     this.ships        = Array.isArray(data.ships) ? data.ships.map(s => Character._migrateShip(s)) : [];
     this.activeShipId = data.activeShipId || null;
     this.shipRoles    = (data.shipRoles && typeof data.shipRoles === 'object' && !Array.isArray(data.shipRoles)) ? data.shipRoles : {};
+    // Zuletzt vom Server gesehener Versions-Zeitstempel (opaker String, siehe
+    // backend/db.js updated_at) — für die optimistische Sperre beim Push.
+    this._syncMeta = { updatedAt: data._syncMeta?.updatedAt || null };
+  }
+
+  /**
+   * Ergänzt fehlende Merge-Felder (updatedAt/_deleted/deletedAt) auf einer
+   * Liste von Items mit stabiler id. Bestehende Werte bleiben unangetastet —
+   * nur zur Rückwärtskompatibilität für Altdaten ohne diese Felder.
+   */
+  static _withSyncFields(items) {
+    return (Array.isArray(items) ? items : []).map(item => ({
+      ...item,
+      updatedAt: item.updatedAt || new Date(0).toISOString(),
+      _deleted:  item._deleted === true,
+      deletedAt: item.deletedAt || null,
+    }));
   }
 
   /**
@@ -154,7 +177,7 @@ class Character {
       sensors:          raw.sensors      || '',
       fuelMax:          parseInt(raw.fuelMax)           || 0,
       fuelCurrent:      raw.fuelCurrent  != null ? parseInt(raw.fuelCurrent)      : (parseInt(raw.fuelMax) || 0),
-      weapons:          Array.isArray(raw.weapons)          ? raw.weapons          : [],
+      weapons:          Character._withSyncFields(raw.weapons),
       critHits:         (raw.critHits && typeof raw.critHits === 'object') ? raw.critHits : {},
       critNotes:        (raw.critNotes && typeof raw.critNotes === 'object') ? raw.critNotes : {},
       crewRoles:        (raw.crewRoles && typeof raw.crewRoles === 'object') ? raw.crewRoles : {},
@@ -162,11 +185,14 @@ class Character {
       operatingCost:    parseInt(raw.operatingCost)     || 0,
       notes:            raw.notes        || '',
       createdAt:        raw.createdAt    || new Date().toISOString(),
+      updatedAt:        raw.updatedAt    || new Date(0).toISOString(),
+      _deleted:         raw._deleted === true,
+      deletedAt:        raw.deletedAt    || null,
       finances: {
         cashCredits:    typeof raw.finances?.cashCredits === 'number' ? raw.finances.cashCredits : 0,
-        transactions:   Array.isArray(raw.finances?.transactions)     ? raw.finances.transactions   : [],
-        recurringItems: Array.isArray(raw.finances?.recurringItems)   ? raw.finances.recurringItems : [],
-        debts:          Array.isArray(raw.finances?.debts)            ? raw.finances.debts           : [],
+        transactions:   Character._withSyncFields(raw.finances?.transactions),
+        recurringItems: Character._withSyncFields(raw.finances?.recurringItems),
+        debts:          Character._withSyncFields(raw.finances?.debts),
       },
     };
   }
@@ -256,7 +282,12 @@ class Character {
    * Zu JSON konvertieren (für Storage)
    */
   toJSON() {
-    return {
+    // Deep-Clone noetig: verschachtelte Objekte/Arrays werden sonst per Referenz
+    // zurueckgegeben. Storage.saveCharacter() haelt eine Kopie im Cache fuer den
+    // Dirty-Check - mit Live-Referenzen wuerde jede spaetere Mutation (z.B.
+    // character.notes.sessions.push(...)) auch den gecachten "alten" Stand
+    // veraendern, wodurch der Vergleich nie einen Unterschied findet.
+    return JSON.parse(JSON.stringify({
       id:         this.id,
       system:     this.system,
       syncMode:   this.syncMode,
@@ -274,7 +305,8 @@ class Character {
       ships:        this.ships,
       activeShipId: this.activeShipId,
       shipRoles:    this.shipRoles,
-    };
+      _syncMeta:    this._syncMeta,
+    }));
   }
 
   /**
