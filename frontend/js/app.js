@@ -55,6 +55,7 @@ const App = {
     });
 
     // Globale Header-Buttons
+    document.getElementById('headerBrand')?.addEventListener('click', () => location.reload());
     document.getElementById('toggleEditBtn').addEventListener('click', () => this.toggleEditMode());
     document.getElementById('undoBtn').addEventListener('click', () => this.undo());
     document.getElementById('historyBtn').addEventListener('click', () => this.showVersionHistory());
