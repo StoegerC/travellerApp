@@ -53,6 +53,12 @@ const CloudSync = {
         method:  'PUT',
         headers,
         body:    JSON.stringify(character.toJSON()),
+        // Grosszuegig bemessen (nicht die 5s wie bei den leichten Aufrufen unten):
+        // Charaktere mit eingebetteten Base64-Bildern koennen mehrere MB gross
+        // sein, ein PUT darueber via Tailscale Funnel kann legitim langsam sein.
+        // Ohne Timeout blieb ein haengender Request fuer immer bei "syncing"
+        // stehen, ohne je einen Fehler zu zeigen (siehe Bugreport Solan Hellgard).
+        signal: AbortSignal.timeout(30000),
       });
       if (res.status === 409) {
         const body = await res.json();
@@ -70,6 +76,7 @@ const CloudSync = {
     try {
       const res = await fetch(`${this.getWorkerUrl()}/char/${charId}`, {
         headers: this._headers(),
+        signal:  AbortSignal.timeout(30000), // siehe pushCharacter() fuer Begruendung
       });
       if (res.status === 404) return { ok: false, notFound: true };
       if (!res.ok)            return { ok: false, status: res.status };
