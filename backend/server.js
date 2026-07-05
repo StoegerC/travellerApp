@@ -7,6 +7,7 @@ const path = require('path');
 const { checkAuth } = require('./auth');
 const characterRoutes = require('./routes/characters');
 const campaignRoutes = require('./routes/campaigns');
+const fileRoutes = require('./routes/files');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -36,10 +37,16 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/index.html'));
 });
 
+// GET /files/:id bleibt oeffentlich wie die statischen Assets: <img src="...">
+// kann keinen Authorization-Header mitschicken. Die ID ist eine lange
+// Zufallszeichenkette (nicht erratbar) - Upload/Loeschen bleiben unten geschuetzt.
+app.use(fileRoutes.publicRouter);
+
 // Ab hier: Bearer-Auth Pflicht (alle Sync-API-Routen)
 app.use(checkAuth);
 app.use(characterRoutes);
 app.use(campaignRoutes);
+app.use(fileRoutes.protectedRouter);
 
 // Error Handler
 app.use((err, req, res, next) => {

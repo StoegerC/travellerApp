@@ -164,6 +164,7 @@ class Character {
       owner:            raw.owner        || '',
       isCampaign:       raw.isCampaign   !== false,
       image:            raw.image        || null,
+      imageFileId:      raw.imageFileId  || null,
       hullMax:          parseInt(raw.hullMax)           || 0,
       hullCurrent:      raw.hullCurrent  != null ? parseInt(raw.hullCurrent)      : (parseInt(raw.hullMax) || 0),
       structureMax:     parseInt(raw.structureMax)      || 0,
