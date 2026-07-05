@@ -12,6 +12,11 @@
 const path = require('path');
 const fs = require('fs');
 const { DatabaseSync } = require('node:sqlite');
+// Wiederverwendung des clientseitigen Merge-Moduls (mergeArray/_mergeShips/
+// purgeTombstones) fuer den Kampagnen-Merge weiter unten - die Datei ist
+// bewusst plain-JS ohne Browser-Globals gehalten, siehe deren eigener
+// module.exports-Guard.
+const SyncMerge = require('../frontend/js/sync-merge.js');
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'traveller.db');
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
@@ -219,9 +224,42 @@ function deleteCampaign(id) {
   });
 }
 
+// Atomarer Merge statt last-write-wins: laeuft in derselben Transaktion wie
+// updateCampaign() selbst, dadurch gibt es kein Lesen-dann-Schreiben-Race
+// zwischen zwei Spielern mehr (siehe Plan "Kampagnen-Sync: Server-seitiger
+// atomarer Merge"). entries = { sessions, persons, locations, quests }, je
+// nur die eigenen (isCampaign-geflaggten) Eintraege des pushenden Charakters.
+function updateCampaignNotes(id, entries) {
+  return updateCampaign(id, campaign => {
+    campaign.notes = campaign.notes || { sessions: [], persons: [], locations: [], quests: [] };
+    for (const tab of ['sessions', 'persons', 'locations', 'quests']) {
+      campaign.notes[tab] = SyncMerge._mergeArrayField(entries[tab] || [], campaign.notes[tab] || []);
+    }
+  });
+}
+
+// ships = die eigenen (isCampaign-geflaggten) Schiffe des pushenden Charakters.
+// crewRoles-Sonderbehandlung zuerst (fremde Eintraege behalten, nur den
+// eigenen ueberschreiben), weil SyncMerge._mergeShip crewRoles sonst wie ein
+// gewoehnliches Skalarfeld behandelt und komplett durch die lokale Version
+// ersetzen wuerde - identisch zur bisherigen Frontend-Logik, nur jetzt
+// innerhalb der Transaktion statt in einem separaten Push-Schritt.
+function updateCampaignShips(id, charId, ships) {
+  return updateCampaign(id, campaign => {
+    campaign.ships = campaign.ships || [];
+    const myShips = ships.map(({ image, ...rest }) => rest).map(s => {
+      const remote = campaign.ships.find(r => r.id === s.id);
+      if (!remote?.crewRoles) return s;
+      return { ...s, crewRoles: { ...remote.crewRoles, ...(s.crewRoles?.[charId] ? { [charId]: s.crewRoles[charId] } : {}) } };
+    });
+    campaign.ships = SyncMerge._mergeShips(myShips, campaign.ships);
+  });
+}
+
 module.exports = {
   db,
   getCharacter, listCharacters, putCharacter, deleteCharacter,
   getCampaign, listCampaigns, campaignExists, insertCampaign, updateCampaign, deleteCampaign,
+  updateCampaignNotes, updateCampaignShips,
   upsertCampaign,
 };

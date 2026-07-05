@@ -14,7 +14,7 @@ const App = {
   _POLL_INTERVAL: 15000,
   _campaignData: null,
   _campaignTimer: null,
-  _CAMPAIGN_POLL: 30000,
+  _CAMPAIGN_POLL: 15000,
 
   pages: {
     metadata:   MetadataPage,
@@ -659,6 +659,7 @@ const App = {
         indicator.classList.remove('ptr-ready');
         textEl.textContent = 'Aktualisiere …';
         await this._syncCloud();
+        if (this.currentCharacter?.campaignId) await this._syncCampaign();
       }
       reset();
     }, { passive: true });
@@ -838,47 +839,35 @@ const App = {
     });
   },
 
+  // Push der eigenen Kampagnen-Eintraege. Der Server merged sie atomar gegen
+  // den aktuellen Stand (siehe backend/db.js updateCampaignNotes) - kein
+  // GET-vor-PUT mehr noetig, das war die Race-Luecke zwischen zwei Spielern.
   async _syncMyCampaignEntries() {
     const char = this.currentCharacter;
     if (!char?.campaignId || char.syncMode !== 'cloud' || !CloudSync.isConfigured()) return;
-    const notes  = char.notes || {};
-    const result = await CampaignSync.getCampaign(char.campaignId);
-    if (!result.ok) return;
-    const cur    = result.data.notes || { sessions: [], persons: [], locations: [], quests: [] };
-    const merged = {};
+    const notes   = char.notes || {};
+    const entries = {};
     for (const tab of ['sessions', 'persons', 'locations', 'quests']) {
-      const myEntries = (notes[tab] || []).filter(e => e.isCampaign);
-      const myIds     = new Set(myEntries.map(e => e.id));
-      merged[tab]     = [...(cur[tab] || []).filter(e => !myIds.has(e.id)), ...myEntries];
+      entries[tab] = (notes[tab] || []).filter(e => e.isCampaign);
     }
-    await CampaignSync.updateNotes(char.campaignId, merged);
-    if (this._campaignData) this._campaignData.notes = merged;
+    const result = await CampaignSync.updateNotes(char.campaignId, entries);
+    if (result.ok && this._campaignData) this._campaignData.notes = result.data;
   },
 
+  // Push der eigenen Kampagnen-Schiffe. crewRoles-Merge (fremde Eintraege
+  // behalten, nur den eigenen ueberschreiben) und Waffen/Finanzen-Merge
+  // laufen jetzt serverseitig in derselben Transaktion (siehe
+  // backend/db.js updateCampaignShips).
   async _syncMyCampaignShips() {
     const char = this.currentCharacter;
     if (!char?.campaignId || char.syncMode !== 'cloud' || !CloudSync.isConfigured()) return;
-    const result = await CampaignSync.getCampaign(char.campaignId);
+    const myShips = (char.ships || []).filter(s => s.isCampaign);
+    const result  = await CampaignSync.updateShips(char.campaignId, char.id, myShips);
     if (!result.ok) return;
-    const cur = Array.isArray(result.data.ships) ? result.data.ships : [];
-
-    // crewRoles gezielt zusammenführen: fremde Einträge (andere charId) vom Server übernehmen,
-    // nur den eigenen Eintrag aus der lokalen Version durchsetzen — verhindert, dass gleichzeitige
-    // Rollenwahl anderer Crew-Mitglieder beim eigenen Push überschrieben wird.
-    const myShips = (char.ships || []).filter(s => s.isCampaign).map(s => {
-      const remote = cur.find(c => c.id === s.id);
-      if (!remote?.crewRoles) return s;
-      const crewRoles = { ...remote.crewRoles, ...(s.crewRoles?.[char.id] ? { [char.id]: s.crewRoles[char.id] } : {}) };
-      return { ...s, crewRoles };
-    });
-
-    const myIds  = new Set(myShips.map(s => s.id));
-    const merged = [...cur.filter(s => !myIds.has(s.id)), ...myShips];
-    await CampaignSync.updateShips(char.campaignId, merged);
-    if (this._campaignData) this._campaignData.ships = merged;
+    if (this._campaignData) this._campaignData.ships = result.data;
 
     // Gemergte crewRoles auch lokal übernehmen, statt auf den nächsten Poll zu warten
-    myShips.forEach(s => {
+    result.data.forEach(s => {
       const local = char.ships.find(cs => cs.id === s.id);
       if (local) local.crewRoles = s.crewRoles;
     });

@@ -48,7 +48,7 @@ const NotesPage = {
     const campNotes = App._campaignData.notes || {};
     const localIds  = new Set((char.notes?.[tab] || []).map(e => e.id));
     return (campNotes[tab] || [])
-      .filter(e => !localIds.has(e.id))
+      .filter(e => !localIds.has(e.id) && !e._deleted)
       .map(e => ({ ...e, _fromCampaign: true }));
   },
 
