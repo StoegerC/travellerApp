@@ -138,8 +138,9 @@ const ShipPage = {
 
   _renderInfo(ship, character, ships) {
     const selector = this._renderSelector(character, ships, ship);
-    const imgHtml = ship.image
-      ? `<img src="${ship.image}" class="ship-portrait" alt="Schiff">`
+    const shipImgSrc = ship.imageFileId ? FileSync.getUrl(ship.imageFileId) : ship.image;
+    const imgHtml = shipImgSrc
+      ? `<img src="${shipImgSrc}" class="ship-portrait" alt="Schiff">`
       : `<div class="ship-portrait-placeholder">🚀</div>`;
 
     if (App.editMode) {
@@ -151,7 +152,7 @@ const ShipPage = {
               <span class="ship-img-btn">📷 Bild wählen</span>
             </label>
             <input type="file" id="shipImgInput" accept="image/*" style="display:none">
-            ${ship.image ? '<button id="shipImgDelBtn" class="ship-img-del">✕ Bild löschen</button>' : ''}
+            ${shipImgSrc ? '<button id="shipImgDelBtn" class="ship-img-del">✕ Bild löschen</button>' : ''}
           </div>
           <div class="ship-info-fields">
             <div class="ship-field-group">
@@ -961,26 +962,30 @@ const ShipPage = {
       });
     });
 
-    // Bild hochladen
-    document.getElementById('shipImgInput')?.addEventListener('change', e => {
+    // Bild hochladen (echte Datei, kein Base64 mehr im Charakter-JSON)
+    document.getElementById('shipImgInput')?.addEventListener('change', async e => {
       const file = e.target.files[0];
+      e.target.value = '';
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = ev => {
-        const ship = this._ship(char);
-        if (!ship) return;
-        ship.image = ev.target.result;
-        this._saveAndSync(char);
-        App.renderCurrentPage();
-      };
-      reader.readAsDataURL(file);
+      const ship = this._ship(char);
+      if (!ship) return;
+      const result = await FileSync.upload(file, { ownerType: 'character', ownerId: char.id, field: 'shipImage', refId: ship.id });
+      if (!result.ok) { App.showStatus('Bild-Upload fehlgeschlagen', 'error'); return; }
+      const oldFileId = ship.imageFileId;
+      ship.image = null;
+      ship.imageFileId = result.data.id;
+      this._saveAndSync(char);
+      if (oldFileId) FileSync.remove(oldFileId);
+      App.renderCurrentPage();
     });
 
     // Bild löschen
     document.getElementById('shipImgDelBtn')?.addEventListener('click', () => {
       const ship = this._ship(char);
       if (!ship) return;
+      if (ship.imageFileId) FileSync.remove(ship.imageFileId);
       ship.image = null;
+      ship.imageFileId = null;
       this._saveAndSync(char);
       App.renderCurrentPage();
     });

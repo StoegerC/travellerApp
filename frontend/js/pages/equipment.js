@@ -680,7 +680,7 @@ const EquipmentPage = {
         ${App.editMode ? `<label class="traits-label">Bild</label>
           <input type="file" id="traitsImg" accept="image/*">` : ''}
         <div id="traitsImgPreview" class="traits-img-preview">
-          ${traits.image ? `<img src="${traits.image}">` : ''}
+          ${(traits.imageFileId || traits.image) ? `<img src="${traits.imageFileId ? FileSync.getUrl(traits.imageFileId) : traits.image}">` : ''}
         </div>
         ${App.editMode
           ? `<label class="traits-label">Beschreibung / Merkmale</label>
@@ -702,15 +702,17 @@ const EquipmentPage = {
     modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 
     if (App.editMode) {
-      document.getElementById('traitsImg')?.addEventListener('change', e => {
+      document.getElementById('traitsImg')?.addEventListener('change', async e => {
         const file = e.target.files[0];
+        e.target.value = '';
         if (!file) return;
-        const reader = new FileReader();
-        reader.onload = ev => {
-          traits.image = ev.target.result;
-          document.getElementById('traitsImgPreview').innerHTML = `<img src="${ev.target.result}">`;
-        };
-        reader.readAsDataURL(file);
+        const result = await FileSync.upload(file, { ownerType: 'character', ownerId: window.currentCharacter.id, field: 'equipmentImage', refId: item.id });
+        if (!result.ok) { App.showStatus('Bild-Upload fehlgeschlagen', 'error'); return; }
+        const oldFileId = traits.imageFileId;
+        traits.image = null;
+        traits.imageFileId = result.data.id;
+        document.getElementById('traitsImgPreview').innerHTML = `<img src="${FileSync.getUrl(traits.imageFileId)}">`;
+        if (oldFileId) FileSync.remove(oldFileId);
       });
 
       document.getElementById('traitsSaveBtn').addEventListener('click', () => {

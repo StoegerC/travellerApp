@@ -21,6 +21,11 @@ const SyncMerge = require('../frontend/js/sync-merge.js');
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'traveller.db');
 fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 
+// Phase 2: hochgeladene Bilder liegen hier unter ihrer files.id als Dateiname
+// (keine Extension noetig, mimetype kommt beim Ausliefern aus der DB-Zeile).
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
+fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+
 const db = new DatabaseSync(DB_PATH);
 db.exec('PRAGMA journal_mode = WAL');
 db.exec('PRAGMA foreign_keys = ON');
@@ -127,6 +132,7 @@ function putCharacter(id, jsonBody, expectedUpdatedAt = null) {
 }
 
 function deleteCharacter(id) {
+  _unlinkFilesForOwner('character', id);
   transaction(() => {
     stmtDeleteChar.run(id);
     stmtDeleteCharFiles.run(id);
@@ -218,6 +224,7 @@ function updateCampaign(id, mutateFn) {
 }
 
 function deleteCampaign(id) {
+  _unlinkFilesForOwner('campaign', id);
   transaction(() => {
     stmtDeleteCampaign.run(id);
     stmtDeleteCampaignFiles.run(id);
@@ -256,10 +263,61 @@ function updateCampaignShips(id, charId, ships) {
   });
 }
 
+// ── Dateien (Phase 2) ───────────────────────────────────────────────────────
+
+const stmtInsertFile = db.prepare(`
+  INSERT INTO files (id, owner_type, owner_id, field, ref_id, filename, mimetype, size, uploader, uploaded_at)
+  VALUES (@id, @ownerType, @ownerId, @field, @refId, @filename, @mimetype, @size, @uploader, @uploadedAt)
+`);
+const stmtGetFile          = db.prepare('SELECT * FROM files WHERE id = ?');
+const stmtDeleteFile       = db.prepare('DELETE FROM files WHERE id = ?');
+const stmtListFilesByOwner = db.prepare('SELECT * FROM files WHERE owner_type = ? AND owner_id = ?');
+
+function insertFile({ id, ownerType, ownerId, field, refId, filename, mimetype, size, uploader }) {
+  const uploadedAt = new Date().toISOString();
+  stmtInsertFile.run({
+    id, ownerType, ownerId,
+    field: field || null, refId: refId || null,
+    filename, mimetype, size,
+    uploader: uploader || null,
+    uploadedAt,
+  });
+  return { id, ownerType, ownerId, field, refId, filename, mimetype, size, uploadedAt };
+}
+
+function getFile(id) {
+  const row = stmtGetFile.get(id);
+  if (!row) return null;
+  return { id: row.id, ownerType: row.owner_type, ownerId: row.owner_id, field: row.field,
+           refId: row.ref_id, filename: row.filename, mimetype: row.mimetype, size: row.size,
+           uploadedAt: row.uploaded_at };
+}
+
+function deleteFile(id) {
+  stmtDeleteFile.run(id);
+}
+
+function listFilesByOwner(ownerType, ownerId) {
+  return stmtListFilesByOwner.all(ownerType, ownerId).map(row => ({ id: row.id }));
+}
+
+// Loescht die tatsaechlichen Dateien von der Platte fuer alle files-Zeilen eines
+// Owners - die DB-Zeilen selbst werden weiterhin per stmtDeleteCharFiles/
+// stmtDeleteCampaignFiles in der aufrufenden delete*()-Funktion entfernt. Ohne
+// diesen Schritt blieben die Dateien seit Anlage der files-Tabelle in Phase 1
+// verwaist auf der Platte liegen (nur die DB-Zeile wurde geloescht).
+function _unlinkFilesForOwner(ownerType, ownerId) {
+  for (const f of listFilesByOwner(ownerType, ownerId)) {
+    fs.unlink(path.join(UPLOAD_DIR, f.id), () => {}); // best effort, Datei evtl. schon weg
+  }
+}
+
 module.exports = {
   db,
+  UPLOAD_DIR,
   getCharacter, listCharacters, putCharacter, deleteCharacter,
   getCampaign, listCampaigns, campaignExists, insertCampaign, updateCampaign, deleteCampaign,
   updateCampaignNotes, updateCampaignShips,
   upsertCampaign,
+  insertFile, getFile, deleteFile, listFilesByOwner,
 };

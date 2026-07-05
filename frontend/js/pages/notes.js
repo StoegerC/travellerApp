@@ -16,6 +16,13 @@ const NotesPage = {
   _notesDir:        { sessions: 'desc', persons: 'asc', locations: 'asc', quests: 'desc' },
   _questFilterVal:  'active',
 
+  // Wie in Metadata._portraitSrc: bevorzugt die hochgeladene Datei, faellt auf
+  // ein altes eingebettetes Base64-Bild zurueck (Altbestand bleibt sichtbar).
+  _personImgSrc(p) {
+    if (p.imageFileId) return FileSync.getUrl(p.imageFileId);
+    return p.image || null;
+  },
+
   // ─────────────────────────────── Datenzugriff ────────────────────────────
   // Roh-Zugriff (inkl. Tombstones) – nötig für save(), damit gelöschte
   // Einträge beim Zurückschreiben nicht aus character.notes verschwinden.
@@ -431,8 +438,8 @@ const NotesPage = {
               ${p.isFavorite ? '⭐' : '☆'}
             </button>
             <div class="pcard-img">
-              ${p.image
-                ? `<img src="${p.image}" class="pcard-avatar-img">`
+              ${this._personImgSrc(p)
+                ? `<img src="${this._personImgSrc(p)}" class="pcard-avatar-img">`
                 : `<span class="pcard-avatar-ph">👤</span>`}
             </div>
             <div class="pcard-body">
@@ -470,7 +477,8 @@ const NotesPage = {
       : data.persons.find(x => String(x.id) === String(id));
     if (!p) return '<p class="notes-empty">Person nicht gefunden.</p>';
 
-    window._personCurrentImage = undefined; // undefined = unverändert; null = explizit entfernt; string = neu gesetzt
+    window._personCurrentImage       = undefined; // Altbestand-Bridge: undefined = unveraendert; null = entfernt; string = neu gesetzt (Base64, Fallback wenn Upload fehlschlaegt)
+    window._personCurrentImageFileId = undefined; // gleiches Muster fuer die hochgeladene Datei-ID (Phase 2)
 
     const linkedSessions = data.sessions.filter(s => s.tags?.persons?.includes(p.id));
 
@@ -486,13 +494,13 @@ const NotesPage = {
           <div class="person-edit-layout">
             <div class="person-edit-image">
               <div id="personImgPreview" class="person-img-wrap">
-                ${p.image
-                  ? `<img src="${p.image}" class="person-img-edit">`
+                ${this._personImgSrc(p)
+                  ? `<img src="${this._personImgSrc(p)}" class="person-img-edit">`
                   : `<div class="person-img-placeholder">👤</div>`}
               </div>
               <label for="personImgUpload" class="person-img-upload-btn">Bild wählen</label>
               <input type="file" id="personImgUpload" accept="image/*" style="display:none;">
-              ${p.image ? `<button id="personImgRemove" class="person-img-remove-btn">Bild entfernen</button>` : ''}
+              ${this._personImgSrc(p) ? `<button id="personImgRemove" class="person-img-remove-btn">Bild entfernen</button>` : ''}
             </div>
             <div class="person-edit-fields">
               <div class="form-group"><label>Name</label>
@@ -574,7 +582,7 @@ const NotesPage = {
       html += `
         <div class="person-view">
           <div class="person-view-header">
-            ${p.image ? `<img src="${p.image}" class="person-img-view">` : ''}
+            ${this._personImgSrc(p) ? `<img src="${this._personImgSrc(p)}" class="person-img-view">` : ''}
             <div class="person-view-meta">
               <h3>${this._esc(p.name || '(Kein Name)')}</h3>
               <div class="person-view-badges">
@@ -1226,7 +1234,8 @@ const NotesPage = {
         status:      document.getElementById('personStatus')?.value || 'alive',
         relation:    document.getElementById('personRelation')?.value || 'neutral',
         locationId:  document.getElementById('personLocation')?.value || null,
-        image:       window._personCurrentImage !== undefined ? window._personCurrentImage : (existing?.image ?? null),
+        image:       window._personCurrentImage       !== undefined ? window._personCurrentImage       : (existing?.image ?? null),
+        imageFileId: window._personCurrentImageFileId !== undefined ? window._personCurrentImageFileId : (existing?.imageFileId ?? null),
         isFavorite:  existing?.isFavorite || false,
         isCampaign:  !!(document.getElementById('entryCampaignToggle')?.checked ?? existing?.isCampaign),
         createdAt:   existing?.createdAt || createdAt,
@@ -1248,6 +1257,9 @@ const NotesPage = {
       } else {
         const idx = data.persons.findIndex(p => String(p.id) === String(id));
         if (idx >= 0) data.persons[idx] = entry;
+      }
+      if (existing?.imageFileId && existing.imageFileId !== entry.imageFileId) {
+        FileSync.remove(existing.imageFileId);
       }
 
     } else if (this._activeTab === 'locations') {
@@ -1486,9 +1498,11 @@ const NotesPage = {
       App.renderCurrentPage();
     });
 
-    // Person-Bild Upload (komprimiert auf max 320×320, JPEG 0.75)
+    // Person-Bild Upload (komprimiert auf max 320×320, JPEG 0.75, dann als
+    // echte Datei hochgeladen statt als Base64 im Charakter-JSON eingebettet)
     document.getElementById('personImgUpload')?.addEventListener('change', e => {
       const file = e.target.files[0];
+      e.target.value = '';
       if (!file) return;
       if (file.size > 4 * 1024 * 1024) { alert('Bild zu groß! Maximum 4 MB'); return; }
       const reader = new FileReader();
@@ -1501,20 +1515,25 @@ const NotesPage = {
           canvas.width  = Math.round(img.width  * scale);
           canvas.height = Math.round(img.height * scale);
           canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-          const compressed = canvas.toDataURL('image/jpeg', 0.75);
-          window._personCurrentImage = compressed;
-          const preview = document.getElementById('personImgPreview');
-          if (preview) preview.innerHTML = `<img src="${compressed}" class="person-img-edit">`;
-          const rmBtn = document.getElementById('personImgRemove');
-          if (!rmBtn) {
-            const uploadBtn = document.querySelector('.person-img-upload-btn');
-            const btn = document.createElement('button');
-            btn.id = 'personImgRemove';
-            btn.className = 'person-img-remove-btn';
-            btn.textContent = 'Bild entfernen';
-            uploadBtn?.insertAdjacentElement('afterend', btn);
-            btn.addEventListener('click', () => _removePersonImg(preview, btn));
-          }
+          canvas.toBlob(async blob => {
+            const char   = App.currentCharacter;
+            const result = await FileSync.upload(blob, { ownerType: 'character', ownerId: char.id, field: 'personImage' });
+            if (!result.ok) { App.showStatus('Bild-Upload fehlgeschlagen', 'error'); return; }
+            window._personCurrentImage       = null;
+            window._personCurrentImageFileId = result.data.id;
+            const preview = document.getElementById('personImgPreview');
+            if (preview) preview.innerHTML = `<img src="${FileSync.getUrl(result.data.id)}" class="person-img-edit">`;
+            const rmBtn = document.getElementById('personImgRemove');
+            if (!rmBtn) {
+              const uploadBtn = document.querySelector('.person-img-upload-btn');
+              const btn = document.createElement('button');
+              btn.id = 'personImgRemove';
+              btn.className = 'person-img-remove-btn';
+              btn.textContent = 'Bild entfernen';
+              uploadBtn?.insertAdjacentElement('afterend', btn);
+              btn.addEventListener('click', () => _removePersonImg(preview, btn));
+            }
+          }, 'image/jpeg', 0.75);
         };
         img.src = ev.target.result;
       };
@@ -1522,7 +1541,8 @@ const NotesPage = {
     });
 
     const _removePersonImg = (preview, btn) => {
-      window._personCurrentImage = null;
+      window._personCurrentImage       = null;
+      window._personCurrentImageFileId = null;
       if (preview) preview.innerHTML = '<div class="person-img-placeholder">👤</div>';
       btn?.remove();
     };

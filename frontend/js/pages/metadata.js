@@ -11,11 +11,18 @@ const MetadataPage = {
       .replace(/"/g, '&quot;');
   },
 
+  // Eintraege sind entweder ein voller data:image/...-String (Altbestand) oder
+  // eine kurze hochgeladene Datei-ID (Phase 2, siehe frontend/js/filesync.js).
+  _portraitSrc(entry) {
+    if (!entry) return null;
+    return entry.startsWith('data:') ? entry : FileSync.getUrl(entry);
+  },
+
   render(character) {
     const meta       = character.metadata;
     const portraits  = meta.portraits || [];
     const idx        = Math.min(meta.portraitIndex || 0, Math.max(0, portraits.length - 1));
-    const current    = portraits[idx] || null;
+    const current    = this._portraitSrc(portraits[idx]);
     const total      = portraits.length;
 
     const characters = Storage.listCharacters();
@@ -203,7 +210,8 @@ const MetadataPage = {
       const meta = App.currentCharacter.metadata;
       if (!meta.portraits.length) return;
       if (!confirm('Dieses Portrait entfernen?')) return;
-      meta.portraits.splice(meta.portraitIndex, 1);
+      const [removed] = meta.portraits.splice(meta.portraitIndex, 1);
+      if (removed && !removed.startsWith('data:')) FileSync.remove(removed);
       meta.portraitIndex = Math.min(meta.portraitIndex, Math.max(0, meta.portraits.length - 1));
       App._doSave();
       App.renderCurrentPage();
@@ -226,13 +234,16 @@ const MetadataPage = {
             canvas.width  = Math.round(img.width  * scale);
             canvas.height = Math.round(img.height * scale);
             canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-            const compressed = canvas.toDataURL('image/jpeg', 0.8);
-
-            const meta = App.currentCharacter.metadata;
-            meta.portraits.push(compressed);
-            meta.portraitIndex = meta.portraits.length - 1;
-            App._doSave();
-            App.renderCurrentPage();
+            canvas.toBlob(async blob => {
+              const char   = App.currentCharacter;
+              const result = await FileSync.upload(blob, { ownerType: 'character', ownerId: char.id, field: 'portrait' });
+              if (!result.ok) { App.showStatus('Bild-Upload fehlgeschlagen', 'error'); return; }
+              const meta = char.metadata;
+              meta.portraits.push(result.data.id);
+              meta.portraitIndex = meta.portraits.length - 1;
+              App._doSave();
+              App.renderCurrentPage();
+            }, 'image/jpeg', 0.8);
           };
           img.src = event.target.result;
         };
