@@ -1,9 +1,14 @@
 /**
- * CloudSync – Kommunikation mit dem Cloudflare Worker
+ * CloudSync – Kommunikation mit dem selbst gehosteten Backend.
  *
  * Konfiguration wird einmalig in localStorage gespeichert:
- *   traveller_worker_url  – z.B. https://traveller-sync.name.workers.dev
- *   traveller_cloud_key   – Bearer-Token
+ *   traveller_worker_url  – z.B. https://macbook.tailXXXX.ts.net
+ *   traveller_cloud_key   – Bearer-Token. Seit Phase 3 (Nutzerverwaltung) ist
+ *     das kein manuell eingetragener geteilter Schlüssel mehr, sondern der
+ *     Session-Token aus AuthAPI.login() (frontend/js/auth.js) - Name/Storage-
+ *     Key bewusst unveraendert gelassen, damit cloudsync.js/campaign.js/
+ *     filesync.js keine Anpassung brauchen (sie senden ohnehin nur
+ *     `Authorization: Bearer <Wert>`, unabhaengig davon wie er zustande kam).
  */
 const CloudSync = {
 
@@ -23,17 +28,18 @@ const CloudSync = {
 
   // ── Verbindungstest ────────────────────────────────────────────────────────
 
-  async test(workerUrl, apiKey) {
+  // Phase 3: prüft nur noch Erreichbarkeit des Servers (öffentlicher
+  // Health-Check, kein Schlüssel/Login nötig) - die eigentliche
+  // Authentifizierung passiert danach über AuthAPI.login() (frontend/js/auth.js).
+  async test(workerUrl) {
     if (!/^https?:\/\/.+/.test(workerUrl)) {
       return { ok: false, error: 'URL muss mit https:// beginnen' };
     }
     try {
-      const res = await fetch(`${workerUrl.replace(/\/$/, '')}/char/__ping__`, {
-        headers: { 'Authorization': `Bearer ${apiKey}` },
+      const res = await fetch(`${workerUrl.replace(/\/$/, '')}/health`, {
         signal: AbortSignal.timeout(5000),
       });
-      // 404 = Worker erreichbar + Auth OK (Charakter __ping__ existiert nicht)
-      return { ok: res.status === 404 || res.ok, status: res.status };
+      return { ok: res.ok, status: res.status };
     } catch (e) {
       return { ok: false, error: e.message };
     }

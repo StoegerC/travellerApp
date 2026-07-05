@@ -11,6 +11,7 @@
  */
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const { DatabaseSync } = require('node:sqlite');
 // Wiederverwendung des clientseitigen Merge-Moduls (mergeArray/_mergeShips/
 // purgeTombstones) fuer den Kampagnen-Merge weiter unten - die Datei ist
@@ -67,6 +68,28 @@ db.exec(`
     uploaded_at TEXT NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_files_owner ON files (owner_type, owner_id);
+
+  -- Nutzerverwaltung (Phase 3). roles: JSON-Array additiver Zusatzrechte
+  -- ("gm", "admin") auf einer gemeinsamen Basis - jeder eingeloggte Nutzer
+  -- darf eigene Charaktere/Kampagnen anlegen, unabhaengig von roles.
+  -- password_hash NULL = noch kein Passwort gesetzt (Erst-Login/Reset-Fall).
+  CREATE TABLE IF NOT EXISTS users (
+    id            TEXT PRIMARY KEY,
+    email         TEXT UNIQUE NOT NULL,
+    password_hash TEXT,
+    roles         TEXT NOT NULL DEFAULT '[]',
+    created_at    TEXT NOT NULL
+  );
+
+  -- Mehrere gleichzeitige Sessions pro Nutzer (mehrere Geraete), im Gegensatz
+  -- zu JWT jederzeit serverseitig widerrufbar (z.B. bei Passwort-Reset).
+  CREATE TABLE IF NOT EXISTS sessions (
+    token        TEXT PRIMARY KEY,
+    user_id      TEXT NOT NULL,
+    created_at   TEXT NOT NULL,
+    last_seen_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions (user_id);
 `);
 
 // Nachrüst-Migration: falls eine ältere DB-Datei ohne owner_id existiert
@@ -92,24 +115,29 @@ function transaction(fn) {
 
 // ── Charaktere ────────────────────────────────────────────────────────────
 
-const stmtGetChar    = db.prepare('SELECT data, updated_at FROM characters WHERE id = ?');
-const stmtListChars  = db.prepare('SELECT id, name FROM characters ORDER BY name');
+const stmtGetChar    = db.prepare('SELECT data, updated_at, owner_id FROM characters WHERE id = ?');
+const stmtListChars  = db.prepare('SELECT id, name, owner_id FROM characters ORDER BY name');
 const stmtUpsertChar = db.prepare(`
-  INSERT INTO characters (id, name, data, updated_at) VALUES (@id, @name, @data, @updatedAt)
+  INSERT INTO characters (id, name, data, updated_at, owner_id) VALUES (@id, @name, @data, @updatedAt, @ownerId)
   ON CONFLICT(id) DO UPDATE SET name = @name, data = @data, updated_at = @updatedAt
 `);
 const stmtDeleteChar = db.prepare('DELETE FROM characters WHERE id = ?');
 const stmtDeleteCharFiles = db.prepare("DELETE FROM files WHERE owner_type = 'character' AND owner_id = ?");
 
-// Rückgabe { data, updatedAt } statt nur des Blobs, damit die Route den
-// X-Updated-At-Header setzen kann (Basis der optimistischen Sperre beim Push).
+// Rückgabe { data, updatedAt, ownerId } statt nur des Blobs, damit die Route
+// den X-Updated-At-Header setzen und Owner-Pruefungen (Phase 3) durchfuehren
+// kann (Basis auch der optimistischen Sperre beim Push).
 function getCharacter(id) {
   const row = stmtGetChar.get(id);
-  return row ? { data: row.data, updatedAt: row.updated_at } : null;
+  return row ? { data: row.data, updatedAt: row.updated_at, ownerId: row.owner_id } : null;
 }
 
+// Phase 3: ownerId wird von der Route mitgegeben (aus req.user.roles-Pruefung
+// heraus), nicht vom Client. listCharacters() liefert bewusst alle inkl.
+// ownerId zurueck - Filterung nach "eigene" vs. "alle" (gm-Flag) passiert in
+// der Route, db.js bleibt hier neutral.
 function listCharacters() {
-  return stmtListChars.all();
+  return stmtListChars.all().map(r => ({ id: r.id, name: r.name, ownerId: r.owner_id }));
 }
 
 // expectedUpdatedAt: opaker String, wie ihn der Client zuletzt vom Server
@@ -117,7 +145,11 @@ function listCharacters() {
 // vom aktuell gespeicherten Stand ab, wird NICHT geschrieben, sondern der
 // aktuelle Serverstand zum Mergen zurückgegeben — reiner String-Vergleich,
 // kein Datums-Parsing, der Server bleibt strukturunwissend.
-function putCharacter(id, jsonBody, expectedUpdatedAt = null) {
+// ownerId: nur bei Neuanlage relevant (Charakter existiert noch nicht) - bei
+// bereits vorhandenen Charakteren bleibt der urspruengliche Owner unveraendert,
+// diese Funktion setzt ihn nie nachtraeglich um (das ist eine Route-Aufgabe,
+// falls jemals gebraucht, hier bewusst nicht vorgesehen).
+function putCharacter(id, jsonBody, expectedUpdatedAt = null, ownerId = null) {
   return transaction(() => {
     const row = stmtGetChar.get(id);
     if (row && expectedUpdatedAt != null && row.updated_at !== expectedUpdatedAt) {
@@ -126,9 +158,19 @@ function putCharacter(id, jsonBody, expectedUpdatedAt = null) {
     let name = '';
     try { name = JSON.parse(jsonBody)?.metadata?.name || ''; } catch { /* keep empty */ }
     const updatedAt = new Date().toISOString();
-    stmtUpsertChar.run({ id, name, data: jsonBody, updatedAt });
-    return { ok: true, updatedAt };
+    const finalOwnerId = row ? row.owner_id : ownerId;
+    stmtUpsertChar.run({ id, name, data: jsonBody, updatedAt, ownerId: finalOwnerId });
+    return { ok: true, updatedAt, ownerId: finalOwnerId };
   });
+}
+
+// Nur für die einmalige Phase-3-Migration (backend/create-admin.js
+// --claim-existing): weist einem noch besitzerlosen Bestandscharakter einen
+// Owner zu. Schreibt bewusst NICHT, falls schon ein Owner gesetzt ist (kein
+// versehentliches Umbiegen bestehender Zuordnungen).
+const stmtClaimUnownedCharacter = db.prepare('UPDATE characters SET owner_id = ? WHERE id = ? AND owner_id IS NULL');
+function claimUnownedCharacter(id, ownerId) {
+  return stmtClaimUnownedCharacter.run(ownerId, id).changes > 0;
 }
 
 function deleteCharacter(id) {
@@ -301,6 +343,12 @@ function listFilesByOwner(ownerType, ownerId) {
   return stmtListFilesByOwner.all(ownerType, ownerId).map(row => ({ id: row.id }));
 }
 
+const stmtFileStats = db.prepare('SELECT COUNT(*) AS count, COALESCE(SUM(size), 0) AS totalSize FROM files');
+function getFileStats() {
+  const row = stmtFileStats.get();
+  return { count: row.count, totalSize: row.totalSize };
+}
+
 // Loescht die tatsaechlichen Dateien von der Platte fuer alle files-Zeilen eines
 // Owners - die DB-Zeilen selbst werden weiterhin per stmtDeleteCharFiles/
 // stmtDeleteCampaignFiles in der aufrufenden delete*()-Funktion entfernt. Ohne
@@ -312,12 +360,90 @@ function _unlinkFilesForOwner(ownerType, ownerId) {
   }
 }
 
+// ── Nutzer & Sessions (Phase 3) ─────────────────────────────────────────────
+
+const stmtInsertUser      = db.prepare(`
+  INSERT INTO users (id, email, password_hash, roles, created_at)
+  VALUES (@id, @email, @passwordHash, @roles, @createdAt)
+`);
+const stmtGetUserByEmail  = db.prepare('SELECT * FROM users WHERE email = ?');
+const stmtGetUserById     = db.prepare('SELECT * FROM users WHERE id = ?');
+const stmtListUsers       = db.prepare('SELECT * FROM users ORDER BY email');
+const stmtSetPasswordHash = db.prepare('UPDATE users SET password_hash = ? WHERE id = ?');
+const stmtSetUserRoles    = db.prepare('UPDATE users SET roles = ? WHERE id = ?');
+const stmtDeleteUser      = db.prepare('DELETE FROM users WHERE id = ?');
+
+function _rowToUser(row) {
+  if (!row) return null;
+  return {
+    id: row.id, email: row.email, passwordHash: row.password_hash,
+    roles: JSON.parse(row.roles), createdAt: row.created_at,
+    hasPassword: row.password_hash != null,
+  };
+}
+
+function insertUser({ id, email, roles = [] }) {
+  const createdAt = new Date().toISOString();
+  stmtInsertUser.run({ id, email, passwordHash: null, roles: JSON.stringify(roles), createdAt });
+  return _rowToUser(stmtGetUserById.get(id));
+}
+
+function getUserByEmail(email) { return _rowToUser(stmtGetUserByEmail.get(email)); }
+function getUserById(id)       { return _rowToUser(stmtGetUserById.get(id)); }
+function listUsers()           { return stmtListUsers.all().map(_rowToUser); }
+
+function setPasswordHash(userId, hash) { stmtSetPasswordHash.run(hash, userId); }
+function setUserRoles(userId, roles)   { stmtSetUserRoles.run(JSON.stringify(roles), userId); }
+
+// Loescht den Nutzer + alle seine Sessions (erzwingt Logout auf allen
+// Geraeten). Charaktere/Kampagnen mit diesem owner_id bleiben bestehen
+// (bewusst kein Kaskaden-Loeschen, um keine Spieldaten versehentlich zu
+// verlieren) - werden dadurch "herrenlos", genau wie es owner_id=NULL
+// urspruenglich schon konnte.
+function deleteUser(id) {
+  transaction(() => {
+    stmtDeleteUser.run(id);
+    stmtDeleteSessionsForUser.run(id);
+  });
+}
+
+// ── Sessions ─────────────────────────────────────────────────────────────
+
+const stmtInsertSession         = db.prepare(`
+  INSERT INTO sessions (token, user_id, created_at, last_seen_at) VALUES (@token, @userId, @createdAt, @createdAt)
+`);
+const stmtGetSession            = db.prepare('SELECT * FROM sessions WHERE token = ?');
+const stmtTouchSession          = db.prepare('UPDATE sessions SET last_seen_at = ? WHERE token = ?');
+const stmtDeleteSession         = db.prepare('DELETE FROM sessions WHERE token = ?');
+const stmtDeleteSessionsForUser = db.prepare('DELETE FROM sessions WHERE user_id = ?');
+
+function createSession(userId) {
+  const token = crypto.randomBytes(32).toString('hex');
+  const createdAt = new Date().toISOString();
+  stmtInsertSession.run({ token, userId, createdAt });
+  return token;
+}
+
+// Liefert den zur Session gehoerenden Nutzer (oder null bei ungueltigem/
+// abgelaufenem Token) und aktualisiert last_seen_at nebenbei.
+function getSessionUser(token) {
+  const row = stmtGetSession.get(token);
+  if (!row) return null;
+  stmtTouchSession.run(new Date().toISOString(), token);
+  return getUserById(row.user_id);
+}
+
+function deleteSession(token)            { stmtDeleteSession.run(token); }
+function invalidateUserSessions(userId)  { stmtDeleteSessionsForUser.run(userId); }
+
 module.exports = {
   db,
   UPLOAD_DIR,
-  getCharacter, listCharacters, putCharacter, deleteCharacter,
+  getCharacter, listCharacters, putCharacter, deleteCharacter, claimUnownedCharacter,
   getCampaign, listCampaigns, campaignExists, insertCampaign, updateCampaign, deleteCampaign,
   updateCampaignNotes, updateCampaignShips,
   upsertCampaign,
-  insertFile, getFile, deleteFile, listFilesByOwner,
+  insertFile, getFile, deleteFile, listFilesByOwner, getFileStats,
+  insertUser, getUserByEmail, getUserById, listUsers, setPasswordHash, setUserRoles, deleteUser,
+  createSession, getSessionUser, deleteSession, invalidateUserSessions,
 };

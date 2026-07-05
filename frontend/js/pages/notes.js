@@ -48,6 +48,18 @@ const NotesPage = {
     };
   },
 
+  // Sucht einen Eintrag zuerst lokal, sonst im geteilten Kampagnen-Pool -
+  // Kampagnen-Inhalte sind gemeinschaftlich: jedes Mitglied darf auch fremde
+  // Einträge öffnen/bearbeiten/löschen (nicht nur seine eigenen). Beim
+  // Speichern übernimmt save() den fremden Eintrag unter derselben id in die
+  // eigene lokale Liste, siehe dortigen Kommentar.
+  _findEntry(tab, id, data) {
+    const local = (data[tab] || []).find(x => String(x.id) === String(id));
+    if (local) return local;
+    const campNotes = App._campaignData?.notes || {};
+    return (campNotes[tab] || []).find(x => String(x.id) === String(id)) || null;
+  },
+
   // Einträge aus dem geteilten Kampagnen-Pool die lokal noch nicht vorhanden sind
   _extEntries(tab) {
     const char = App.currentCharacter;
@@ -215,7 +227,7 @@ const NotesPage = {
       </tr></thead>
       <tbody>`;
 
-    if (data.sessions.length === 0) {
+    if (data.sessions.length === 0 && this._extEntries('sessions').length === 0) {
       html += `<tr><td colspan="6" class="nt-empty">Noch keine Session eingetragen. Tippe auf „+ Session".</td></tr>`;
     } else {
       this._sortedList(data.sessions, 'sessions').forEach(s => {
@@ -236,7 +248,7 @@ const NotesPage = {
         </tr>`;
       });
       this._extEntries('sessions').forEach(s => {
-        html += `<tr class="camp-ext-row">
+        html += `<tr class="camp-ext-row notes-list-item" data-id="${s.id}">
           <td class="nt-date-col">${this._esc(s.inGameDate || '')}</td>
           <td><span class="nli-title-inline">${this._esc(s.title || 'Ohne Titel')}</span></td>
           <td class="nt-detail-col"></td>
@@ -254,7 +266,7 @@ const NotesPage = {
     const isNew = id === 'new';
     const s = isNew
       ? { id: 'new', title: '', sessionDate: '', inGameDate: '', content: '', tags: { persons: [], locations: [], quests: [], events: [] } }
-      : data.sessions.find(x => String(x.id) === String(id));
+      : this._findEntry('sessions', id, data);
     if (!s) return '<p class="notes-empty">Session nicht gefunden.</p>';
 
     // Init edit tags when entering edit for first time
@@ -415,7 +427,7 @@ const NotesPage = {
       </div>
     </div>`;
 
-    if (data.persons.length === 0) {
+    if (data.persons.length === 0 && this._extEntries('persons').length === 0) {
       html += '<p class="notes-empty">Noch keine Personen eingetragen.</p>';
     } else {
       html += '<div class="person-card-grid" id="personList">';
@@ -459,7 +471,7 @@ const NotesPage = {
       if (extPersons.length) {
         html += `<div class="camp-ext-section"><span class="camp-ext-label">🏕 Von Mitspielern</span><div class="person-card-grid">`;
         extPersons.forEach(p => {
-          html += `<div class="camp-ext-entry pcard-ext">
+          html += `<div class="camp-ext-entry pcard-ext person-card notes-list-item" data-id="${p.id}">
             <span class="pcard-name">${this._esc(p.name || '(Kein Name)')}</span>
             ${p.role ? `<span class="pcard-role">${this._esc(p.role)}</span>` : ''}
           </div>`;
@@ -474,7 +486,7 @@ const NotesPage = {
     const isNew = id === 'new';
     const p = isNew
       ? { id: 'new', name: '', role: '', race: 'Mensch', description: '', status: 'alive', relation: 'neutral', image: null }
-      : data.persons.find(x => String(x.id) === String(id));
+      : this._findEntry('persons', id, data);
     if (!p) return '<p class="notes-empty">Person nicht gefunden.</p>';
 
     window._personCurrentImage       = undefined; // Altbestand-Bridge: undefined = unveraendert; null = entfernt; string = neu gesetzt (Base64, Fallback wenn Upload fehlschlaegt)
@@ -748,7 +760,7 @@ const NotesPage = {
       </tr></thead>
       <tbody>`;
 
-    if (data.locations.length === 0) {
+    if (data.locations.length === 0 && this._extEntries('locations').length === 0) {
       html += `<tr><td colspan="6" class="nt-empty">Noch keine Orte eingetragen.</td></tr>`;
     } else {
       this._sortedList(data.locations, 'locations').forEach(l => {
@@ -769,7 +781,7 @@ const NotesPage = {
       });
       this._extEntries('locations').forEach(l => {
         const detail = [l.sector, l.uwp].filter(Boolean).join(' ');
-        html += `<tr class="camp-ext-row">
+        html += `<tr class="camp-ext-row notes-list-item" data-id="${l.id}">
           <td></td>
           <td><span class="nli-title-inline">${this._esc(l.name || '(Kein Name)')}</span></td>
           <td class="nt-detail-col">${this._esc(detail)}</td>
@@ -792,7 +804,7 @@ const NotesPage = {
           description: '', notes: '', status: 'visited', visitedDate: '',
           mapX: prefill?.mapX ?? null, mapY: prefill?.mapY ?? null,
           mapSector: prefill?.mapSector || null, mapHex: prefill?.mapHex || null }
-      : data.locations.find(x => String(x.id) === String(id));
+      : this._findEntry('locations', id, data);
     if (!l) return '<p class="notes-empty">Ort nicht gefunden.</p>';
 
     const linkedSessions = data.sessions.filter(s => s.tags?.locations?.includes(l.id));
@@ -998,7 +1010,7 @@ const NotesPage = {
     const filtered = this._sortedList(data.quests, 'quests')
       .filter(q => !f || (q.status || 'active') === f);
 
-    if (data.quests.length === 0) {
+    if (data.quests.length === 0 && this._extEntries('quests').length === 0) {
       html += `<tr><td colspan="6" class="nt-empty">Noch keine Quests eingetragen.</td></tr>`;
     } else if (filtered.length === 0) {
       html += `<tr><td colspan="6" class="nt-empty">Keine Quests in dieser Kategorie.</td></tr>`;
@@ -1023,7 +1035,7 @@ const NotesPage = {
     });
 
     this._extEntries('quests').forEach(q => {
-      html += `<tr class="camp-ext-row">
+      html += `<tr class="camp-ext-row notes-list-item" data-id="${q.id}">
         <td></td>
         <td><span class="nli-title-inline">${this._esc(q.title || 'Ohne Titel')}</span>
           <span class="quest-status-badge qst-${q.status||'active'}">${this._questStatusLabel(q.status)}</span></td>
@@ -1040,7 +1052,7 @@ const NotesPage = {
     const isNew = id === 'new';
     const q = isNew
       ? { id: 'new', title: '', description: '', objective: '', reward: '', questgiverId: '', status: 'active' }
-      : data.quests.find(x => String(x.id) === String(id));
+      : this._findEntry('quests', id, data);
     if (!q) return '<p class="notes-empty">Quest nicht gefunden.</p>';
 
     const giver = data.persons.find(p => p.id === q.questgiverId);
@@ -1199,7 +1211,7 @@ const NotesPage = {
     const createdAt = tsVal ? new Date(tsVal).toISOString() : new Date().toISOString();
 
     if (this._activeTab === 'sessions') {
-      const existing = isNew ? null : data.sessions.find(s => s.id === id);
+      const existing = isNew ? null : this._findEntry('sessions', id, data);
       const entry = {
         id:          isNew ? ('s' + Date.now()) : id,
         title:       document.getElementById('sessionTitle')?.value?.trim() || '',
@@ -1215,8 +1227,13 @@ const NotesPage = {
       if (isNew) {
         if (entry.title) { data.sessions.push(entry); this._detailId = entry.id; }
       } else {
+        // Gemeinschaftliche Kampagnen-Eintraege: existiert die id lokal noch
+        // nicht (fremder, gerade zum ersten Mal bearbeiteter Eintrag), unter
+        // derselben id uebernehmen statt zu verwerfen - der naechste
+        // _syncMyCampaignEntries()-Push schliesst sie dann automatisch mit ein.
         const idx = data.sessions.findIndex(s => String(s.id) === String(id));
         if (idx >= 0) data.sessions[idx] = entry;
+        else data.sessions.push(entry);
       }
       // _editTags intentionally NOT cleared here: autosave calls save() without
       // re-rendering, so clearing _editTags would corrupt the picker state and
@@ -1224,7 +1241,7 @@ const NotesPage = {
       this._editTags = JSON.parse(JSON.stringify(entry.tags));
 
     } else if (this._activeTab === 'persons') {
-      const existing = isNew ? null : data.persons.find(p => p.id === id);
+      const existing = isNew ? null : this._findEntry('persons', id, data);
       const entry = {
         id:          isNew ? ('p' + Date.now()) : id,
         name:        document.getElementById('personName')?.value?.trim() || '',
@@ -1257,13 +1274,14 @@ const NotesPage = {
       } else {
         const idx = data.persons.findIndex(p => String(p.id) === String(id));
         if (idx >= 0) data.persons[idx] = entry;
+        else data.persons.push(entry); // fremder Eintrag, erstmalig uebernommen (siehe sessions-Kommentar oben)
       }
       if (existing?.imageFileId && existing.imageFileId !== entry.imageFileId) {
         FileSync.remove(existing.imageFileId);
       }
 
     } else if (this._activeTab === 'locations') {
-      const existing = isNew ? null : data.locations.find(l => l.id === id);
+      const existing = isNew ? null : this._findEntry('locations', id, data);
       const rawX = document.getElementById('locMapX')?.value;
       const rawY = document.getElementById('locMapY')?.value;
       const entry = {
@@ -1299,10 +1317,11 @@ const NotesPage = {
       } else {
         const idx = data.locations.findIndex(l => String(l.id) === String(id));
         if (idx >= 0) data.locations[idx] = entry;
+        else data.locations.push(entry); // fremder Eintrag, erstmalig uebernommen
       }
 
     } else if (this._activeTab === 'quests') {
-      const existing = isNew ? null : data.quests.find(q => q.id === id);
+      const existing = isNew ? null : this._findEntry('quests', id, data);
       const entry = {
         id:           isNew ? ('q' + Date.now()) : id,
         title:        document.getElementById('questTitle')?.value?.trim() || '',
@@ -1320,6 +1339,7 @@ const NotesPage = {
       } else {
         const idx = data.quests.findIndex(q => String(q.id) === String(id));
         if (idx >= 0) data.quests[idx] = entry;
+        else data.quests.push(entry); // fremder Eintrag, erstmalig uebernommen
       }
     }
 
@@ -1400,11 +1420,17 @@ const NotesPage = {
       const data = this._d(App.currentCharacter);
       const key = { sessions: 'sessions', persons: 'persons', locations: 'locations', quests: 'quests' }[this._activeTab];
       const item = data[key].find(x => String(x.id) === String(id));
+      const now  = new Date().toISOString();
       if (item) {
-        const now = new Date().toISOString();
         item._deleted  = true;
         item.deletedAt = now;
         item.updatedAt = now;
+      } else {
+        // Fremder, lokal noch nie uebernommener Eintrag - als Tombstone unter
+        // derselben id neu anlegen, damit die Loeschung ueberhaupt gepusht
+        // werden kann (gemeinschaftliche Kampagnen-Inhalte, siehe save()).
+        const foreign = this._findEntry(key, id, data);
+        if (foreign) data[key].push({ ...foreign, _deleted: true, deletedAt: now, updatedAt: now });
       }
       App.currentCharacter.notes = data;
       this._saveAndSync(App.currentCharacter);

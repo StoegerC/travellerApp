@@ -16,6 +16,10 @@ const App = {
   _campaignTimer: null,
   _CAMPAIGN_POLL: 15000,
   _LAST_CHAR_KEY: 'traveller_last_character_id',
+  // Read-only-Ansicht fuer Meister, die einen fremden Charakter ueber
+  // showCloudCharList() laden (gm-Flag, kein Owner) - wird bei jedem
+  // regulaeren loadCharacter() zurueckgesetzt.
+  _readOnlyView: false,
 
   pages: {
     metadata:   MetadataPage,
@@ -131,11 +135,18 @@ const App = {
   },
 
   // ── Charakter laden/wechseln ────────────────────────────────────────────
-  loadCharacter(id) {
+  // readOnly: true fuer Meister, die einen fremden Charakter betrachten (siehe
+  // showCloudCharList()). Muss hier gesetzt werden statt erst danach - diese
+  // Funktion loest weiter unten synchron _syncCloud() aus, das bei einem noch
+  // ausstehenden Push sofort _pushToCloud() aufruft; ein "danach" gesetztes
+  // _readOnlyView wuerde dieses erste Flush-Push nicht mehr rechtzeitig stoppen.
+  loadCharacter(id, readOnly = false) {
     this.currentCharacter = Storage.loadCharacter(id);
     if (!this.currentCharacter) { console.error('Charakter nicht gefunden:', id); return; }
     window.currentCharacter = this.currentCharacter;
     localStorage.setItem(this._LAST_CHAR_KEY, id);
+    this._readOnlyView = readOnly;
+    this.editMode = false;
     this._undoStack = [];
     this._updateUndoBtn();
     this._updateHeaderName();
@@ -191,18 +202,25 @@ const App = {
 
   _showNewCharDialog() {
     return new Promise(resolve => {
-      const modal  = document.getElementById('newCharModal');
-      const step1  = document.getElementById('ncStep1');
-      const step2  = document.getElementById('ncStep2');
-      const testEl = document.getElementById('ncTestResult');
+      const modal    = document.getElementById('newCharModal');
+      const step1    = document.getElementById('ncStep1');
+      const step2    = document.getElementById('ncStep2');
+      const step3    = document.getElementById('ncStep3');
+      const testEl   = document.getElementById('ncTestResult');
+      const loginEl  = document.getElementById('ncLoginResult');
 
-      step1.style.display = '';
-      step2.style.display = 'none';
+      const showStep = n => {
+        step1.style.display = n === 1 ? '' : 'none';
+        step2.style.display = n === 2 ? '' : 'none';
+        step3.style.display = n === 3 ? '' : 'none';
+      };
+      showStep(1);
       testEl.textContent  = '';
       testEl.className    = 'nc-test-result';
-      document.getElementById('ncCreateBtn').disabled = true;
+      loginEl.textContent = '';
+      loginEl.className   = 'nc-test-result';
+      document.getElementById('ncNextBtn').disabled = true;
       if (CloudSync.getWorkerUrl()) document.getElementById('ncWorkerUrl').value = CloudSync.getWorkerUrl();
-      if (CloudSync.getApiKey())    document.getElementById('ncApiKey').value    = CloudSync.getApiKey();
 
       modal.classList.add('visible');
 
@@ -212,36 +230,45 @@ const App = {
       document.getElementById('ncLocalBtn').onclick  = () => close('local');
       document.getElementById('ncCloudBtn').onclick  = () => {
         if (CloudSync.isConfigured()) { close('cloud'); return; }
-        step1.style.display = 'none';
-        step2.style.display = '';
+        showStep(2);
       };
-      document.getElementById('ncBackBtn').onclick = () => {
-        step2.style.display = 'none';
-        step1.style.display = '';
-      };
+      document.getElementById('ncBackBtn').onclick  = () => showStep(1);
+      document.getElementById('ncBackBtn2').onclick = () => showStep(2);
       document.getElementById('ncTestBtn').onclick = async () => {
         const url = document.getElementById('ncWorkerUrl').value.trim();
-        const key = document.getElementById('ncApiKey').value.trim();
-        if (!url || !key) { testEl.textContent = '⚠ URL und Key angeben'; return; }
+        if (!url) { testEl.textContent = '⚠ URL angeben'; return; }
         const btn = document.getElementById('ncTestBtn');
         btn.disabled = true;
         testEl.textContent = '⏳ Teste …';
         testEl.className   = 'nc-test-result';
-        const r = await CloudSync.test(url, key);
+        const r = await CloudSync.test(url);
         btn.disabled = false;
         if (r.ok) {
           testEl.textContent = '✓ Verbindung OK';
           testEl.className   = 'nc-test-result nc-test-ok';
-          document.getElementById('ncCreateBtn').disabled = false;
-          CloudSync.setWorkerUrl(url);
-          CloudSync.setApiKey(key);
+          document.getElementById('ncNextBtn').disabled = false;
         } else {
           testEl.textContent = `✗ Fehler (${r.status || r.error || 'Timeout'})`;
           testEl.className   = 'nc-test-result nc-test-error';
-          document.getElementById('ncCreateBtn').disabled = true;
+          document.getElementById('ncNextBtn').disabled = true;
         }
       };
-      document.getElementById('ncCreateBtn').onclick = () => close('cloud');
+      document.getElementById('ncNextBtn').onclick = () => showStep(3);
+      document.getElementById('ncCreateBtn').onclick = async () => {
+        const url      = document.getElementById('ncWorkerUrl').value.trim();
+        const email    = document.getElementById('ncEmail').value.trim();
+        const password = document.getElementById('ncPassword').value;
+        if (!email || password.length < 8) { loginEl.textContent = '⚠ E-Mail und Passwort (min. 8 Zeichen) angeben'; return; }
+        const btn = document.getElementById('ncCreateBtn');
+        btn.disabled = true;
+        loginEl.textContent = '⏳ Melde an …';
+        loginEl.className   = 'nc-test-result';
+        const r = await AuthAPI.login(url, email, password);
+        btn.disabled = false;
+        if (r.ok) { close('cloud'); return; }
+        loginEl.textContent = `✗ ${r.error || 'Anmeldung fehlgeschlagen'}`;
+        loginEl.className   = 'nc-test-result nc-test-error';
+      };
     });
   },
 
@@ -443,6 +470,7 @@ const App = {
 
   // ── Edit-Modus ──────────────────────────────────────────────────────────
   toggleEditMode() {
+    if (this._readOnlyView) return; // Meister-Ansicht eines fremden Charakters
     const page = this.pages[this.currentPage];
     if (!page) return;
 
@@ -458,6 +486,12 @@ const App = {
   updateEditButton() {
     const btn = document.getElementById('toggleEditBtn');
     if (!btn) return;
+
+    if (this._readOnlyView) {
+      btn.style.display = 'none';
+      return;
+    }
+    btn.style.display = '';
 
     if (this.editMode) {
       btn.textContent = '✓ Fertig';
@@ -508,6 +542,7 @@ const App = {
   // Serie von Retries mit Wartezeit nötig.
   async _pushToCloud(retriesLeft = 3) {
     if (!this.currentCharacter || this.currentCharacter.syncMode !== 'cloud') return;
+    if (this._readOnlyView) return; // Meister-Ansicht eines fremden Charakters - Server wuerde ohnehin 403 liefern
     this._setSyncState('syncing');
 
     const expected = this.currentCharacter._syncMeta?.updatedAt || null;
@@ -675,40 +710,66 @@ const App = {
 
   showCloudConfig() {
     const modal    = document.getElementById('cloudConfigModal');
+    const step1    = document.getElementById('cfgStep1');
+    const step2    = document.getElementById('cfgStep2');
     const testEl   = document.getElementById('cfgTestResult');
+    const loginEl  = document.getElementById('cfgLoginResult');
     const urlInput = document.getElementById('cfgWorkerUrl');
-    const keyInput = document.getElementById('cfgApiKey');
 
-    urlInput.value     = CloudSync.getWorkerUrl();
-    keyInput.value     = CloudSync.getApiKey();
-    testEl.textContent = '';
-    testEl.className   = 'nc-test-result';
+    const showStep = n => {
+      step1.style.display = n === 1 ? '' : 'none';
+      step2.style.display = n === 2 ? '' : 'none';
+    };
+    showStep(1);
+    urlInput.value       = CloudSync.getWorkerUrl();
+    testEl.textContent   = '';
+    testEl.className     = 'nc-test-result';
+    loginEl.textContent  = '';
+    loginEl.className    = 'nc-test-result';
+    document.getElementById('cfgNextBtn').disabled = true;
     modal.classList.add('visible');
 
     document.getElementById('cfgTestBtn').onclick = async () => {
       const url = urlInput.value.trim();
-      const key = keyInput.value.trim();
-      if (!url || !key) { testEl.textContent = '⚠ URL und Key angeben'; return; }
+      if (!url) { testEl.textContent = '⚠ URL angeben'; return; }
       const btn = document.getElementById('cfgTestBtn');
       btn.disabled = true;
       testEl.textContent = '⏳ Teste …';
       testEl.className   = 'nc-test-result';
-      const r = await CloudSync.test(url, key);
+      const r = await CloudSync.test(url);
       btn.disabled = false;
       if (r.ok) {
         testEl.textContent = '✓ Verbindung OK';
         testEl.className   = 'nc-test-result nc-test-ok';
+        document.getElementById('cfgNextBtn').disabled = false;
       } else {
         testEl.textContent = `✗ Fehler (${r.status || r.error || 'Timeout'})`;
         testEl.className   = 'nc-test-result nc-test-error';
+        document.getElementById('cfgNextBtn').disabled = true;
       }
     };
 
-    document.getElementById('cfgSaveBtn').onclick = () => {
-      CloudSync.setWorkerUrl(urlInput.value.trim());
-      CloudSync.setApiKey(keyInput.value.trim());
+    document.getElementById('cfgNextBtn').onclick = () => showStep(2);
+    document.getElementById('cfgBackBtn').onclick = () => showStep(1);
+
+    document.getElementById('cfgLoginBtn').onclick = async () => {
+      const url      = urlInput.value.trim();
+      const email    = document.getElementById('cfgEmail').value.trim();
+      const password = document.getElementById('cfgPassword').value;
+      if (!email || password.length < 8) { loginEl.textContent = '⚠ E-Mail und Passwort (min. 8 Zeichen) angeben'; return; }
+      const btn = document.getElementById('cfgLoginBtn');
+      btn.disabled = true;
+      loginEl.textContent = '⏳ Melde an …';
+      loginEl.className   = 'nc-test-result';
+      const r = await AuthAPI.login(url, email, password);
+      btn.disabled = false;
+      if (!r.ok) {
+        loginEl.textContent = `✗ ${r.error || 'Anmeldung fehlgeschlagen'}`;
+        loginEl.className   = 'nc-test-result nc-test-error';
+        return;
+      }
       modal.classList.remove('visible');
-      this.showStatus('Cloud-Einstellungen gespeichert ✓', 'success');
+      this.showStatus('Angemeldet ✓', 'success');
       if (this.currentCharacter?.syncMode === 'cloud') this._pushToCloud();
       modal.dispatchEvent(new CustomEvent('configSaved'));
     };
@@ -825,9 +886,33 @@ const App = {
       this._campaignData = r.data;
       Storage.saveCampaign(r.data);
       this._mergeCampaignShipRoles();
+      this._mergeCampaignNotesBack();
       if (!this.editMode && (this.currentPage === 'notes' || this.currentPage === 'metadata' || this.currentPage === 'ship')) {
         this.renderCurrentPage();
       }
+    }
+  },
+
+  // Kampagnen-Inhalte sind gemeinschaftlich (siehe NotesPage._findEntry): ein
+  // Mitspieler kann einen von mir erstellten Eintrag bearbeitet haben. Ohne
+  // diesen Schritt würde mein eigenes Gerät die fremde Änderung nie sehen,
+  // weil der Poll bisher nur _campaignData aktualisiert hat (das steuert nur
+  // die "externe", nie selbst berührte Anzeige) - eigene notes[]-Einträge
+  // wurden dagegen als alleine von mir änderbar behandelt. Nur bereits lokal
+  // vorhandene Einträge werden abgeglichen (per id, neuere updatedAt gewinnt);
+  // rein fremde, nie von mir berührte Einträge bleiben bewusst nur in
+  // _campaignData/_extEntries() sichtbar, nicht automatisch übernommen.
+  _mergeCampaignNotesBack() {
+    const char        = this.currentCharacter;
+    const remoteNotes = this._campaignData?.notes;
+    if (!char?.notes || !remoteNotes) return;
+    for (const tab of ['sessions', 'persons', 'locations', 'quests']) {
+      const remoteList = remoteNotes[tab];
+      if (!Array.isArray(remoteList) || !Array.isArray(char.notes[tab])) continue;
+      char.notes[tab] = char.notes[tab].map(local => {
+        const remote = remoteList.find(r => r.id === local.id);
+        return remote ? SyncMerge._pickNewer(local, remote) : local;
+      });
     }
   },
 
@@ -1039,10 +1124,11 @@ const App = {
 
     listEl.innerHTML = chars.map(c => {
       const isLocal = localIds.has(c.id);
+      const statusLabel = !c.mine ? '🔒 Nur lesen (Meister)' : (isLocal ? '✓ Lokal vorhanden' : '⬇ Laden');
       return `
-        <button class="cloud-char-item" data-id="${this._esc(c.id)}">
+        <button class="cloud-char-item" data-id="${this._esc(c.id)}" data-mine="${c.mine}">
           <span class="cloud-char-name">${this._esc(c.name || 'Namenlos')}</span>
-          <span class="cloud-char-status">${isLocal ? '✓ Lokal vorhanden' : '⬇ Laden'}</span>
+          <span class="cloud-char-status">${statusLabel}</span>
         </button>`;
     }).join('');
 
@@ -1058,11 +1144,13 @@ const App = {
           return;
         }
 
+        const isMine = btn.dataset.mine === 'true';
         const char = Character.fromJSON(r.data);
         Storage.saveCharacter(char);
         modal.classList.remove('visible');
-        this.loadCharacter(char.id);
-        this.showStatus(`„${char.metadata.name || 'Charakter'}" geladen ✓`, 'success');
+        this.loadCharacter(char.id, !isMine);
+        this.updateEditButton();
+        this.showStatus(`„${char.metadata.name || 'Charakter'}" geladen ✓${isMine ? '' : ' (nur lesen)'}`, 'success');
       });
     });
   },

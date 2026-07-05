@@ -11,8 +11,10 @@ DATENHALTUNG
     macOS-Autostart (launchd) stehen, echte Migration gegen den produktiven Worker
     gefahren, erstes Gerät umgestellt und Sync verifiziert. Noch offen: restliche Geräte
     umstellen, ein paar Tage beobachten, dann Cloudflare Worker/KV abschalten.
-    Phase 2 (Datei-Uploads) ist umgesetzt, siehe CHANGELOG.md. Phase 3
-    (Nutzerverwaltung/Login, owner_id-Spalte schon vorbereitet) folgt danach.
+    Phase 2 (Datei-Uploads) und Phase 3 (Nutzerverwaltung/Login) sind umgesetzt, siehe
+    CHANGELOG.md. Noch offen aus Phase 3: alle Geräte (iPhone, weitere Browser,
+    GitHub-Pages-Zugriff) müssen sich einmalig neu mit E-Mail+Passwort anmelden, da der
+    alte gemeinsame API-Key beim Cutover sofort ungültig wurde.
 [ ] Backup-Strategie für die neue SQLite-DB (ersetzt den alten „Cloudflare-Backup
     nach GitHub Actions"-Punkt — z.B. nächtliches Kopieren von backend/data/traveller.db
     + backend/uploads/ an einen zweiten Ort)

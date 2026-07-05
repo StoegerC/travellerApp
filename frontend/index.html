@@ -10,7 +10,7 @@
   <title>Traveller – Charakterdatenblatt</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=1.11.0">
+  <link rel="stylesheet" href="styles.css?v=1.12.0">
   <script>
   (function(){
     var c=document.createElement('canvas'); c.width=c.height=64;
@@ -177,14 +177,10 @@
       </div>
 
       <div id="ncStep2" style="display:none">
-        <p class="vh-hint">Cloudflare-Zugangsdaten</p>
+        <p class="vh-hint">Server-Adresse</p>
         <div class="form-group">
-          <label>Worker-URL</label>
-          <input type="url" id="ncWorkerUrl" placeholder="https://traveller-sync.name.workers.dev" autocomplete="off">
-        </div>
-        <div class="form-group">
-          <label>API-Key</label>
-          <input type="password" id="ncApiKey" placeholder="Bearer Token" autocomplete="off">
+          <label>Server-URL</label>
+          <input type="url" id="ncWorkerUrl" placeholder="https://macbook.tailXXXX.ts.net" autocomplete="off">
         </div>
         <div class="nc-action-row">
           <button id="ncTestBtn" class="btn-secondary">Verbindung testen</button>
@@ -192,7 +188,27 @@
         </div>
         <div class="nc-action-row nc-btn-row">
           <button id="ncBackBtn" class="btn-secondary">← Zurück</button>
-          <button id="ncCreateBtn" class="btn-success" disabled>Erstellen</button>
+          <button id="ncNextBtn" class="btn-success" disabled>Weiter</button>
+        </div>
+      </div>
+
+      <div id="ncStep3" style="display:none">
+        <p class="vh-hint">Anmelden. Falls für diesen Account noch kein Passwort gesetzt
+          ist, legst du hier mit deiner Eingabe eines fest.</p>
+        <div class="form-group">
+          <label>E-Mail</label>
+          <input type="email" id="ncEmail" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label>Passwort</label>
+          <input type="password" id="ncPassword" autocomplete="current-password" minlength="8">
+        </div>
+        <div class="nc-action-row">
+          <span id="ncLoginResult" class="nc-test-result"></span>
+        </div>
+        <div class="nc-action-row nc-btn-row">
+          <button id="ncBackBtn2" class="btn-secondary">← Zurück</button>
+          <button id="ncCreateBtn" class="btn-success">Anmelden &amp; erstellen</button>
         </div>
       </div>
     </div>
@@ -205,20 +221,37 @@
         <h2 class="vh-title">Cloud-Einstellungen</h2>
         <button id="cloudConfigClose" class="vh-close">✕</button>
       </div>
-      <div class="form-group">
-        <label>Worker-URL</label>
-        <input type="url" id="cfgWorkerUrl" autocomplete="off">
+      <div id="cfgStep1">
+        <div class="form-group">
+          <label>Server-URL</label>
+          <input type="url" id="cfgWorkerUrl" autocomplete="off">
+        </div>
+        <div class="nc-action-row">
+          <button id="cfgTestBtn" class="btn-secondary">Verbindung testen</button>
+          <span id="cfgTestResult" class="nc-test-result"></span>
+        </div>
+        <div class="nc-action-row nc-btn-row">
+          <button id="cfgNextBtn" class="btn-success" disabled>Weiter</button>
+        </div>
       </div>
-      <div class="form-group">
-        <label>API-Key</label>
-        <input type="password" id="cfgApiKey" autocomplete="off">
-      </div>
-      <div class="nc-action-row">
-        <button id="cfgTestBtn" class="btn-secondary">Verbindung testen</button>
-        <span id="cfgTestResult" class="nc-test-result"></span>
-      </div>
-      <div class="nc-action-row nc-btn-row">
-        <button id="cfgSaveBtn" class="btn-success">Speichern</button>
+      <div id="cfgStep2" style="display:none">
+        <p class="vh-hint">Anmelden. Falls für diesen Account noch kein Passwort gesetzt
+          ist, legst du hier mit deiner Eingabe eines fest.</p>
+        <div class="form-group">
+          <label>E-Mail</label>
+          <input type="email" id="cfgEmail" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label>Passwort</label>
+          <input type="password" id="cfgPassword" autocomplete="current-password" minlength="8">
+        </div>
+        <div class="nc-action-row">
+          <span id="cfgLoginResult" class="nc-test-result"></span>
+        </div>
+        <div class="nc-action-row nc-btn-row">
+          <button id="cfgBackBtn" class="btn-secondary">← Zurück</button>
+          <button id="cfgLoginBtn" class="btn-success">Anmelden</button>
+        </div>
       </div>
     </div>
   </div>
@@ -314,24 +347,25 @@
     </div>
   </div>
 
-  <script src="js/cloudsync.js?v=1.11.0"></script>
-  <script src="js/campaign.js?v=1.11.0"></script>
-  <script src="js/filesync.js?v=1.11.0"></script>
-  <script src="js/markdown.js?v=1.11.0"></script>
-  <script src="js/data/skills.js?v=1.11.0"></script>
-  <script src="js/models/character.js?v=1.11.0"></script>
-  <script src="js/sync-merge.js?v=1.11.0"></script>
-  <script src="js/storage.js?v=1.11.0"></script>
-  <script src="js/pages/metadata.js?v=1.11.0"></script>
-  <script src="js/pages/attributes.js?v=1.11.0"></script>
-  <script src="js/pages/finances.js?v=1.11.0"></script>
-  <script src="js/pages/equipment.js?v=1.11.0"></script>
-  <script src="js/pages/ship.js?v=1.11.0"></script>
-  <script src="js/pages/career.js?v=1.11.0"></script>
-  <script src="js/pages/notes.js?v=1.11.0"></script>
-  <script src="js/pages/karte.js?v=1.11.0"></script>
-  <script src="js/pages/combat.js?v=1.11.0"></script>
-  <script src="js/app.js?v=1.11.0"></script>
+  <script src="js/cloudsync.js?v=1.12.0"></script>
+  <script src="js/auth.js?v=1.12.0"></script>
+  <script src="js/campaign.js?v=1.12.0"></script>
+  <script src="js/filesync.js?v=1.12.0"></script>
+  <script src="js/markdown.js?v=1.12.0"></script>
+  <script src="js/data/skills.js?v=1.12.0"></script>
+  <script src="js/models/character.js?v=1.12.0"></script>
+  <script src="js/sync-merge.js?v=1.12.0"></script>
+  <script src="js/storage.js?v=1.12.0"></script>
+  <script src="js/pages/metadata.js?v=1.12.0"></script>
+  <script src="js/pages/attributes.js?v=1.12.0"></script>
+  <script src="js/pages/finances.js?v=1.12.0"></script>
+  <script src="js/pages/equipment.js?v=1.12.0"></script>
+  <script src="js/pages/ship.js?v=1.12.0"></script>
+  <script src="js/pages/career.js?v=1.12.0"></script>
+  <script src="js/pages/notes.js?v=1.12.0"></script>
+  <script src="js/pages/karte.js?v=1.12.0"></script>
+  <script src="js/pages/combat.js?v=1.12.0"></script>
+  <script src="js/app.js?v=1.12.0"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
