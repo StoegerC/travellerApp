@@ -58,25 +58,24 @@ router.get('/campaign/:id/ships', (req, res) => {
   res.json(campaign.ships || []);
 });
 
-// PUT /campaign/:id/ships – last-write-wins auf dem ganzen Array
+// PUT /campaign/:id/ships – atomarer Merge statt last-write-wins, siehe
+// db.updateCampaignShips (Bilder werden dort weiterhin defensiv gestrippt).
 router.put('/campaign/:id/ships', (req, res) => {
-  if (!Array.isArray(req.body)) return res.status(400).send('Invalid JSON');
-  const campaign = db.updateCampaign(req.params.id, c => {
-    // Bilder werden hier defensiv weiter gestrippt (wie im alten Worker) –
-    // sobald Schiffsbilder in Phase 2 auf echte Datei-Uploads umgestellt
-    // sind, sollte das Feld ohnehin nicht mehr im Payload auftauchen.
-    c.ships = req.body.map(({ image, ...rest }) => rest);
-  });
+  const { charId, ships } = req.body || {};
+  if (!charId || !Array.isArray(ships)) return res.status(400).send('Invalid JSON');
+  const campaign = db.updateCampaignShips(req.params.id, charId, ships);
   if (!campaign) return res.status(404).send('Not Found');
-  res.status(200).send('OK');
+  res.json(campaign.ships);
 });
 
-// PUT /campaign/:id/notes
+// PUT /campaign/:id/notes – atomarer Merge statt last-write-wins, siehe
+// db.updateCampaignNotes.
 router.put('/campaign/:id/notes', (req, res) => {
-  if (!req.body || typeof req.body !== 'object') return res.status(400).send('Invalid JSON');
-  const campaign = db.updateCampaign(req.params.id, c => { c.notes = req.body; });
+  const { entries } = req.body || {};
+  if (!entries || typeof entries !== 'object') return res.status(400).send('Invalid JSON');
+  const campaign = db.updateCampaignNotes(req.params.id, entries);
   if (!campaign) return res.status(404).send('Not Found');
-  res.status(200).send('OK');
+  res.json(campaign.notes);
 });
 
 // PUT /campaign/:id/join

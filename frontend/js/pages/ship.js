@@ -101,7 +101,7 @@ const ShipPage = {
     const campaignShips = App._campaignData?.ships;
     if (!Array.isArray(campaignShips)) return [];
     const localIds = new Set(ships.map(s => s.id));
-    return campaignShips.filter(s => s.isCampaign && !localIds.has(s.id));
+    return campaignShips.filter(s => s.isCampaign && !s._deleted && !localIds.has(s.id));
   },
 
   _renderSelector(character, ships, ship) {

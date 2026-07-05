@@ -54,29 +54,36 @@ const CampaignSync = {
     }
   },
 
-  async updateNotes(id, notes) {
+  // entries = { sessions, persons, locations, quests } – nur die eigenen
+  // (isCampaign-geflaggten) Eintraege, der Server merged sie atomar gegen
+  // den aktuellen Stand (siehe backend/db.js updateCampaignNotes). Antwort
+  // enthaelt den gemergten Stand, damit der Aufrufer den lokalen Cache ohne
+  // Warten auf den naechsten Poll aktualisieren kann.
+  async updateNotes(id, entries) {
     try {
       const res = await fetch(this._url(`/campaign/${id}/notes`), {
         method:  'PUT',
         headers: { ...this._headers(), 'Content-Type': 'application/json' },
-        body:    JSON.stringify(notes),
+        body:    JSON.stringify({ entries }),
       });
       if (!res.ok) return { ok: false, status: res.status };
-      return { ok: true };
+      return { ok: true, data: await res.json() };
     } catch (e) {
       return { ok: false, error: e.message };
     }
   },
 
-  async updateShips(id, ships) {
+  // ships = die eigenen (isCampaign-geflaggten) Schiffe des Charakters, siehe
+  // backend/db.js updateCampaignShips fuer die crewRoles-Merge-Semantik.
+  async updateShips(id, charId, ships) {
     try {
       const res = await fetch(this._url(`/campaign/${id}/ships`), {
         method:  'PUT',
         headers: { ...this._headers(), 'Content-Type': 'application/json' },
-        body:    JSON.stringify(ships),
+        body:    JSON.stringify({ charId, ships }),
       });
       if (!res.ok) return { ok: false, status: res.status };
-      return { ok: true };
+      return { ok: true, data: await res.json() };
     } catch (e) {
       return { ok: false, error: e.message };
     }
