@@ -29,7 +29,11 @@ const CampaignSync = {
     try {
       const res = await fetch(this._url(`/campaign/${id}`), {
         headers: this._headers(),
-        signal: AbortSignal.timeout(5000),
+        // Kampagnen-Dokumente buendeln Notizen/Schiffe mehrerer Spieler (inkl.
+        // eingebetteter Bilder) und koennen mehrere MB gross werden - 5s ist
+        // hier zu knapp bemessen, siehe cloudsync.js pullCharacter() fuer den
+        // Bug, den ein zu kurzes/fehlendes Timeout bei grossen Payloads macht.
+        signal: AbortSignal.timeout(30000),
       });
       if (res.status === 404) return { ok: false, notFound: true };
       if (!res.ok) return { ok: false, status: res.status };
@@ -45,6 +49,7 @@ const CampaignSync = {
         method:  'POST',
         headers: { ...this._headers(), 'Content-Type': 'application/json' },
         body:    JSON.stringify({ name, ownerId }),
+        signal:  AbortSignal.timeout(5000),
       });
       if (res.status === 409) return { ok: false, conflict: true };
       if (!res.ok) return { ok: false, status: res.status };
@@ -65,6 +70,7 @@ const CampaignSync = {
         method:  'PUT',
         headers: { ...this._headers(), 'Content-Type': 'application/json' },
         body:    JSON.stringify({ entries }),
+        signal:  AbortSignal.timeout(30000),
       });
       if (!res.ok) return { ok: false, status: res.status };
       return { ok: true, data: await res.json() };
@@ -81,6 +87,7 @@ const CampaignSync = {
         method:  'PUT',
         headers: { ...this._headers(), 'Content-Type': 'application/json' },
         body:    JSON.stringify({ charId, ships }),
+        signal:  AbortSignal.timeout(30000),
       });
       if (!res.ok) return { ok: false, status: res.status };
       return { ok: true, data: await res.json() };
@@ -95,6 +102,7 @@ const CampaignSync = {
         method:  'PUT',
         headers: { ...this._headers(), 'Content-Type': 'application/json' },
         body:    JSON.stringify({ charId }),
+        signal:  AbortSignal.timeout(5000),
       });
       if (res.status === 404) return { ok: false, notFound: true };
       if (!res.ok) return { ok: false, status: res.status };
@@ -110,6 +118,7 @@ const CampaignSync = {
         method:  'PUT',
         headers: { ...this._headers(), 'Content-Type': 'application/json' },
         body:    JSON.stringify({ charId }),
+        signal:  AbortSignal.timeout(5000),
       });
       if (!res.ok) return { ok: false, status: res.status };
       return { ok: true };
@@ -124,6 +133,7 @@ const CampaignSync = {
         method:  'DELETE',
         headers: { ...this._headers(), 'Content-Type': 'application/json' },
         body:    JSON.stringify({ requesterId }),
+        signal:  AbortSignal.timeout(5000),
       });
       if (!res.ok) return { ok: false, status: res.status };
       return { ok: true };
@@ -138,6 +148,7 @@ const CampaignSync = {
         method:  'DELETE',
         headers: { ...this._headers(), 'Content-Type': 'application/json' },
         body:    JSON.stringify({ requesterId }),
+        signal:  AbortSignal.timeout(5000),
       });
       if (!res.ok) return { ok: false, status: res.status };
       return { ok: true };

@@ -37,7 +37,10 @@ UI / UX
 
 FEATURE REQUESTS
 [ ] Dateien hochladen (Phase 2 der Backend-Migration, siehe DATENHALTUNG — Endpunkte/Tabelle
-    liegen schon bereit in backend/db.js, Routen + Frontend-UI fehlen noch)
+    liegen schon bereit in backend/db.js, Routen + Frontend-UI fehlen noch). Nicht mehr nur
+    "nice to have": ein Charakter mit mehreren eingebetteten Bildern lag bei 5,4 MB und ein
+    Sync-Push darüber ist über den Tailscale Funnel hängen geblieben (siehe Timeout-Fix in
+    CHANGELOG.md) — echte Datei-Uploads würden das JSON wieder klein halten.
 [ ] Privatsphäre bei Charakteren
 [ ] Private Notizen nur für GM einsehbar
 [ ] Datum / Kalender (Zahlungen, Journal)
