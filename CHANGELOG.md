@@ -8,6 +8,7 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 ## [Unreleased]
 
 ### Neu
+- **Zuletzt geöffneter Charakter wird gemerkt** — App-Neustart bzw. Neuladen der Seite öffnet wieder den zuletzt aktiven Charakter statt immer den alphabetisch ersten (`localStorage`-Schlüssel `traveller_last_character_id`, aktualisiert bei jedem Charakterwechsel/-Anlegen). Die zuletzt gewählte Schiffs-Auswahl (`character.activeShipId`) war bereits Teil der Charakterdaten und blieb dadurch schon vorher über Neustarts erhalten
 - **Geburtsdatum** im Metadaten-Tab neben dem Alter-Feld (Freitext, z.B. `1100-001` für Imperialkalender)
 - **Weiterbildung: Wochen-Dialog** — `+` öffnet einen Dialog mit Anzahl Wochen + Von/Bis-Datum; Einträge erscheinen als Log unter der Fortschrittsleiste; `−` entfernt den letzten Eintrag
 - **Schiff: Finanzen-Tab** — eigene Kasse pro Schiff (`ship.finances.cashCredits` + Transaktionsliste), getrennt vom persönlichen Geld des Charakters. Einnahmen/Ausgaben mit Betrag, Beschreibung und Ingame-Datum erfassen, Transaktionen löschbar mit automatischer Kassenstand-Korrektur

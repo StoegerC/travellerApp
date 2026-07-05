@@ -15,6 +15,7 @@ const App = {
   _campaignData: null,
   _campaignTimer: null,
   _CAMPAIGN_POLL: 15000,
+  _LAST_CHAR_KEY: 'traveller_last_character_id',
 
   pages: {
     metadata:   MetadataPage,
@@ -34,7 +35,9 @@ const App = {
 
     const characters = Storage.listCharacters();
     if (characters.length > 0) {
-      this.loadCharacter(characters[0].id);
+      const lastId = localStorage.getItem(this._LAST_CHAR_KEY);
+      const stillExists = lastId && characters.some(c => c.id === lastId);
+      this.loadCharacter(stillExists ? lastId : characters[0].id);
     } else {
       this.showLoadCharDialog(true);
     }
@@ -131,6 +134,7 @@ const App = {
     this.currentCharacter = Storage.loadCharacter(id);
     if (!this.currentCharacter) { console.error('Charakter nicht gefunden:', id); return; }
     window.currentCharacter = this.currentCharacter;
+    localStorage.setItem(this._LAST_CHAR_KEY, id);
     this._undoStack = [];
     this._updateUndoBtn();
     this._updateHeaderName();
@@ -162,6 +166,7 @@ const App = {
     Storage.saveCharacter(char);
     this.currentCharacter = char;
     window.currentCharacter = char;
+    localStorage.setItem(this._LAST_CHAR_KEY, char.id);
     this._undoStack = [];
     this._updateUndoBtn();
     this.editMode = true;
