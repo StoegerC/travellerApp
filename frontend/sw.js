@@ -1,4 +1,4 @@
-const CACHE = 'traveller-v13';
+const CACHE = 'traveller-v14';
 
 const ASSETS = [
   './',
@@ -9,6 +9,7 @@ const ASSETS = [
   './icons/icon-512.png',
   './icons/apple-touch-icon.png',
   './js/cloudsync.js',
+  './js/auth.js',
   './js/campaign.js',
   './js/filesync.js',
   './js/markdown.js',

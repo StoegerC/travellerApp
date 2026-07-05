@@ -6,6 +6,11 @@
  * einer SQLite-Transaktion (Read-Modify-Write) – das behebt die Race-Lücke,
  * die KVs nicht-transaktionales get/put beim gleichzeitigen Beitreten zweier
  * Spieler hatte.
+ *
+ * Phase 3: ownerId/requesterId kommen nicht mehr aus dem Client-Body (dort
+ * beliebig faelschbar), sondern aus req.user.id (checkAuth). Zusaetzlich wird
+ * geprueft, dass ein per charId beigetretener/entfernter Charakter tatsaechlich
+ * dem aufrufenden Nutzer gehoert.
  */
 const express = require('express');
 const db = require('../db');
@@ -16,34 +21,51 @@ function isValidCampaignId(id) {
   return /^[a-z0-9_-]{2,32}$/.test(id);
 }
 
-// GET /campaigns
+function isGm(user) { return user.roles.includes('gm'); }
+
+function ownsCharacter(userId, charId) {
+  const char = db.getCharacter(charId);
+  return !!char && char.ownerId === userId;
+}
+
+function isCampaignMember(campaign, userId) {
+  if (campaign.ownerId === userId) return true;
+  return (campaign.members || []).some(m => ownsCharacter(userId, m.charId));
+}
+
+// GET /campaigns – Liste bleibt bewusst offen (nur id/name/memberCount, keine
+// Inhalte) - noetig damit man einer Kampagne per ID/Name beitreten kann.
 router.get('/campaigns', (req, res) => {
   res.json(db.listCampaigns());
 });
 
-// GET /campaign/:id
+// GET /campaign/:id – nur Mitglieder (oder gm-Flag)
 router.get('/campaign/:id', (req, res) => {
   if (!isValidCampaignId(req.params.id)) return res.status(400).send('Invalid campaign ID');
   const campaign = db.getCampaign(req.params.id);
   if (!campaign) return res.status(404).send('Not Found');
+  if (!isCampaignMember(campaign, req.user.id) && !isGm(req.user)) return res.status(403).send('Forbidden');
   res.json(campaign);
 });
 
-// POST /campaign/:id – erstellen (409 wenn bereits vorhanden)
+// POST /campaign/:id – erstellen (409 wenn bereits vorhanden). ownerId kommt
+// aus der Session, nicht mehr aus dem Body. charId (der beitretende eigene
+// Charakter) muss dem Aufrufer gehoeren.
 router.post('/campaign/:id', (req, res) => {
   const { id } = req.params;
   if (!isValidCampaignId(id)) return res.status(400).send('Invalid campaign ID');
   if (db.campaignExists(id)) return res.status(409).send('Campaign ID already taken');
 
-  const { name, ownerId } = req.body || {};
-  if (!ownerId) return res.status(400).send('Missing ownerId');
+  const { name, charId } = req.body || {};
+  if (!charId) return res.status(400).send('Missing charId');
+  if (!ownsCharacter(req.user.id, charId)) return res.status(403).send('Forbidden');
 
   const campaign = {
     id,
     name: name || id,
-    ownerId,
+    ownerId: req.user.id,
     createdAt: new Date().toISOString(),
-    members: [{ charId: ownerId, joinedAt: new Date().toISOString() }],
+    members: [{ charId, joinedAt: new Date().toISOString() }],
     notes: { sessions: [], persons: [], locations: [], quests: [] },
     ships: [],
   };
@@ -51,10 +73,11 @@ router.post('/campaign/:id', (req, res) => {
   res.json(campaign);
 });
 
-// GET /campaign/:id/ships
+// GET /campaign/:id/ships – dieselbe Mitgliedschaftspruefung wie GET /campaign/:id
 router.get('/campaign/:id/ships', (req, res) => {
   const campaign = db.getCampaign(req.params.id);
   if (!campaign) return res.status(404).send('Not Found');
+  if (!isCampaignMember(campaign, req.user.id) && !isGm(req.user)) return res.status(403).send('Forbidden');
   res.json(campaign.ships || []);
 });
 
@@ -63,6 +86,7 @@ router.get('/campaign/:id/ships', (req, res) => {
 router.put('/campaign/:id/ships', (req, res) => {
   const { charId, ships } = req.body || {};
   if (!charId || !Array.isArray(ships)) return res.status(400).send('Invalid JSON');
+  if (!ownsCharacter(req.user.id, charId)) return res.status(403).send('Forbidden');
   const campaign = db.updateCampaignShips(req.params.id, charId, ships);
   if (!campaign) return res.status(404).send('Not Found');
   res.json(campaign.ships);
@@ -78,10 +102,11 @@ router.put('/campaign/:id/notes', (req, res) => {
   res.json(campaign.notes);
 });
 
-// PUT /campaign/:id/join
+// PUT /campaign/:id/join – nur mit eigenem Charakter
 router.put('/campaign/:id/join', (req, res) => {
   const { charId } = req.body || {};
   if (!charId) return res.status(400).send('Missing charId');
+  if (!ownsCharacter(req.user.id, charId)) return res.status(403).send('Forbidden');
   const campaign = db.updateCampaign(req.params.id, c => {
     if (!c.members.find(m => m.charId === charId)) {
       c.members.push({ charId, joinedAt: new Date().toISOString() });
@@ -91,10 +116,11 @@ router.put('/campaign/:id/join', (req, res) => {
   res.status(200).send('OK');
 });
 
-// PUT /campaign/:id/leave
+// PUT /campaign/:id/leave – nur mit eigenem Charakter
 router.put('/campaign/:id/leave', (req, res) => {
   const { charId } = req.body || {};
   if (!charId) return res.status(400).send('Missing charId');
+  if (!ownsCharacter(req.user.id, charId)) return res.status(403).send('Forbidden');
   const campaign = db.updateCampaign(req.params.id, c => {
     c.members = c.members.filter(m => m.charId !== charId);
   });
@@ -104,10 +130,9 @@ router.put('/campaign/:id/leave', (req, res) => {
 
 // DELETE /campaign/:id/member/:charId – nur Owner
 router.delete('/campaign/:id/member/:charId', (req, res) => {
-  const { requesterId } = req.body || {};
   const current = db.getCampaign(req.params.id);
   if (!current) return res.status(404).send('Not Found');
-  if (requesterId !== current.ownerId) return res.status(403).send('Forbidden');
+  if (req.user.id !== current.ownerId) return res.status(403).send('Forbidden');
   db.updateCampaign(req.params.id, c => {
     c.members = c.members.filter(m => m.charId !== req.params.charId);
   });
@@ -118,8 +143,7 @@ router.delete('/campaign/:id/member/:charId', (req, res) => {
 router.delete('/campaign/:id', (req, res) => {
   const current = db.getCampaign(req.params.id);
   if (!current) return res.status(404).send('Not Found');
-  const { requesterId } = req.body || {};
-  if (requesterId !== current.ownerId) return res.status(403).send('Forbidden');
+  if (req.user.id !== current.ownerId) return res.status(403).send('Forbidden');
   db.deleteCampaign(req.params.id);
   res.status(200).send('OK');
 });

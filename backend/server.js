@@ -4,10 +4,12 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-const { checkAuth } = require('./auth');
+const { checkAuth, requireRole } = require('./auth');
+const authRoutes = require('./routes/auth');
 const characterRoutes = require('./routes/characters');
 const campaignRoutes = require('./routes/campaigns');
 const fileRoutes = require('./routes/files');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -42,11 +44,18 @@ app.get('/', (req, res) => {
 // Zufallszeichenkette (nicht erratbar) - Upload/Loeschen bleiben unten geschuetzt.
 app.use(fileRoutes.publicRouter);
 
-// Ab hier: Bearer-Auth Pflicht (alle Sync-API-Routen)
+// POST /auth/login ist oeffentlich - ohne gueltige Session kann man sich
+// sonst gar nicht erst einloggen.
+app.use(authRoutes.publicRouter);
+
+// Ab hier: Bearer-Session-Auth Pflicht (Phase 3, ersetzt den frueheren
+// geteilten API_KEY vollstaendig - kein Parallelbetrieb)
 app.use(checkAuth);
+app.use(authRoutes.protectedRouter);
 app.use(characterRoutes);
 app.use(campaignRoutes);
 app.use(fileRoutes.protectedRouter);
+app.use(requireRole('admin'), adminRoutes);
 
 // Error Handler
 app.use((err, req, res, next) => {

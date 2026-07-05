@@ -43,12 +43,15 @@ const CampaignSync = {
     }
   },
 
-  async createCampaign(id, name, ownerId) {
+  // charId: der eigene Charakter, der als erstes Mitglied beitritt. Der
+  // Kampagnen-"Besitzer" (darf löschen/Mitglieder kicken) wird seit Phase 3
+  // serverseitig aus der Session ermittelt, nicht mehr hier übergeben.
+  async createCampaign(id, name, charId) {
     try {
       const res = await fetch(this._url(`/campaign/${id}`), {
         method:  'POST',
         headers: { ...this._headers(), 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ name, ownerId }),
+        body:    JSON.stringify({ name, charId }),
         signal:  AbortSignal.timeout(5000),
       });
       if (res.status === 409) return { ok: false, conflict: true };
