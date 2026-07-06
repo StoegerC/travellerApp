@@ -1009,13 +1009,31 @@ const App = {
   // Push der eigenen Kampagnen-Eintraege. Der Server merged sie atomar gegen
   // den aktuellen Stand (siehe backend/db.js updateCampaignNotes) - kein
   // GET-vor-PUT mehr noetig, das war die Race-Luecke zwischen zwei Spielern.
+  //
+  // Eintraege, die lokal nicht (mehr) "In Kampagne teilen" gesetzt sind, aber
+  // noch im Kampagnen-Pool stehen (weil sie frueher mal geteilt waren), werden
+  // hier NICHT einfach weggelassen - sonst bleibt die veraltete geteilte Kopie
+  // fuer alle anderen Mitglieder fuer immer sichtbar, das Zuruecknehmen von
+  // "In Kampagne teilen" hat serverseitig nie einen Effekt (Bug: Eintrag als
+  // privat markiert, taucht trotzdem bei anderen Spielern auf). Stattdessen
+  // wird ein minimaler Tombstone gepusht, der die alte Pool-Kopie per
+  // _pickNewer() (neueres updatedAt gewinnt) ersetzt, ohne den lokalen,
+  // weiterhin vorhandenen Eintrag selbst zu loeschen.
   async _syncMyCampaignEntries() {
     const char = this.currentCharacter;
     if (!char?.campaignId || char.syncMode !== 'cloud' || !CloudSync.isConfigured()) return;
     const notes   = char.notes || {};
+    const pool    = this._campaignData?.notes || {};
     const entries = {};
+    const now     = new Date().toISOString();
     for (const tab of ['sessions', 'persons', 'locations', 'quests']) {
-      entries[tab] = (notes[tab] || []).filter(e => e.isCampaign);
+      const list     = notes[tab] || [];
+      const shared   = list.filter(e => e.isCampaign);
+      const poolIds  = new Set((pool[tab] || []).filter(e => !e._deleted).map(e => e.id));
+      const unshared = list
+        .filter(e => !e.isCampaign && poolIds.has(e.id))
+        .map(e => ({ id: e.id, _deleted: true, deletedAt: now, updatedAt: now }));
+      entries[tab] = [...shared, ...unshared];
     }
     const result = await CampaignSync.updateNotes(char.campaignId, entries);
     if (result.ok && this._campaignData) this._campaignData.notes = result.data;
@@ -1025,11 +1043,18 @@ const App = {
   // behalten, nur den eigenen ueberschreiben) und Waffen/Finanzen-Merge
   // laufen jetzt serverseitig in derselben Transaktion (siehe
   // backend/db.js updateCampaignShips).
+  //
+  // Gleiches Unshare-Tombstone-Prinzip wie in _syncMyCampaignEntries oben.
   async _syncMyCampaignShips() {
     const char = this.currentCharacter;
     if (!char?.campaignId || char.syncMode !== 'cloud' || !CloudSync.isConfigured()) return;
-    const myShips = (char.ships || []).filter(s => s.isCampaign);
-    const result  = await CampaignSync.updateShips(char.campaignId, char.id, myShips);
+    const now      = new Date().toISOString();
+    const poolIds  = new Set((this._campaignData?.ships || []).filter(s => !s._deleted).map(s => s.id));
+    const myShips  = (char.ships || []).filter(s => s.isCampaign);
+    const unshared = (char.ships || [])
+      .filter(s => !s.isCampaign && poolIds.has(s.id))
+      .map(s => ({ id: s.id, _deleted: true, deletedAt: now, updatedAt: now }));
+    const result  = await CampaignSync.updateShips(char.campaignId, char.id, [...myShips, ...unshared]);
     if (!result.ok) return;
     if (this._campaignData) this._campaignData.ships = result.data;
 

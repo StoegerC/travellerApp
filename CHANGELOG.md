@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.1.1] – 2026-07-06
+
+### Behoben
+- **Kampagne: Zurücknehmen von „In Kampagne teilen" hatte serverseitig nie einen Effekt** — ein einmal geteilter Personen-/Orte-/Quest-/Journal-Eintrag oder ein einmal geteiltes Schiff blieb für andere Mitspieler dauerhaft sichtbar, selbst nachdem der Haken lokal wieder entfernt wurde (`isCampaign` zurück auf privat), weil der Push-Schritt (`App._syncMyCampaignEntries`/`_syncMyCampaignShips`) nicht mehr geteilte Einträge einfach aus dem Batch wegließ statt sie aktiv zu entfernen — der serverseitige Merge kennt aber nur „hinzufügen/aktualisieren", kein „fehlt jetzt, also löschen". Betraf z.B. neu angelegte Schiffe: die werden in einer Kampagne automatisch als geteilt angelegt, ein nachträgliches Umschalten auf „🔒 Privat" nahm die Freigabe serverseitig nie zurück. Fix: unshare-Fälle senden jetzt einen minimalen Tombstone mit, der die veraltete Pool-Kopie ersetzt, ohne den eigenen lokalen Eintrag anzutasten.
+
+---
+
 ## [3.1.0] – 2026-07-06
 
 ### Neu
