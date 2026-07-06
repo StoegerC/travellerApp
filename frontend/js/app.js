@@ -321,6 +321,7 @@ const App = {
       // geändert hat. Ein zweiter, unconditional Push hier würde genau den
       // Bug zurückbringen, den der Dirty-Check beheben soll (siehe storage.js).
       if (this.currentPage === 'ship' && this.currentCharacter.campaignId) this._syncMyCampaignShips();
+      if (this.currentPage === 'notes' && this.currentCharacter.campaignId) this._syncMyCampaignEntries();
     } else {
       const e = Storage.lastError;
       const isQuota = e instanceof DOMException &&
