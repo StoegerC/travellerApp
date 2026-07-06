@@ -1253,6 +1253,16 @@ const NotesPage = {
         createdAt:   existing?.createdAt || createdAt,
         updatedAt:   new Date().toISOString(),
       };
+      // "@"-Erwähnungen im Bericht verlinken die referenzierte Person/den Ort/
+      // die Quest automatisch auch über das normale Tag-System (erscheint dann
+      // z.B. in der "Personen:/Orte:/Quests:"-Übersicht am Sessionende und in
+      // der Rückverlinkung bei der Person selbst). Rein additiv: Entfernen einer
+      // Erwähnung aus dem Text entfernt den Tag nicht wieder automatisch, falls
+      // er zusätzlich manuell über den Tag-Picker gesetzt wurde.
+      for (const [, name, type, mentionId] of entry.content.matchAll(Md._MENTION_RE)) {
+        const key = type + 's';
+        if (!entry.tags[key].includes(mentionId)) entry.tags[key].push(mentionId);
+      }
       if (isNew) {
         if (entry.title) { data.sessions.push(entry); this._detailId = entry.id; }
       } else {
