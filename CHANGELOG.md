@@ -8,6 +8,7 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 ## [Unreleased]
 
 ### Behoben
+- **Kampagnen-Besitzer in Admin-Übersicht falsch als „ohne zugeordneten Nutzer" geführt** — `db.updateCampaign()` (genutzt von Join/Leave/Kick, Notes-/Schiffs-Merge und dem `create-admin.js --claim-existing`-Migrationsscript) schrieb den neuen `ownerId` bisher nur in den JSON-Blob (`campaign.ownerId`, die tatsächlich für Zugriffskontrolle in `routes/campaigns.js` maßgebliche Quelle), nie aber in die separate SQL-Spalte `campaigns.owner_id` — die blieb dadurch nach der Phase-3-Migration auf ihrem alten Wert (einer Charakter-ID statt einer Nutzer-ID) stehen. Zugriffsrechte waren davon nicht betroffen, aber die neue Admin-Speicherübersicht (`getAdminOverview()`) liest genau diese SQL-Spalte für die schnelle Aggregation und zeigte die Kampagne deshalb fälschlich als besitzerlos. `UPDATE` schreibt die Spalte jetzt mit, bestehende Kampagnen wurden per Korrekturlauf einmalig nachgezogen.
 - **Cloud-Einstellungen: „Weiter" ließ sich ohne Verbindungstest nicht anklicken** — sowohl im „Neuer Charakter"-Dialog als auch in den Cloud-Einstellungen war der „Weiter"-Button standardmäßig deaktiviert und wurde nur nach einem erfolgreichen „Verbindung testen" wieder freigegeben. Der Test bleibt als optionale Diagnose verfügbar, blockiert den Login-Schritt aber nicht mehr.
 
 ### Neu

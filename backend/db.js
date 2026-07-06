@@ -190,7 +190,7 @@ const stmtInsertCampaign = db.prepare(`
   VALUES (@id, @name, @ownerId, @data, @memberCount, @createdAt, @updatedAt)
 `);
 const stmtUpdateCampaign = db.prepare(`
-  UPDATE campaigns SET name = @name, data = @data, member_count = @memberCount, updated_at = @updatedAt
+  UPDATE campaigns SET name = @name, owner_id = @ownerId, data = @data, member_count = @memberCount, updated_at = @updatedAt
   WHERE id = @id
 `);
 const stmtDeleteCampaign = db.prepare('DELETE FROM campaigns WHERE id = ?');
@@ -257,6 +257,14 @@ function updateCampaign(id, mutateFn) {
     stmtUpdateCampaign.run({
       id,
       name: campaign.name,
+      // owner_id-Spalte wurde bisher hier nie mitgeschrieben - nur die
+      // eigentliche Zugriffskontrolle in routes/campaigns.js las/schrieb
+      // campaign.ownerId im JSON-Blob. Dadurch driftete die SQL-Spalte
+      // (nur bei INSERT/upsertCampaign gesetzt) von der tatsaechlichen
+      // Owner-Zuordnung ab, sobald z.B. create-admin.js --claim-existing
+      // sie per updateCampaign() umgestellt hat - sichtbar u.a. in der
+      // Admin-Speicherübersicht (getAdminOverview liest die SQL-Spalte).
+      ownerId: campaign.ownerId,
       data: JSON.stringify(campaign),
       memberCount: (campaign.members || []).length,
       updatedAt: new Date().toISOString(),
