@@ -962,7 +962,15 @@ const App = {
       this._campaignData = r.data;
       Storage.saveCampaign(r.data);
       this._mergeCampaignShipRoles();
+      this._mergeCampaignShipsBack();
       this._mergeCampaignNotesBack();
+      // Ohne dieses Speichern leben die Merge-Ergebnisse oben nur im Speicher:
+      // ein Reload/Neustart der App vor der naechsten Autosave-Aktion wuerde
+      // sie verwerfen (IndexedDB haette noch den alten Stand) und z.B. ein
+      // bereits adoptiertes, inzwischen zurueckgenommenes Schiff waere nach
+      // Reload wieder da. saveCharacter() hat einen eingebauten Dirty-Check,
+      // ist also ein guenstiges No-Op, wenn sich nichts geaendert hat.
+      if (this.currentCharacter) Storage.saveCharacter(this.currentCharacter);
       if (!this.editMode && (this.currentPage === 'notes' || this.currentPage === 'metadata' || this.currentPage === 'ship')) {
         this.renderCurrentPage();
       }
@@ -978,6 +986,14 @@ const App = {
   // vorhandene Einträge werden abgeglichen (per id, neuere updatedAt gewinnt);
   // rein fremde, nie von mir berührte Einträge bleiben bewusst nur in
   // _campaignData/_extEntries() sichtbar, nicht automatisch übernommen.
+  //
+  // Guard "local.isCampaign": ohne diesen wuerde ein gerade erst lokal auf
+  // privat gestelltes Item (isCampaign=false) durch den eigenen, kurz danach
+  // gepushten Unshare-Tombstone (siehe _syncMyCampaignEntries) beim naechsten
+  // Poll wieder ueberschrieben - der Tombstone traegt einen minimal spaeteren
+  // updatedAt-Stempel als das lokale Speichern selbst und wuerde _pickNewer()
+  // sonst fuer sich entscheiden. isCampaign=false ist ein bewusstes "das ist
+  // jetzt wieder meine private Kopie, vom Kampagnen-Pool nicht mehr anfassen".
   _mergeCampaignNotesBack() {
     const char        = this.currentCharacter;
     const remoteNotes = this._campaignData?.notes;
@@ -986,6 +1002,7 @@ const App = {
       const remoteList = remoteNotes[tab];
       if (!Array.isArray(remoteList) || !Array.isArray(char.notes[tab])) continue;
       char.notes[tab] = char.notes[tab].map(local => {
+        if (!local.isCampaign) return local;
         const remote = remoteList.find(r => r.id === local.id);
         return remote ? SyncMerge._pickNewer(local, remote) : local;
       });
@@ -1003,6 +1020,27 @@ const App = {
       const remote = remoteShips.find(r => r.id === local.id);
       if (!remote?.crewRoles) return;
       local.crewRoles = { ...remote.crewRoles, ...(local.crewRoles?.[char.id] ? { [char.id]: local.crewRoles[char.id] } : {}) };
+    });
+  },
+
+  // Analog zu _mergeCampaignNotesBack, aber fuer Schiffe: ein per Dropdown
+  // "adoptiertes" fremdes Schiff (siehe #shipSelect "ext:"-Handler) landet
+  // sofort in char.ships und ist ab dann komplett unabhaengig vom Kampagnen-
+  // Pool - ohne diesen Merge-Schritt wuerde die adoptierende Person nie
+  // mitbekommen, wenn der urspruengliche Besitzer das Schiff wieder auf
+  // privat stellt oder loescht (Bug: Schiff bleibt bei allen Mitspielern
+  // sichtbar, obwohl "nicht mehr in der Kampagne"). _mergeShip() statt
+  // _pickNewer(), weil Schiffe zusaetzlich Waffen/Finanzen feldweise
+  // brauchen. Gleicher isCampaign-Guard wie bei den Notizen: eine bereits
+  // lokal auf privat gestellte eigene Kopie bleibt unangetastet.
+  _mergeCampaignShipsBack() {
+    const char        = this.currentCharacter;
+    const remoteShips = this._campaignData?.ships;
+    if (!Array.isArray(char?.ships) || !Array.isArray(remoteShips)) return;
+    char.ships = char.ships.map(local => {
+      if (!local.isCampaign) return local;
+      const remote = remoteShips.find(r => r.id === local.id);
+      return remote ? SyncMerge._mergeShip(local, remote) : local;
     });
   },
 
