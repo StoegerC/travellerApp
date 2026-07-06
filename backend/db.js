@@ -349,6 +349,70 @@ function getFileStats() {
   return { count: row.count, totalSize: row.totalSize };
 }
 
+// Admin-Übersicht: wer besitzt welche Charaktere/Kampagnen und wie viel
+// Speicher (Charakter-JSON vs. Medien) belegt das. LENGTH(CAST(x AS BLOB))
+// statt LENGTH(x), weil SQLite bei TEXT sonst Zeichen statt Bytes zählt -
+// bei Umlauten/ß in Notizen wäre die Byte-Größe sonst zu niedrig.
+const stmtCharsForAdmin = db.prepare(
+  'SELECT id, name, owner_id AS ownerId, LENGTH(CAST(data AS BLOB)) AS bytes FROM characters'
+);
+const stmtCampaignsForAdmin = db.prepare(
+  'SELECT id, name, owner_id AS ownerId, LENGTH(CAST(data AS BLOB)) AS bytes FROM campaigns'
+);
+const stmtFileBytesByOwner = db.prepare(
+  'SELECT owner_type AS ownerType, owner_id AS ownerId, COALESCE(SUM(size), 0) AS bytes FROM files GROUP BY owner_type, owner_id'
+);
+
+function getAdminOverview() {
+  const users      = listUsers();
+  const characters = stmtCharsForAdmin.all();
+  const campaigns  = stmtCampaignsForAdmin.all();
+
+  const knownUserIds = new Set(users.map(u => u.id));
+
+  // Dateien hängen an Charakter/Kampagne, nicht direkt am Nutzer - hier über
+  // die jeweilige owner_id auf den Nutzer aufgelöst. Zeigt owner_id auf
+  // keinen (mehr) existierenden Nutzer (z.B. nach admin/users/:id DELETE),
+  // zaehlt das als verwaist statt an eine tote Nutzer-ID verloren zu gehen.
+  const charOwnerById = new Map(characters.map(c => [c.id, c.ownerId]));
+  const campOwnerById = new Map(campaigns.map(c => [c.id, c.ownerId]));
+  const mediaBytesByUser = new Map();
+  let orphanedMediaBytes = 0;
+  for (const g of stmtFileBytesByOwner.all()) {
+    const userId = g.ownerType === 'character' ? charOwnerById.get(g.ownerId) : campOwnerById.get(g.ownerId);
+    if (userId && knownUserIds.has(userId)) mediaBytesByUser.set(userId, (mediaBytesByUser.get(userId) || 0) + g.bytes);
+    else orphanedMediaBytes += g.bytes;
+  }
+  const summarize = (chars, camps, mediaBytes) => ({
+    characters: chars.map(c => ({ id: c.id, name: c.name, bytes: c.bytes })),
+    campaigns:  camps.map(c => ({ id: c.id, name: c.name, bytes: c.bytes })),
+    storage: {
+      characterBytes: chars.reduce((s, c) => s + c.bytes, 0),
+      mediaBytes,
+    },
+  });
+
+  const userOverviews = users.map(u => summarize(
+    characters.filter(c => c.ownerId === u.id),
+    campaigns.filter(c => c.ownerId === u.id),
+    mediaBytesByUser.get(u.id) || 0
+  ));
+
+  // Nutzer geloescht (siehe deleteUser) oder Charakter/Kampagne nie einem
+  // Owner zugeordnet - trotzdem sichtbar machen statt stillschweigend zu
+  // verstecken, sonst "verschwindet" belegter Speicherplatz aus der Ansicht.
+  const orphanedOverview = summarize(
+    characters.filter(c => !c.ownerId || !knownUserIds.has(c.ownerId)),
+    campaigns.filter(c => !knownUserIds.has(c.ownerId)),
+    orphanedMediaBytes
+  );
+
+  return {
+    users: users.map((u, i) => ({ id: u.id, email: u.email, roles: u.roles, ...userOverviews[i] })),
+    orphaned: orphanedOverview,
+  };
+}
+
 // Loescht die tatsaechlichen Dateien von der Platte fuer alle files-Zeilen eines
 // Owners - die DB-Zeilen selbst werden weiterhin per stmtDeleteCharFiles/
 // stmtDeleteCampaignFiles in der aufrufenden delete*()-Funktion entfernt. Ohne
@@ -443,7 +507,7 @@ module.exports = {
   getCampaign, listCampaigns, campaignExists, insertCampaign, updateCampaign, deleteCampaign,
   updateCampaignNotes, updateCampaignShips,
   upsertCampaign,
-  insertFile, getFile, deleteFile, listFilesByOwner, getFileStats,
+  insertFile, getFile, deleteFile, listFilesByOwner, getFileStats, getAdminOverview,
   insertUser, getUserByEmail, getUserById, listUsers, setPasswordHash, setUserRoles, deleteUser,
   createSession, getSessionUser, deleteSession, invalidateUserSessions,
 };

@@ -86,4 +86,13 @@ router.get('/admin/stats', (req, res) => {
   });
 });
 
+// GET /admin/overview – pro Nutzer: eigene Charaktere/Kampagnen (Name +
+// Groesse) und Speicherverbrauch aufgeschluesselt in Charakter-JSON vs.
+// Medien (Datei-Uploads). "orphaned" fasst Inhalte zusammen, deren Owner
+// keinem aktuellen Nutzer mehr entspricht (z.B. nach admin/users/:id DELETE,
+// das bewusst keine Charaktere/Kampagnen mitloescht, siehe db.deleteUser).
+router.get('/admin/overview', (req, res) => {
+  res.json(db.getAdminOverview());
+});
+
 module.exports = router;
