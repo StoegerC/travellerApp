@@ -1122,10 +1122,21 @@ const ShipPage = {
           canvas.height = Math.round(img.height * scale);
           canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
           canvas.toBlob(async blob => {
+            const shipId = this._ship(char)?.id;
+            if (!shipId) return;
+            const result = await FileSync.upload(blob, { ownerType: 'character', ownerId: char.id, field: 'shipImage', refId: shipId });
+            if (!result.ok) { App.showStatus('Bild-Upload fehlgeschlagen', 'error'); return; }
+            // Ship-Objekt ERST NACH dem Upload frisch nachschlagen, nicht die vor
+            // dem "await" gefangene Referenz weiterverwenden: bei Kampagnen-
+            // geteilten Schiffen (isCampaign) ersetzt ein zwischenzeitlich
+            // gelaufener Kampagnen-Poll (App._mergeCampaignShipsBack, alle 15s)
+            // das Objekt in char.ships[] durch ein neu gemergtes - ein Upload,
+            // der laenger als das Poll-Intervall braeuchte (grosse PDFs/Bilder
+            // ueber Tailscale Funnel), wuerde sonst still gegen die verwaiste
+            // alte Kopie schreiben und nie gespeichert werden (Bug: PDF/Bild
+            // kommt beim Server an, taucht aber nie in der Anhangsliste auf).
             const ship = this._ship(char);
             if (!ship) return;
-            const result = await FileSync.upload(blob, { ownerType: 'character', ownerId: char.id, field: 'shipImage', refId: ship.id });
-            if (!result.ok) { App.showStatus('Bild-Upload fehlgeschlagen', 'error'); return; }
             if (!ship.images) ship.images = [];
             ship.images.push(result.data.id);
             ship.imageIndex = ship.images.length - 1;
@@ -1176,11 +1187,16 @@ const ShipPage = {
       if (!file) return;
       if (file.type !== 'application/pdf') { alert('Bitte eine PDF-Datei wählen'); return; }
       if (file.size > 100 * 1024 * 1024) { alert('Datei zu groß! Maximum 100 MB'); return; }
+      const shipId = this._ship(char)?.id;
+      if (!shipId) return;
+      App.showStatus('Lade PDF hoch …', 'info');
+      const result = await FileSync.upload(file, { ownerType: 'character', ownerId: char.id, field: 'shipAttachment', refId: shipId });
+      if (!result.ok) { App.showStatus('PDF-Upload fehlgeschlagen', 'error'); return; }
+      // Siehe Kommentar bei shipImgUpload oben: Ship-Objekt erst NACH dem
+      // (bei grossen PDFs potenziell lange dauernden) Upload frisch nachschlagen,
+      // sonst geht die Zuordnung bei zwischenzeitlichem Kampagnen-Poll verloren.
       const ship = this._ship(char);
       if (!ship) return;
-      App.showStatus('Lade PDF hoch …', 'info');
-      const result = await FileSync.upload(file, { ownerType: 'character', ownerId: char.id, field: 'shipAttachment', refId: ship.id });
-      if (!result.ok) { App.showStatus('PDF-Upload fehlgeschlagen', 'error'); return; }
       if (!ship.attachments) ship.attachments = [];
       ship.attachments.push({ id: result.data.id, filename: file.name, size: file.size });
       this._saveAndSync(char);

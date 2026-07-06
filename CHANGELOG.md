@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.2.2] – 2026-07-06
+
+### Behoben
+- **Schiffs-Bild/PDF-Upload bei Kampagnen-geteilten Schiffen konnte spurlos verloren gehen** — `shipImgUpload`/`shipAttachmentUpload` hielten das Schiff-Objekt in einer Variable fest, die vor dem (bei großen Dateien potenziell mehrere Sekunden dauernden) Upload ausgelesen wurde. Lief währenddessen ein Kampagnen-Poll (`App._mergeCampaignShipsBack`, alle 15s, seit 3.1.2), wurde das Objekt in `char.ships[]` durch eine frisch gemergte Kopie ersetzt — die alte Variable zeigte danach ins Leere, die neu hochgeladene Datei landete in einem nirgends mehr referenzierten Schiff-Objekt und verschwand beim nächsten Speichern. Betraf in der Praxis vor allem größere PDFs (siehe 3.2.1, 100-MB-Limit), die durch die Übertragungsdauer über Tailscale Funnel eher in dieses Zeitfenster fielen. Fix: Schiff-Objekt wird nach dem Upload frisch nachgeschlagen statt der vor dem Upload gefangenen Referenz.
+
+---
+
 ## [3.2.1] – 2026-07-06
 
 ### Geändert
