@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.0.0] – 2026-07-06
+
 ### Neu
 - **Phase 3 der Backend-Migration: Nutzerverwaltung mit Login statt geteiltem API-Key** — bisher teilten sich alle Geräte einen einzigen Bearer-Token ohne Identität, jede Route vertraute der `:id` im Pfad blind (jeder mit dem Schlüssel konnte jeden Charakter/jede Kampagne lesen/schreiben/löschen). Jetzt: E-Mail+Passwort-Login (`backend/routes/auth.js`, Session-Tokens in neuer `sessions`-Tabelle statt JWT, Passwort-Hashing via eingebautes `crypto.scrypt` — keine neue Abhängigkeit). Registrierung ist Admin-getrieben: Admin legt nur eine E-Mail an, der Nutzer setzt sein Passwort selbst beim ersten Login; ein Admin-Reset zwingt beim nächsten Login ein neues Passwort. Rollen sind additive Zusatzrechte auf einer gemeinsamen Basis (`users.roles`-JSON-Array): jeder eingeloggte Nutzer hat volle Rechte auf eigene Charaktere/Kampagnen, `gm` erlaubt zusätzlich lesenden (nicht schreibenden) Zugriff auf **alle** Charaktere aller Nutzer, `admin` erlaubt Nutzerverwaltung + Server-Statistiken (bewusst nicht automatisch mit `gm` kombiniert). `characters.owner_id`/`campaigns.owner_id` werden jetzt tatsächlich durchgesetzt statt nur vorbereitet zu sein. Kampagnen-Inhalte (Notizen, Personen, Orte, Quests) bleiben gemeinschaftlich: jedes Kampagnen-Mitglied darf jeden geteilten Eintrag bearbeiten/löschen, nicht nur seine eigenen (`frontend/js/pages/notes.js`, `App._mergeCampaignNotesBack()` gleicht fremd bearbeitete eigene Einträge nach dem Sync wieder lokal ab). Neue eigenständige Admin-Oberfläche (`frontend/admin.html`) für Nutzer anlegen/löschen, Rollen vergeben, Passwort zurücksetzen, Server-Übersicht (Charaktere, Dateien, Speicherplatz, Uptime). Sauberer Cutover: der alte geteilte `API_KEY` ist komplett abgeschaltet, jedes Gerät braucht einmalig den neuen Login.
 - **Klick auf das Traveller-Logo lädt die Seite neu** — schneller manueller Reload, falls z.B. ein hartnäckiger Service-Worker-Cache umgangen werden soll
