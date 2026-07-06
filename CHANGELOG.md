@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Behoben
+- **Cloud-Einstellungen: „Weiter" ließ sich ohne Verbindungstest nicht anklicken** — sowohl im „Neuer Charakter"-Dialog als auch in den Cloud-Einstellungen war der „Weiter"-Button standardmäßig deaktiviert und wurde nur nach einem erfolgreichen „Verbindung testen" wieder freigegeben. Der Test bleibt als optionale Diagnose verfügbar, blockiert den Login-Schritt aber nicht mehr.
+
 ### Neu
 - **Admin-Seite: Besitz &amp; Speicher pro Nutzer** — neue Tabelle zeigt pro Nutzer, wie viele Charaktere/Kampagnen er angelegt hat (mit Name + Größe, aufklappbar über „Details") und wie viel Speicher das insgesamt belegt, aufgeschlüsselt in Charakter-Daten (JSON) und Medien (hochgeladene Bilder). Neuer Endpunkt `GET /admin/overview` (`db.getAdminOverview()`) löst dafür Datei-Uploads (die an einem Charakter/einer Kampagne hängen, nicht direkt am Nutzer) über deren `owner_id` auf den jeweiligen Nutzer auf. Inhalte ohne (mehr) existierenden Owner — z.B. nach Löschen eines Nutzers, dessen Charaktere/Kampagnen bewusst erhalten bleiben — erscheinen gesammelt unter „Ohne zugeordneten Nutzer" statt unsichtbar zu werden.
 

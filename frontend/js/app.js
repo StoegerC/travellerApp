@@ -219,7 +219,6 @@ const App = {
       testEl.className    = 'nc-test-result';
       loginEl.textContent = '';
       loginEl.className   = 'nc-test-result';
-      document.getElementById('ncNextBtn').disabled = true;
       if (CloudSync.getWorkerUrl()) document.getElementById('ncWorkerUrl').value = CloudSync.getWorkerUrl();
 
       modal.classList.add('visible');
@@ -246,11 +245,9 @@ const App = {
         if (r.ok) {
           testEl.textContent = '✓ Verbindung OK';
           testEl.className   = 'nc-test-result nc-test-ok';
-          document.getElementById('ncNextBtn').disabled = false;
         } else {
           testEl.textContent = `✗ Fehler (${r.status || r.error || 'Timeout'})`;
           testEl.className   = 'nc-test-result nc-test-error';
-          document.getElementById('ncNextBtn').disabled = true;
         }
       };
       document.getElementById('ncNextBtn').onclick = () => showStep(3);
@@ -727,7 +724,6 @@ const App = {
     testEl.className     = 'nc-test-result';
     loginEl.textContent  = '';
     loginEl.className    = 'nc-test-result';
-    document.getElementById('cfgNextBtn').disabled = true;
     modal.classList.add('visible');
 
     document.getElementById('cfgTestBtn').onclick = async () => {
@@ -742,11 +738,9 @@ const App = {
       if (r.ok) {
         testEl.textContent = '✓ Verbindung OK';
         testEl.className   = 'nc-test-result nc-test-ok';
-        document.getElementById('cfgNextBtn').disabled = false;
       } else {
         testEl.textContent = `✗ Fehler (${r.status || r.error || 'Timeout'})`;
         testEl.className   = 'nc-test-result nc-test-error';
-        document.getElementById('cfgNextBtn').disabled = true;
       }
     };
 
