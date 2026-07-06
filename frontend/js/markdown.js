@@ -128,18 +128,19 @@ const Md = {
     return html;
   },
 
-  // @[Name](type:id) – Erwähnungen von Personen/Orten/Quests, eingefügt über
-  // die "@"-Autovervollständigung im Journal (siehe NotesPage._attachMentionAutocomplete).
+  // @[Name](type:id) – Erwähnungen von Personen/Orten/Quests/Sessions,
+  // eingefügt über die "@"-Autovervollständigung (siehe
+  // frontend/js/mention-autocomplete.js, an vielen Textfeldern angehängt).
   // Der Name wird beim Einfügen eingebettet statt live nachgeschlagen, damit
   // dieser Renderer weiterhin ohne Abhängigkeit auf character.notes auskommt
   // (wird auch für Schiffs-/Ausrüstungs-Notizen ohne solche Daten genutzt) -
   // spätere Umbenennungen spiegeln sich daher nicht rückwirkend in alten
-  // Journal-Einträgen wider.
-  _MENTION_RE: /@\[([^\]]+)\]\((person|location|quest):([\w-]+)\)/g,
+  // Einträgen wider.
+  _MENTION_RE: /@\[([^\]]+)\]\((person|location|quest|session):([\w-]+)\)/g,
 
   _mentions(text) {
     return text.replace(this._MENTION_RE, (_, name, type, id) => {
-      const cls = { person: 'person-link', location: 'location-link', quest: 'quest-link' }[type];
+      const cls = { person: 'person-link', location: 'location-link', quest: 'quest-link', session: 'session-link' }[type];
       return `<span class="link-chip mention-chip ${cls}" data-tab="${type}s" data-id="${id}">${name}</span>`;
     });
   },

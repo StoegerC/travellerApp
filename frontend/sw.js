@@ -1,4 +1,4 @@
-const CACHE = 'traveller-v3.0.2';
+const CACHE = 'traveller-v3.1.0';
 
 const ASSETS = [
   './',
@@ -13,6 +13,7 @@ const ASSETS = [
   './js/campaign.js',
   './js/filesync.js',
   './js/markdown.js',
+  './js/mention-autocomplete.js',
   './js/data/skills.js',
   './js/models/character.js',
   './js/sync-merge.js',

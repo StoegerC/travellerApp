@@ -185,10 +185,18 @@ const CareerPage = {
     const bg = career.background || {};
     const secretsBlurred = bg.secretsHidden && !this._secretsRevealed;
 
+    // Diese Felder kennen (anders als der Rest der App) keinen Edit-/Lese-
+    // Modus-Unterschied - immer editierbar. Die Vorschau darunter ist daher
+    // IMMER sichtbar (nicht an App.editMode gekoppelt), damit auch hier
+    // "@"-Erwähnungen als klickbarer Link erscheinen.
     const field = (key, label, placeholder) => `
       <div class="cr-bg-group">
         <label class="cr-bg-label">${label} <span class="cr-save-feedback" data-field="${key}">✓</span></label>
-        <textarea class="cr-bg-field" data-field="${key}" placeholder="${placeholder}" rows="3">${this._esc(bg[key] || '')}</textarea>
+        <div class="loc-name-wrap">
+          <textarea id="crBg-${key}" class="cr-bg-field" data-field="${key}" placeholder="${placeholder} (@ verlinkt Personen/Orte/Quests/Journal)" rows="3">${this._esc(bg[key] || '')}</textarea>
+          <div id="crBg-${key}-suggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
+        </div>
+        <div id="crBg-${key}-preview" class="cr-bg-preview md-content">${bg[key] ? Md.render(bg[key]) : ''}</div>
       </div>`;
 
     const quotes = (bg.quotes || []).map((q, i) => `
@@ -212,7 +220,11 @@ const CareerPage = {
           </label>
         </div>
         <div class="cr-secrets-wrap${secretsBlurred ? ' blurred' : ''}" id="secretsWrap">
-          <textarea class="cr-bg-field" data-field="secrets" placeholder="Verdeckte Informationen …" rows="3">${this._esc(bg.secrets || '')}</textarea>
+          <div class="loc-name-wrap">
+            <textarea id="crBg-secrets" class="cr-bg-field" data-field="secrets" placeholder="Verdeckte Informationen … (@ verlinkt Personen/Orte/Quests/Journal)" rows="3">${this._esc(bg.secrets || '')}</textarea>
+            <div id="crBg-secrets-suggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
+          </div>
+          <div id="crBg-secrets-preview" class="cr-bg-preview md-content">${!secretsBlurred && bg.secrets ? Md.render(bg.secrets) : ''}</div>
           ${secretsBlurred ? '<div class="cr-secrets-reveal" id="revealSecrets">Tippen zum Aufdecken</div>' : ''}
         </div>
       </div>
@@ -336,7 +348,10 @@ const CareerPage = {
         </div>
         <div class="cr-modal-row">
           <label>Beschreibung</label>
-          <textarea id="evDesc" class="cr-modal-field" rows="4" placeholder="Beschreibung des Ereignisses …">${this._esc(ev.description||'')}</textarea>
+          <div class="loc-name-wrap">
+            <textarea id="evDesc" class="cr-modal-field" rows="4" placeholder="Beschreibung des Ereignisses … (@ verlinkt Personen/Orte/Quests/Journal)">${this._esc(ev.description||'')}</textarea>
+            <div id="evDescSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
+          </div>
         </div>
         ${persons.length ? `<div class="cr-modal-row"><label>Verknüpfte Personen</label><div class="cr-check-list">${personChecks}</div></div>` : ''}
         ${locs.length    ? `<div class="cr-modal-row"><label>Verknüpfte Orte</label><div class="cr-check-list">${locChecks}</div></div>` : ''}
@@ -360,6 +375,12 @@ const CareerPage = {
       document.getElementById('career-page').innerHTML = this.render(char);
       this.attachListeners();
     };
+
+    // "@"-Erwähnungen (Ereignis-Beschreibung + Hintergrund-Felder)
+    MentionAutocomplete.attach('evDesc', 'evDescSuggestions', char);
+    ['appearance', 'personality', 'goals', 'motivation', 'secrets'].forEach(key => {
+      MentionAutocomplete.attach(`crBg-${key}`, `crBg-${key}-suggestions`, char);
+    });
 
     // ── Timeline: Term-Punkt anklicken ───────────────────────────────────
     document.querySelectorAll('.cr-term-dot').forEach(btn => {
@@ -529,10 +550,19 @@ const CareerPage = {
     // ── Hintergrund: Auto-Save on Blur ───────────────────────────────────
     document.querySelectorAll('.cr-bg-field').forEach(field => {
       field.addEventListener('blur', () => {
-        career.background[field.dataset.field] = field.value;
+        const key = field.dataset.field;
+        career.background[key] = field.value;
         Storage.saveCharacter(char);
-        const fb = document.querySelector(`.cr-save-feedback[data-field="${field.dataset.field}"]`);
+        const fb = document.querySelector(`.cr-save-feedback[data-field="${key}"]`);
         if (fb) { fb.style.opacity = '1'; setTimeout(() => fb.style.opacity = '0', 1200); }
+        // Vorschau direkt aktualisieren statt vollem Re-Render (würde Fokus/
+        // Scrollposition der anderen Felder stören). Geheimnisse: Vorschau
+        // nur befüllen, wenn gerade nicht verdeckt (siehe secretsBlurred).
+        const preview = document.getElementById(`crBg-${key}-preview`);
+        if (preview) {
+          const blurred = key === 'secrets' && career.background.secretsHidden && !this._secretsRevealed;
+          preview.innerHTML = (!blurred && field.value) ? Md.render(field.value) : '';
+        }
       });
     });
 

@@ -4013,6 +4013,13 @@ label.attachment-upload-btn {
   transition: width 0.3s ease;
 }
 
+.fin-debt-notes {
+  font-size: 13px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+}
+
 .fin-debt-info {
   display: flex;
   justify-content: space-between;
@@ -4596,6 +4603,13 @@ label.attachment-upload-btn {
   font-family: inherit;
 }
 .cr-bg-field:focus { border-color: #667eea; outline: none; background: #fff; }
+
+.cr-bg-preview {
+  font-size: 13px;
+  margin-top: 6px;
+  padding: 0 2px;
+}
+.cr-bg-preview:empty { display: none; }
 
 /* Secrets */
 
@@ -6980,6 +6994,7 @@ body.dark-mode .fin-debt-card       { background: #161929; border-color: #2c3050
 body.dark-mode .fin-debt-name       { color: #dde0f5; }
 body.dark-mode .fin-debt-creditor   { color: #8890b0; }
 body.dark-mode .fin-debt-info       { color: #8890b0; }
+body.dark-mode .fin-debt-notes      { border-top-color: #2c3050; }
 body.dark-mode .fin-debt-pay        { background: #2d0d10; color: #f87171; border-color: #dc3545; }
 body.dark-mode .fin-block           { background: #161929; border-color: #2c3050; }
 body.dark-mode .fin-block-title     { color: #9095b8; }
