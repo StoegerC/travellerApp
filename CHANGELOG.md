@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Neu
+- **PDF-Anhänge bei Journal-Einträgen** — Sessions im Log-Tab können jetzt beliebig viele PDFs (Handouts, Karten, Briefe) anhängen, analog zu den bestehenden Bild-Uploads: echte Datei statt Base64-Einbettung (`session.attachments[]`, `field: 'sessionAttachment'`), sofortiger Upload beim Auswählen, Übernahme ins Charakter-JSON erst beim Speichern (wie beim Personenbild). In der Leseansicht erscheinen Anhänge als anklickbare Links, die die PDF in einem neuen Tab öffnen. Serverseitig akzeptiert `POST /files` jetzt zusätzlich zu Bildern `application/pdf`, geprüft anhand der tatsächlichen Magic Bytes (`%PDF-`) statt nur des vom Client behaupteten mimetype — eine als PDF getarnte, aber inhaltlich andere Datei wird abgelehnt. `GET /files/:id` sendet zusätzlich `X-Content-Type-Options: nosniff`, damit der Browser den deklarierten Content-Type nicht eigenmächtig umdeutet. Entfernte Anhänge werden beim Speichern serverseitig mitgelöscht (Abgleich alter/neuer Anhangsliste, analog zum Bild-Austausch bei Personen).
+
 ### Entfernt
 - **Orte-Leiste am unteren Rand des Karten-Tabs** — zeigte bisher alle mit der Karte verknüpften Orte als Chip-Liste unterhalb der Travellermap-Ansicht. Redundant zur Verlinkung im Orte-Tab („📝 Log" → „🌍 Orte" → „Auf Karte zeigen") und wäre mit wachsender Orte-Zahl unübersichtlich geworden. Karte und Weltinfo-Panel füllen jetzt den freigewordenen Platz.
 
