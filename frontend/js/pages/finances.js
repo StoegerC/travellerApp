@@ -200,6 +200,7 @@ const FinancesPage = {
                Rate zahlen (${this._fmt(d.monthlyPayment || 0)})
              </button>`
         }
+        ${d.notes ? `<div class="md-content fin-debt-notes">${Md.render(d.notes)}</div>` : ''}
       </div>`;
     });
 
@@ -226,7 +227,10 @@ const FinancesPage = {
       <div class="fin-modal">
         <h3 id="txModalTitle">Einnahme</h3>
         <input  id="txAmount" type="number" min="0" placeholder="Betrag (Cr)" class="fin-modal-field">
-        <input  id="txDesc"   type="text"   placeholder="Beschreibung"        class="fin-modal-field">
+        <div class="loc-name-wrap">
+          <input id="txDesc" type="text" placeholder="Beschreibung (@ verlinkt Personen/Orte/Quests/Journal)" class="fin-modal-field">
+          <div id="txDescSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
+        </div>
         <input  id="txDate"   type="text"   placeholder="Ingame-Datum (z.B. 1105-234)" class="fin-modal-field">
         <select id="txCat"    class="fin-modal-field">
           ${cats.map(c => `<option value="${c.v}">${c.l}</option>`).join('')}
@@ -272,7 +276,10 @@ const FinancesPage = {
         <input    id="debtCreditor" type="text"   placeholder="Gläubiger (optional)"                 class="fin-modal-field">
         <input    id="debtTotal"    type="number" min="0" placeholder="Gesamtbetrag (Cr)"            class="fin-modal-field">
         <input    id="debtMonthly"  type="number" min="0" placeholder="Monatsrate (Cr)"              class="fin-modal-field">
-        <textarea id="debtNotes"    placeholder="Notizen (optional)" class="fin-modal-field fin-modal-textarea"></textarea>
+        <div class="loc-name-wrap">
+          <textarea id="debtNotes" placeholder="Notizen (optional, @ verlinkt Personen/Orte/Quests/Journal)" class="fin-modal-field fin-modal-textarea"></textarea>
+          <div id="debtNotesSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
+        </div>
         <div class="fin-modal-actions">
           <button id="debtSaveBtn"   class="fin-btn-save">Speichern</button>
           <button id="debtCancelBtn" class="fin-btn-cancel">Abbrechen</button>
@@ -291,6 +298,11 @@ const FinancesPage = {
     const rerender = () => App.renderCurrentPage();
     const showModal = id => document.getElementById(id)?.classList.add('open');
     const hideModal = id => document.getElementById(id)?.classList.remove('open');
+
+    // "@"-Erwähnungen in den Modal-Feldern (Modals liegen immer im DOM, nur
+    // per CSS versteckt - Anhängen schadet nicht, solange sie geschlossen sind).
+    MentionAutocomplete.attach('txDesc',     'txDescSuggestions',     char);
+    MentionAutocomplete.attach('debtNotes',  'debtNotesSuggestions', char);
 
     // ── Block 1 ──────────────────────────────────────────────────────────
     document.getElementById('finIncomeBtn')?.addEventListener('click', () => {

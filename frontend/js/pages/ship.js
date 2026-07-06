@@ -351,8 +351,11 @@ const ShipPage = {
           <h3>${this._esc(title)}</h3>
           ${editing
             ? `<label class="traits-label">${this._esc(label)}</label>
-               <textarea id="noteModalText" class="traits-textarea">${this._esc(current)}</textarea>
-               <span class="md-hint">**fett** · *kursiv* · # Überschrift · | Tabelle |</span>`
+               <div class="loc-name-wrap">
+                 <textarea id="noteModalText" class="traits-textarea">${this._esc(current)}</textarea>
+                 <div id="noteModalTextSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
+               </div>
+               <span class="md-hint">**fett** · *kursiv* · # Überschrift · | Tabelle | · @ verlinkt Personen/Orte/Quests/Journal</span>`
             : `<div class="traits-desc-view md-content">${Md.render(current) || '<p class="md-p" style="color:#999">Keine Notiz.</p>'}</div>`}
           <div class="traits-actions">
             <button id="noteModalCancelBtn" class="btn-secondary">Schließen</button>
@@ -365,6 +368,7 @@ const ShipPage = {
       modal.querySelector('#noteModalCancelBtn').addEventListener('click', () => modal.remove());
 
       if (editing) {
+        MentionAutocomplete.attach('noteModalText', 'noteModalTextSuggestions', window.currentCharacter);
         modal.querySelector('#noteModalSaveBtn').addEventListener('click', () => {
           onSave(modal.querySelector('#noteModalText').value);
           modal.remove();
@@ -521,7 +525,10 @@ const ShipPage = {
       const posRows = positions.map((p, i) => `
         <div class="ship-pos-row">
           <input class="ship-input sp-pos-name"   value="${this._esc(p.position||'')}" placeholder="Position (z.B. Koch)">
-          <input class="ship-input sp-pos-person"  value="${this._esc(p.person||'')}"   placeholder="Name (optional)">
+          <div class="loc-name-wrap">
+            <input class="ship-input sp-pos-person" value="${this._esc(p.person||'')}" placeholder="Name (optional)">
+            <div class="loc-suggestions sp-pos-suggest" style="display:none"></div>
+          </div>
           <button class="btn-danger sp-pos-rm" data-idx="${i}">✕</button>
         </div>`).join('') || '<p class="ship-empty" id="shipCrewEmpty">Keine weiteren Besatzungsmitglieder eingetragen.</p>';
 
@@ -623,6 +630,7 @@ const ShipPage = {
                Rate zahlen (${this._finFmt(d.monthlyPayment || 0)})
              </button>`
         }
+        ${d.notes ? `<div class="md-content fin-debt-notes">${Md.render(d.notes)}</div>` : ''}
       </div>`;
     });
     if (!debtCards) debtCards = `<p class="fin-empty">Keine Schulden eingetragen.</p>`;
@@ -663,7 +671,10 @@ const ShipPage = {
       <div class="fin-modal">
         <h3 id="shipTxModalTitle">Einnahme</h3>
         <input id="shipTxAmount" type="number" min="0" placeholder="Betrag (Cr)" class="fin-modal-field">
-        <input id="shipTxDesc"   type="text"   placeholder="Beschreibung"        class="fin-modal-field">
+        <div class="loc-name-wrap">
+          <input id="shipTxDesc" type="text" placeholder="Beschreibung (@ verlinkt Personen/Orte/Quests/Journal)" class="fin-modal-field">
+          <div id="shipTxDescSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
+        </div>
         <input id="shipTxDate"   type="text"   placeholder="Ingame-Datum (z.B. 1105-234)" class="fin-modal-field">
         <div class="fin-modal-actions">
           <button id="shipTxSaveBtn"   class="fin-btn-save">Speichern</button>
@@ -706,7 +717,10 @@ const ShipPage = {
         <input    id="shipDebtCreditor" type="text"   placeholder="Gläubiger (optional)"                 class="fin-modal-field">
         <input    id="shipDebtTotal"    type="number" min="0" placeholder="Gesamtbetrag (Cr)"            class="fin-modal-field">
         <input    id="shipDebtMonthly"  type="number" min="0" placeholder="Monatsrate (Cr)"              class="fin-modal-field">
-        <textarea id="shipDebtNotes"    placeholder="Notizen (optional)" class="fin-modal-field fin-modal-textarea"></textarea>
+        <div class="loc-name-wrap">
+          <textarea id="shipDebtNotes" placeholder="Notizen (optional, @ verlinkt Personen/Orte/Quests/Journal)" class="fin-modal-field fin-modal-textarea"></textarea>
+          <div id="shipDebtNotesSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
+        </div>
         <div class="fin-modal-actions">
           <button id="shipDebtSaveBtn"   class="fin-btn-save">Speichern</button>
           <button id="shipDebtCancelBtn" class="fin-btn-cancel">Abbrechen</button>
@@ -888,11 +902,76 @@ const ShipPage = {
     if (char.campaignId) App._syncMyCampaignShips();
   },
 
+  // NPC-Mannschaft: Personenvorschlag beim Tippen in .sp-pos-person (eigene
+  // Personen + in einer Kampagne geteilte Personen anderer Mitspieler),
+  // analog zu NotesPage._attachLocAutocomplete (Tippen → Vorschlagsliste →
+  // Klick füllt Feld). Kein neues Datenfeld - füllt nur den bestehenden
+  // person-Freitext.
+  _crewPersonList(char) {
+    const own      = char.notes?.persons || [];
+    const campaign = (char.campaignId && App._campaignData?.notes?.persons) || [];
+    const byId = new Map();
+    campaign.forEach(p => { if (p && !p._deleted) byId.set(p.id, p); });
+    own.forEach(p => { if (p && !p._deleted) byId.set(p.id, p); }); // eigene ueberschreiben Kampagnen-Kopie
+    return [...byId.values()];
+  },
+
+  // Haengt die Vorschlagslogik an EIN Input - separat von
+  // _attachCrewPersonAutocomplete() aufrufbar, damit #shipAddPosBtn (fügt
+  // eine Zeile per DOM-Insertion ein, ohne vollen Re-Render, siehe unten)
+  // nur die neue Zeile anschliesst statt alle bestehenden ein zweites Mal
+  // (sonst doppelte Listener/doppelte Vorschlagslisten).
+  _attachCrewPersonInput(input, persons) {
+    if (!input) return;
+    const suggestEl = input.parentElement.querySelector('.sp-pos-suggest');
+    if (!suggestEl) return;
+
+    const close = () => { suggestEl.style.display = 'none'; suggestEl.innerHTML = ''; };
+
+    const update = () => {
+      const q = input.value.trim().toLowerCase();
+      if (!q) { close(); return; }
+      const matches = persons.filter(p => p.name && p.name.toLowerCase().includes(q)).slice(0, 8);
+      if (!matches.length) { close(); return; }
+      suggestEl.innerHTML = matches.map((p, i) => `
+        <div class="loc-suggest-item sp-pos-suggest-item" data-idx="${i}"><strong>${this._esc(p.name)}</strong></div>`
+      ).join('');
+      suggestEl.style.display = '';
+      suggestEl.querySelectorAll('.sp-pos-suggest-item').forEach(item => {
+        // mousedown statt click: feuert vor dem blur des Inputs.
+        item.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          input.value = matches[parseInt(item.dataset.idx)].name;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          close();
+        });
+      });
+    };
+
+    input.addEventListener('input', update);
+    input.addEventListener('focus', update);
+    input.addEventListener('blur', () => setTimeout(close, 200));
+  },
+
+  _attachCrewPersonAutocomplete(char) {
+    const persons = this._crewPersonList(char);
+    document.querySelectorAll('.sp-pos-person').forEach(input => this._attachCrewPersonInput(input, persons));
+  },
+
   // ── Listeners ─────────────────────────────────────────────────────────────
 
   attachListeners() {
     const char = window.currentCharacter;
     if (!char) return;
+
+    // "@"-Erwähnungen in den Finanzen-Modal-Feldern (immer im DOM, nur per
+    // CSS versteckt solange das Modal geschlossen ist).
+    MentionAutocomplete.attach('shipTxDesc',    'shipTxDescSuggestions',    char);
+    MentionAutocomplete.attach('shipDebtNotes', 'shipDebtNotesSuggestions', char);
+
+    // Crew: Personenvorschlag beim Eintragen von NPC-Mannschaftsmitgliedern
+    this._attachCrewPersonAutocomplete(char);
+
     // Schiff wechseln (inkl. Übernahme geteilter Kampagnen-Schiffe)
     document.getElementById('shipSelect')?.addEventListener('change', e => {
       this.save(char);
@@ -1110,10 +1189,17 @@ const ShipPage = {
       row.className = 'ship-pos-row';
       row.innerHTML = `
         <input class="ship-input sp-pos-name"   placeholder="Position (z.B. Pilot)">
-        <input class="ship-input sp-pos-person"  placeholder="Name (optional)">
+        <div class="loc-name-wrap">
+          <input class="ship-input sp-pos-person" placeholder="Name (optional)">
+          <div class="loc-suggestions sp-pos-suggest" style="display:none"></div>
+        </div>
         <button class="btn-danger sp-pos-rm">✕</button>`;
       row.querySelector('.sp-pos-rm').addEventListener('click', () => row.remove());
       container.appendChild(row);
+      // Per-Zeilen-Anschluss statt _attachCrewPersonAutocomplete() erneut
+      // aufzurufen - das würde bei bereits vorhandenen Zeilen doppelte
+      // Listener registrieren (siehe Kommentar bei _attachCrewPersonInput).
+      this._attachCrewPersonInput(row.querySelector('.sp-pos-person'), this._crewPersonList(char));
     });
 
     // Crew-Positionen: entfernen (bestehende)

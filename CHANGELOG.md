@@ -9,6 +9,16 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.1.0] – 2026-07-06
+
+### Neu
+- **„@"-Erwähnungen auf viele weitere Felder ausgeweitet, Journal-Einträge als vierter Typ** — die bisher nur im Journal-Bericht verfügbare Erwähnungsfunktion gibt es jetzt auch bei Personen-/Orte-/Quest-Beschreibungen, Finanzen (Schulden-Notizen + Transaktionsbeschreibung, Charakter und Schiff), Werdegang (Ereignis-Beschreibung + Hintergrundfelder Aussehen/Persönlichkeit/Ziele/Motivation/Geheimnisse) und Schiffs-Krit.-Treffer-Notizen. Zusätzlich erwähnbar: Journal-Einträge selbst (`session`-Typ, rendert als derselbe Link wie die bestehenden Rückverlinkungen zu Sessions). Die Logik ist in ein neues, seitenunabhängiges Modul `frontend/js/mention-autocomplete.js` ausgelagert (vorher fest an das Journal-Textfeld gebunden), das eigene + in einer Kampagne geteilte Personen/Orte/Quests/Sessions durchsucht.
+  - Nebenbei sichtbar gemacht: `debt.notes` (Schulden-Notizfeld, Charakter und Schiff) wurde bisher erfasst, aber nirgends angezeigt — erscheint jetzt in der Schulden-Karte, sonst wäre eine Erwähnung darin nie klickbar gewesen.
+  - Die Werdegang-Hintergrundfelder haben keine eigene Lese-/Bearbeitungsunterscheidung (immer editierbar, unabhängig vom Bearbeitungsmodus) — bekommen deshalb eine immer sichtbare, kompakte Vorschau unter dem jeweiligen Textfeld, die bei „Geheimnisse" nur erscheint, wenn das Feld gerade nicht verdeckt ist.
+- **Personenvorschlag bei Schiffs-Mannschaft** — beim Eintragen eines NPC-Mannschaftsmitglieds (`.sp-pos-person`) schlägt eine Tippen-→-Vorschlagsliste-→-Klick-Suche (wie bei der Orts-Suche) eigene und in der Kampagne geteilte Personen vor, analog zur „@"-Suche. Dabei einen Bug behoben: der „+ Weiteres Mitglied"-Button fügte eine neue Zeile per direkter DOM-Einfügung ein, ohne die Erwähnungs-/Vorschlags-Anhänge der bereits vorhandenen Zeilen zu duplizieren oder die neue Zeile selbst anzuschließen.
+
+---
+
 ## [3.0.2] – 2026-07-06
 
 ### Neu
