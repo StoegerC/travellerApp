@@ -6815,6 +6815,7 @@ body.dark-mode .loc-rumor      { background: #252840; color: #9095b8; }
 body.dark-mode .qst-backlog    { background: #252840; color: #9095b8; }
 body.dark-mode .qst-failed     { background: #2d0d10; color: #f87171; }
 body.dark-mode .qst-completed  { background: #0d1e35; color: #60a5fa; }
+body.dark-mode .person-link    { background: #0d2218; color: #4ade80; }
 body.dark-mode .location-link  { background: #1e1a08; color: #fbbf24; }
 body.dark-mode .quest-link     { background: #2d0d10; color: #f87171; }
 
