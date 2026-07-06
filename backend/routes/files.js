@@ -28,12 +28,19 @@ const upload = multer({
 
 const publicRouter = express.Router();
 
-// GET /files/:id
+// GET /files/:id – die id ist ein zufälliger 128-Bit-Dateiname (siehe
+// multer-storage oben), der nie wiederverwendet/überschrieben wird: ein
+// geändertes Bild bekommt beim erneuten Hochladen immer eine neue id, die
+// alte wird separat per DELETE entfernt. Der Inhalt unter einer gegebenen
+// id ist damit dauerhaft unveränderlich - langes, "immutable" Caching ist
+// hier sicher und hält Charaktere/Kampagnen mit vielen Bildern beim
+// erneuten Laden (z.B. nach einem Logout-Cleanup, siehe Storage.
+// purgeCloudCharacters) schnell, weil nur das kleine JSON neu geholt werden muss.
 publicRouter.get('/files/:id', (req, res) => {
   const file = db.getFile(req.params.id);
   if (!file) return res.status(404).send('Not Found');
   res.set('Content-Type', file.mimetype);
-  res.sendFile(path.join(db.UPLOAD_DIR, file.id), err => {
+  res.sendFile(path.join(db.UPLOAD_DIR, file.id), { maxAge: '1y', immutable: true }, err => {
     if (err && !res.headersSent) res.status(404).send('Not Found');
   });
 });

@@ -47,8 +47,14 @@ const AuthAPI = {
     }
   },
 
+  // Entfernt neben der Session auch alle lokal gecachten Cloud-Charaktere
+  // (siehe Storage.purgeCloudCharacters) - sonst blieben auf einem geteilten
+  // Geraet nach einem Nutzerwechsel weiterhin fremde Charaktere aus
+  // IndexedDB sichtbar/ladbar, obwohl die Zugriffskontrolle serverseitig
+  // (Phase 3) korrekt greift. purgedIds gibt der aufrufenden UI die
+  // Moeglichkeit, von einem gerade geloeschten aktiven Charakter wegzuleiten.
   async logout() {
-    if (!CloudSync.isConfigured()) return { ok: true };
+    if (!CloudSync.isConfigured()) return { ok: true, purgedIds: [] };
     try {
       await fetch(`${CloudSync.getWorkerUrl()}/auth/logout`, {
         method:  'POST',
@@ -57,6 +63,7 @@ const AuthAPI = {
       });
     } catch { /* Logout ist best effort - lokale Session wird trotzdem entfernt */ }
     CloudSync.setApiKey('');
-    return { ok: true };
+    const purgedIds = typeof Storage !== 'undefined' ? Storage.purgeCloudCharacters() : [];
+    return { ok: true, purgedIds };
   },
 };
