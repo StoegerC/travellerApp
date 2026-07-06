@@ -52,6 +52,14 @@
   .hidden { display: none; }
   .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
   .row-actions button { padding: 4px 8px; min-height: unset; font-size: 0.8rem; }
+  .owner-detail-row td { padding: 0 10px 12px; border-bottom: 1px solid #eee; }
+  @media (prefers-color-scheme: dark) { .owner-detail-row td { border-color: #333; } }
+  .owner-detail-cols { display: flex; gap: 24px; flex-wrap: wrap; }
+  .owner-detail-list { margin: 4px 0 0; padding: 0; list-style: none; font-size: 0.85rem; }
+  .owner-detail-list li { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+  .owner-detail-list .item-size { color: #888; white-space: nowrap; }
+  .owner-detail-empty { color: #888; font-size: 0.85rem; margin: 4px 0 0; }
+  .btn-toggle-detail { padding: 4px 8px; min-height: unset; font-size: 0.8rem; }
 </style>
 </head>
 <body>
@@ -108,6 +116,18 @@
       <table>
         <thead><tr><th>E-Mail</th><th>Rollen</th><th>Passwort</th><th>Aktionen</th></tr></thead>
         <tbody id="userTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="panel" style="max-width: none;">
+      <h2>Besitz &amp; Speicher pro Nutzer</h2>
+      <p class="subtitle">Speicher aufgeschlüsselt in Charakter-Daten (JSON) und Medien (hochgeladene Bilder).</p>
+      <table>
+        <thead><tr>
+          <th>E-Mail</th><th>Charaktere</th><th>Kampagnen</th>
+          <th>Charakter (JSON)</th><th>Medien</th><th>Gesamt</th><th></th>
+        </tr></thead>
+        <tbody id="overviewTableBody"></tbody>
       </table>
     </div>
 

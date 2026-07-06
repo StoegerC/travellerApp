@@ -82,11 +82,17 @@ const AdminApp = {
     document.getElementById('welcomeText').textContent = this.url;
     this.renderStats(stats);
     this.loadUsers();
+    this.loadOverview();
     return true;
   },
 
+  _fmtBytes(bytes) {
+    if (!bytes) return '0 KB';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  },
+
   renderStats(s) {
-    const fmtMb = bytes => (bytes / (1024 * 1024)).toFixed(1) + ' MB';
     const fmtUptime = sec => {
       const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60);
       return `${h}h ${m}m`;
@@ -96,13 +102,61 @@ const AdminApp = {
       { label: 'Kampagnen', value: s.campaignCount },
       { label: 'Nutzer', value: s.userCount },
       { label: 'Dateien', value: s.files.count },
-      { label: 'Datei-Speicher', value: fmtMb(s.files.totalSize) },
-      { label: 'Speicher frei', value: s.disk ? fmtMb(s.disk.freeBytes) : '–' },
+      { label: 'Datei-Speicher', value: this._fmtBytes(s.files.totalSize) },
+      { label: 'Speicher frei', value: s.disk ? this._fmtBytes(s.disk.freeBytes) : '–' },
       { label: 'Server-Uptime', value: fmtUptime(s.uptimeSeconds) },
     ];
     document.getElementById('statsGrid').innerHTML = cards.map(c =>
       `<div class="stat-card"><div class="stat-value">${c.value}</div><div class="stat-label">${c.label}</div></div>`
     ).join('');
+  },
+
+  async loadOverview() {
+    const res = await this.apiFetch('/admin/overview');
+    if (!res.ok) return;
+    const data = await res.json();
+    const rows = [...data.users];
+    // "Verwaist" nur anzeigen, wenn tatsaechlich etwas ohne (aktuellen) Owner
+    // existiert - z.B. nach Loeschen eines Nutzers (Charaktere/Kampagnen
+    // bleiben laut Design erhalten, siehe admin.js DELETE-Kommentar).
+    const hasOrphaned = data.orphaned.characters.length || data.orphaned.campaigns.length;
+    if (hasOrphaned) rows.push({ id: '_orphaned', email: '⚠ Ohne zugeordneten Nutzer', roles: [], ...data.orphaned });
+
+    document.getElementById('overviewTableBody').innerHTML = rows.map(u => {
+      const totalBytes = u.storage.characterBytes + u.storage.mediaBytes;
+      return `
+        <tr>
+          <td>${this._esc(u.email)}</td>
+          <td>${u.characters.length}</td>
+          <td>${u.campaigns.length}</td>
+          <td>${this._fmtBytes(u.storage.characterBytes)}</td>
+          <td>${this._fmtBytes(u.storage.mediaBytes)}</td>
+          <td>${this._fmtBytes(totalBytes)}</td>
+          <td><button class="btn-secondary btn-toggle-detail" data-toggle="${u.id}">Details</button></td>
+        </tr>
+        <tr class="owner-detail-row hidden" id="detail-${u.id}">
+          <td colspan="7">${this._renderOwnerDetail(u)}</td>
+        </tr>`;
+    }).join('');
+
+    document.querySelectorAll('[data-toggle]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById(`detail-${btn.dataset.toggle}`)?.classList.toggle('hidden');
+      });
+    });
+  },
+
+  _renderOwnerDetail(u) {
+    const list = (items, emptyLabel) => items.length
+      ? `<ul class="owner-detail-list">${items.map(i =>
+          `<li><span>${this._esc(i.name || 'Namenlos')}</span><span class="item-size">${this._fmtBytes(i.bytes)}</span></li>`
+        ).join('')}</ul>`
+      : `<p class="owner-detail-empty">${emptyLabel}</p>`;
+    return `
+      <div class="owner-detail-cols">
+        <div><strong>Charaktere</strong>${list(u.characters, 'Keine Charaktere')}</div>
+        <div><strong>Kampagnen</strong>${list(u.campaigns, 'Keine Kampagnen')}</div>
+      </div>`;
   },
 
   async loadUsers() {
@@ -142,6 +196,7 @@ const AdminApp = {
       await this.apiFetch(`/admin/users/${id}`, { method: 'DELETE' });
     }
     this.loadUsers();
+    this.loadOverview();
   },
 
   async createUser() {
@@ -154,6 +209,7 @@ const AdminApp = {
     errEl.textContent = '';
     document.getElementById('newUserEmail').value = '';
     this.loadUsers();
+    this.loadOverview();
   },
 
   _esc(s) {
