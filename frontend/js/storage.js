@@ -189,9 +189,11 @@ const Storage = {
   },
 
   // ── Versionsverlauf ────────────────────────────────────────────────────
-  saveVersion(charId, json) {
+  // meta.page: aktuell nur beim Beenden des Bearbeitungsmodus gesetzt (siehe
+  // App.toggleEditMode) - hält fest, auf welcher Seite bearbeitet wurde.
+  saveVersion(charId, json, meta = null) {
     if (!this._db) return;
-    const version = { id: `${charId}_${Date.now()}`, charId, timestamp: Date.now(), data: json };
+    const version = { id: `${charId}_${Date.now()}`, charId, timestamp: Date.now(), data: json, page: meta?.page || null };
     const tx = this._db.transaction(this._VERSION_STORE, 'readwrite');
     tx.objectStore(this._VERSION_STORE).put(version);
     tx.oncomplete = () => this._pruneVersions(charId);

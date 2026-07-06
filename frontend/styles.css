@@ -348,6 +348,16 @@ body {
   color: #888;
 }
 
+.vh-page {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4a5ad4;
+  background: #eef1ff;
+  border-radius: 10px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
 .vh-empty,
 .vh-loading {
   text-align: center;
@@ -6425,6 +6435,10 @@ body.dark-mode .vh-time {
 }
 body.dark-mode .vh-name {
   color: #8890b0;
+}
+body.dark-mode .vh-page {
+  color: #8899ee;
+  background: #202840;
 }
 body.dark-mode .vh-empty,
 body.dark-mode .vh-loading {

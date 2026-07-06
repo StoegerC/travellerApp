@@ -21,6 +21,12 @@ const App = {
   // regulaeren loadCharacter() zurueckgesetzt.
   _readOnlyView: false,
 
+  // Anzeigenamen der Tabs fuer den Versionsverlauf (siehe showVersionHistory).
+  _PAGE_LABELS: {
+    metadata: 'Charakter', attributes: 'Attribute', equipment: 'Ausrüstung',
+    ship: 'Schiff', combat: 'Kampf', career: 'Werdegang', notes: 'Log', karte: 'Karte',
+  },
+
   pages: {
     metadata:   MetadataPage,
     attributes: AttributesPage,
@@ -301,7 +307,7 @@ const App = {
     this._doSave();
   },
 
-  _doSave(saveVersion = false) {
+  _doSave(saveVersion = false, versionMeta = null) {
     if (!this.currentCharacter) return;
 
     // Snapshot vor page.save(), damit undo den Pre-Save-Zustand wiederherstellt
@@ -312,7 +318,7 @@ const App = {
 
     if (Storage.saveCharacter(this.currentCharacter)) {
       this._updateHeaderName();
-      if (saveVersion) this._saveVersion();
+      if (saveVersion) this._saveVersion(versionMeta);
       // Kein direkter _pushToCloud()-Aufruf hier: Storage.saveCharacter() plant
       // selbst schon einen (dirty-geprüften) Push, sobald sich wirklich etwas
       // geändert hat. Ein zweiter, unconditional Push hier würde genau den
@@ -337,11 +343,14 @@ const App = {
     this._updateUndoBtn();
   },
 
-  _saveVersion() {
+  _saveVersion(meta = null) {
     const now = Date.now();
-    if (now - this._lastVersionSave < 30000) return; // max. eine Version pro 30s
+    // Drossel gilt nur fuer ungetaggte (Tab-Wechsel-)Versionen - eine mit
+    // Seite getaggte (Bearbeitungsmodus verlassen) soll nie stillschweigend
+    // wegfallen, nur weil kurz zuvor ein reiner Tab-Wechsel gespeichert hat.
+    if (!meta && now - this._lastVersionSave < 30000) return; // max. eine ungetaggte Version pro 30s
     this._lastVersionSave = now;
-    Storage.saveVersion(this.currentCharacter.id, this.currentCharacter.toJSON());
+    Storage.saveVersion(this.currentCharacter.id, this.currentCharacter.toJSON(), meta);
   },
 
   undo() {
@@ -377,6 +386,7 @@ const App = {
       <button class="vh-item" data-vid="${v.id}">
         <span class="vh-time">${this._fmtVersionTime(v.timestamp)}</span>
         <span class="vh-name">${this._esc(v.data?.metadata?.name || 'Namenlos')}</span>
+        ${v.page ? `<span class="vh-page">${this._esc(this._PAGE_LABELS[v.page] || v.page)}</span>` : ''}
       </button>`).join('');
 
     list.querySelectorAll('.vh-item').forEach(btn => {
@@ -474,7 +484,11 @@ const App = {
 
     if (this.editMode) {
       clearTimeout(this._autosaveTimer);
-      this._doSave(true);
+      // Seite mitgeben, auf der der Bearbeitungsmodus beendet wurde (siehe
+      // Storage.saveVersion) - beim reinen Tab-Wechsel (switchPage) bewusst
+      // nicht, um den Verlauf nicht mit dieser Zusatzinfo bei jedem Wechsel
+      // vollzuschreiben.
+      this._doSave(true, { page: this.currentPage });
     }
 
     this.editMode = !this.editMode;
