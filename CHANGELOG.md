@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.1.2] – 2026-07-06
+
+### Behoben
+- **Kampagne: bereits übernommene ("adoptierte") Schiffe/Einträge bekamen ein Zurücknehmen von „In Kampagne teilen" nie mit** — Ergänzung zu 3.1.1: dort wurde nur verhindert, dass ein unshare-tes Item für neu hinzukommende Mitspieler weiter sichtbar bleibt. Wer ein geteiltes Schiff aber bereits einmal aus der Kampagnen-Dropdown-Liste ausgewählt hatte, besaß ab dann eine eigene, komplett unabhängige lokale Kopie (`char.ships[]`) — die bekam von einem späteren Unshare/Löschen durch den ursprünglichen Besitzer nichts mit, weil es dafür (anders als bei Notiz-Einträgen) noch keinen Rückabgleich gab. Neue Funktion `App._mergeCampaignShipsBack()` (Pendant zu `_mergeCampaignNotesBack`) holt das nach. Dabei einen zweiten, durch den 3.1.1-Fix eingeschleppten Bug behoben: der Rückabgleich lief bisher nur im Speicher und wurde nie in `Storage` persistiert — ein Reload vor der nächsten Autosave-Aktion hätte sowohl diesen als auch den bestehenden Notizen-Rückabgleich (`_mergeCampaignNotesBack`) wieder verworfen. Zusätzlich bekamen beide Rückabgleich-Funktionen eine `isCampaign`-Bedingung: ohne die hätte der eigene, gerade erst auf privat gestellte Eintrag durch den kurz zuvor gepushten Unshare-Tombstone (minimal neuerer Zeitstempel) versehentlich überschrieben werden können.
+
+---
+
 ## [3.1.1] – 2026-07-06
 
 ### Behoben
