@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.2.0] – 2026-07-06
+
+### Neu
+- **Schiffs-Übersicht: mehrere Bilder + mehrere PDF-Dokumente** — analog zum Charakter-Portrait können jetzt beliebig viele Bilder pro Schiff hochgeladen und per Pfeil-Navigation durchgeblättert werden (`ship.images[]` + `ship.imageIndex`, ersetzt das bisherige einzelne `ship.image`/`ship.imageFileId` — Altbestand wird beim Laden automatisch in die neue Liste übernommen). Bilder werden vor dem Hochladen client-seitig verkleinert/komprimiert wie beim Portrait. Zusätzlich: beliebig viele PDF-Dokumente pro Schiff (`ship.attachments[]`, gleiches Muster wie die bestehenden Journal-Anhänge), in der Leseansicht als anklickbare Links.
+
+---
+
 ## [3.1.2] – 2026-07-06
 
 ### Behoben
