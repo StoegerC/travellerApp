@@ -102,6 +102,8 @@ Abgeschlossene Features werden in **`CHANGELOG.md`** dokumentiert (Keep-a-Change
 **Regeln für Claude:**
 - Nach Abschluss eines Features einen Eintrag unter `## [Unreleased]` ergänzen
 - Bei einem neuen Release: `[Unreleased]`-Einträge in einen versionierten Block verschieben
+  und die Versionsnummer im App-Header (`<small class="app-version">` in `frontend/index.html`)
+  auf denselben Stand bringen — beide dürfen nie auseinanderlaufen
 
 ## Todo-Liste
 
