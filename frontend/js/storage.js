@@ -147,6 +147,24 @@ const Storage = {
     this.deleteVersionsForChar(id);
   },
 
+  // Entfernt beim Abmelden alle Cloud-synchronisierten Charaktere (+ deren
+  // Versionsverlauf) und die komplette Kampagnen-Lokalkopie aus IndexedDB.
+  // Rein lokale Charaktere (nie synchronisiert, an keinen Account gebunden)
+  // bleiben unangetastet. Sicher, weil Cloud-Charaktere jederzeit vom Server
+  // neu geladen werden koennen, sobald sich ihr Besitzer wieder anmeldet -
+  // verhindert, dass auf einem geteilten Geraet nach einem Nutzerwechsel
+  // fremde Charaktere weiterhin sichtbar/ladbar bleiben (siehe checkAuth/
+  // owner_id-Durchsetzung im Backend, die diese Lokalkopie bisher umging).
+  purgeCloudCharacters() {
+    const cloudIds = this._cache.filter(c => c.syncMode === 'cloud').map(c => c.id);
+    cloudIds.forEach(id => this.deleteCharacter(id));
+    if (this._db) {
+      const tx = this._db.transaction(this._CAMPAIGN_STORE, 'readwrite');
+      tx.objectStore(this._CAMPAIGN_STORE).clear();
+    }
+    return cloudIds;
+  },
+
   // ── Kampagnen ──────────────────────────────────────────────────────────
   saveCampaign(campaign) {
     if (!this._db || !campaign?.id) return;

@@ -780,11 +780,27 @@ const App = {
     document.getElementById('cfgLogoutBtn').onclick = async () => {
       const btn = document.getElementById('cfgLogoutBtn');
       btn.disabled = true;
-      await AuthAPI.logout();
+      const { purgedIds } = await AuthAPI.logout();
       btn.disabled = false;
-      this.showStatus('Abgemeldet', 'info');
-      urlInput.value = CloudSync.getWorkerUrl();
-      showStep(1);
+      this.showStatus('Abgemeldet - Cloud-Charaktere lokal entfernt', 'info');
+
+      if (this.currentCharacter && purgedIds.includes(this.currentCharacter.id)) {
+        // Der aktuell geladene Charakter gehoerte zum jetzt abgemeldeten
+        // Account und wurde soeben aus IndexedDB entfernt - auf einen
+        // verbleibenden (rein lokalen) Charakter wechseln oder den
+        // Willkommen-Dialog zeigen, statt mit einer Karteileiche weiterzuarbeiten.
+        this._stopCloudPoll();
+        this._stopCampaignPoll();
+        this.currentCharacter = null;
+        this._campaignData = null;
+        modal.classList.remove('visible');
+        const remaining = Storage.listCharacters();
+        if (remaining.length > 0) this.loadCharacter(remaining[0].id);
+        else this.showLoadCharDialog(true);
+      } else {
+        urlInput.value = CloudSync.getWorkerUrl();
+        showStep(1);
+      }
     };
   },
 
