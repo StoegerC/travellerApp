@@ -485,10 +485,14 @@ body {
 
 .form-group input[type="text"],
 .form-group input[type="number"],
+.form-group input[type="email"],
+.form-group input[type="password"],
 .form-group textarea,
 .form-group select,
 input[type="text"],
 input[type="number"],
+input[type="email"],
+input[type="password"],
 textarea,
 select {
   width: 100%;
@@ -6115,6 +6119,7 @@ body.dark-mode input[type="number"],
 body.dark-mode input[type="datetime-local"],
 body.dark-mode input[type="search"],
 body.dark-mode input[type="url"],
+body.dark-mode input[type="email"],
 body.dark-mode input[type="password"],
 body.dark-mode textarea,
 body.dark-mode select {
