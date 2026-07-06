@@ -36,8 +36,3 @@ UI / UX
 [ ] Timeline-Ansicht: Sessions chronologisch als Zeitstrahl
 [ ] Druckansicht / PDF-Export des Charakterbogens
 [ ] Journal in Listenansicht
-
-FEATURE REQUESTS
-[ ] Privatsphäre bei Charakteren
-[ ] Private Notizen nur für GM einsehbar
-[ ] Datum / Kalender (Zahlungen, Journal)
