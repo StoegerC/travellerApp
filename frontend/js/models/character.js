@@ -163,8 +163,12 @@ class Character {
       tonnage:          raw.tonnage      || '',
       owner:            raw.owner        || '',
       isCampaign:       raw.isCampaign   !== false,
-      image:            raw.image        || null,
-      imageFileId:      raw.imageFileId  || null,
+      // Altbestand (Phase 2, ein einzelnes Bild) wird in die neue Mehrfach-
+      // Bilder-Liste uebernommen, damit bestehende Schiffsbilder nicht
+      // verloren gehen - danach ist images[] die alleinige Quelle.
+      images:           Array.isArray(raw.images) ? raw.images : [raw.imageFileId, raw.image].filter(Boolean),
+      imageIndex:       Number.isInteger(raw.imageIndex) ? raw.imageIndex : 0,
+      attachments:      Array.isArray(raw.attachments) ? raw.attachments : [],
       hullMax:          parseInt(raw.hullMax)           || 0,
       hullCurrent:      raw.hullCurrent  != null ? parseInt(raw.hullCurrent)      : (parseInt(raw.hullMax) || 0),
       structureMax:     parseInt(raw.structureMax)      || 0,

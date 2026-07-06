@@ -26,6 +26,13 @@ const ShipPage = {
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   },
 
+  // Eintraege in ship.images[] sind entweder eine hochgeladene Datei-ID oder
+  // (Altbestand) ein voller data:image/...-String, siehe MetadataPage._portraitSrc.
+  _shipImgSrc(entry) {
+    if (!entry) return null;
+    return entry.startsWith('data:') ? entry : FileSync.getUrl(entry);
+  },
+
   _finFmt(n) {
     return 'Cr ' + Math.abs(Math.round(n)).toLocaleString('de-DE');
   },
@@ -136,24 +143,76 @@ const ShipPage = {
 
   // ── Info ─────────────────────────────────────────────────────────────────
 
+  // Mehrfach-Bilder-Widget (Vorbild: MetadataPage-Portrait) - Navigation/Zaehler
+  // erscheinen in Lese- UND Bearbeitungsmodus, Hinzufuegen/Loeschen nur im Bearbeitungsmodus.
+  _shipImgWidget(ship) {
+    const images  = ship.images || [];
+    const idx     = Math.min(ship.imageIndex || 0, Math.max(0, images.length - 1));
+    const current = this._shipImgSrc(images[idx]);
+    const total   = images.length;
+
+    const imgDisplay = current
+      ? `<img src="${current}" class="ship-portrait" alt="Schiff">`
+      : `<div class="ship-portrait-placeholder">🚀</div>`;
+
+    const navButtons = total > 1 ? `
+      <button class="ship-img-nav ship-img-prev" id="shipImgPrev" ${idx === 0 ? 'disabled' : ''}>‹</button>
+      <button class="ship-img-nav ship-img-next" id="shipImgNext" ${idx === total - 1 ? 'disabled' : ''}>›</button>` : '';
+    const counter = total > 1 ? `<span class="ship-img-counter">${idx + 1} / ${total}</span>` : '';
+
+    const editControls = App.editMode ? `
+      <div class="ship-img-edit-row">
+        <label class="ship-img-label" for="shipImgUpload"><span class="ship-img-btn">📷 Hinzufügen</span></label>
+        <input type="file" id="shipImgUpload" accept="image/*" style="display:none">
+        ${total > 0 ? '<button id="shipImgDelete" class="ship-img-del">✕ Entfernen</button>' : ''}
+      </div>` : '';
+
+    return `<div class="ship-portrait-col">
+      <div class="ship-portrait-frame" id="shipImgFrame">
+        ${imgDisplay}
+        ${navButtons}
+        ${counter}
+      </div>
+      ${editControls}
+    </div>`;
+  },
+
+  _shipAttachmentsWidget(ship) {
+    const attachments = ship.attachments || [];
+    if (App.editMode) {
+      return `<div class="form-group">
+        <label>Dokumente (PDF)</label>
+        <div id="shipAttachmentsList" class="attachment-list">
+          ${attachments.length
+            ? attachments.map(a => `
+                <span class="attachment-chip" data-id="${a.id}">
+                  📄 ${this._esc(a.filename)}
+                  <button class="attachment-rm-btn" data-id="${a.id}" title="Anhang entfernen">×</button>
+                </span>`).join('')
+            : '<span class="attachments-empty-hint">Keine Dokumente</span>'}
+        </div>
+        <label for="shipAttachmentUpload" class="btn-secondary attachment-upload-btn">+ PDF hinzufügen</label>
+        <input type="file" id="shipAttachmentUpload" accept="application/pdf" style="display:none;">
+      </div>`;
+    }
+    if (!attachments.length) return '';
+    return `<h3 class="ship-section-title">Dokumente</h3>
+      <div class="attachment-list">
+        ${attachments.map(a => `
+          <a href="${FileSync.getUrl(a.id)}" target="_blank" rel="noopener" class="attachment-chip attachment-link">
+            📄 ${this._esc(a.filename)}
+          </a>`).join('')}
+      </div>`;
+  },
+
   _renderInfo(ship, character, ships) {
     const selector = this._renderSelector(character, ships, ship);
-    const shipImgSrc = ship.imageFileId ? FileSync.getUrl(ship.imageFileId) : ship.image;
-    const imgHtml = shipImgSrc
-      ? `<img src="${shipImgSrc}" class="ship-portrait" alt="Schiff">`
-      : `<div class="ship-portrait-placeholder">🚀</div>`;
+    const imgWidget = this._shipImgWidget(ship);
 
     if (App.editMode) {
       return selector + `<div class="ship-section">
         <div class="ship-info-layout">
-          <div class="ship-portrait-col">
-            ${imgHtml}
-            <label class="ship-img-label" for="shipImgInput">
-              <span class="ship-img-btn">📷 Bild wählen</span>
-            </label>
-            <input type="file" id="shipImgInput" accept="image/*" style="display:none">
-            ${shipImgSrc ? '<button id="shipImgDelBtn" class="ship-img-del">✕ Bild löschen</button>' : ''}
-          </div>
+          ${imgWidget}
           <div class="ship-info-fields">
             <div class="ship-field-group">
               <label class="ship-field-lbl">Name</label>
@@ -188,6 +247,8 @@ const ShipPage = {
 
         <h3 class="ship-section-title">Notizen</h3>
         <textarea id="si-notes" class="ship-notes">${this._esc(ship.notes || '')}</textarea>
+
+        ${this._shipAttachmentsWidget(ship)}
       </div>`;
     }
 
@@ -198,7 +259,7 @@ const ShipPage = {
 
     return selector + `<div class="ship-section">
       <div class="ship-info-layout">
-        <div class="ship-portrait-col">${imgHtml}</div>
+        ${imgWidget}
         <div class="ship-info-fields">
           ${row('Klasse',   ship.class)}
           ${row('TL',       ship.tl)}
@@ -219,6 +280,7 @@ const ShipPage = {
       </div>
 
       ${ship.notes ? `<h3 class="ship-section-title">Notizen</h3><p class="ship-notes-view">${this._esc(ship.notes)}</p>` : ''}
+      ${this._shipAttachmentsWidget(ship)}
     </div>`;
   },
 
@@ -1041,32 +1103,102 @@ const ShipPage = {
       });
     });
 
-    // Bild hochladen (echte Datei, kein Base64 mehr im Charakter-JSON)
-    document.getElementById('shipImgInput')?.addEventListener('change', async e => {
+    // Bild hinzufügen (mehrere möglich, Vorbild: MetadataPage-Portrait-Upload
+    // inkl. Verkleinern/Komprimieren vor dem Hochladen)
+    document.getElementById('shipImgUpload')?.addEventListener('change', (e) => {
       const file = e.target.files[0];
       e.target.value = '';
       if (!file) return;
+      if (file.size > 8 * 1024 * 1024) { alert('Bild zu groß! Maximum 8 MB'); return; }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const MAX_W = 600, MAX_H = 450;
+          const scale = Math.min(1, MAX_W / img.width, MAX_H / img.height);
+          const canvas = document.createElement('canvas');
+          canvas.width  = Math.round(img.width  * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(async blob => {
+            const ship = this._ship(char);
+            if (!ship) return;
+            const result = await FileSync.upload(blob, { ownerType: 'character', ownerId: char.id, field: 'shipImage', refId: ship.id });
+            if (!result.ok) { App.showStatus('Bild-Upload fehlgeschlagen', 'error'); return; }
+            if (!ship.images) ship.images = [];
+            ship.images.push(result.data.id);
+            ship.imageIndex = ship.images.length - 1;
+            this._saveAndSync(char);
+            App.renderCurrentPage();
+          }, 'image/jpeg', 0.8);
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Bild-Navigation (nur lokaler Storage-Save, kein Kampagnen-Push für
+    // einen reinen Bildwechsel - siehe MetadataPage-Portrait-Navigation)
+    document.getElementById('shipImgPrev')?.addEventListener('click', () => {
       const ship = this._ship(char);
-      if (!ship) return;
-      const result = await FileSync.upload(file, { ownerType: 'character', ownerId: char.id, field: 'shipImage', refId: ship.id });
-      if (!result.ok) { App.showStatus('Bild-Upload fehlgeschlagen', 'error'); return; }
-      const oldFileId = ship.imageFileId;
-      ship.image = null;
-      ship.imageFileId = result.data.id;
-      this._saveAndSync(char);
-      if (oldFileId) FileSync.remove(oldFileId);
+      if (!ship || !(ship.imageIndex > 0)) return;
+      ship.imageIndex--;
+      Storage.saveCharacter(char);
+      App.renderCurrentPage();
+    });
+    document.getElementById('shipImgNext')?.addEventListener('click', () => {
+      const ship = this._ship(char);
+      if (!ship || !(ship.imageIndex < (ship.images || []).length - 1)) return;
+      ship.imageIndex++;
+      Storage.saveCharacter(char);
       App.renderCurrentPage();
     });
 
-    // Bild löschen
-    document.getElementById('shipImgDelBtn')?.addEventListener('click', () => {
+    // Aktuell angezeigtes Bild entfernen
+    document.getElementById('shipImgDelete')?.addEventListener('click', () => {
       const ship = this._ship(char);
-      if (!ship) return;
-      if (ship.imageFileId) FileSync.remove(ship.imageFileId);
-      ship.image = null;
-      ship.imageFileId = null;
+      if (!ship || !ship.images?.length) return;
+      if (!confirm('Dieses Bild entfernen?')) return;
+      const [removed] = ship.images.splice(ship.imageIndex, 1);
+      if (removed && !removed.startsWith('data:')) FileSync.remove(removed);
+      ship.imageIndex = Math.min(ship.imageIndex, Math.max(0, ship.images.length - 1));
       this._saveAndSync(char);
       App.renderCurrentPage();
+    });
+
+    // Dokumente (PDF) - Upload direkt beim Auswählen, sofort persistiert
+    // (Schiffsfelder haben keinen separaten "Speichern"-Schritt wie das
+    // Session-Formular, siehe restliche Buttons in dieser Methode).
+    document.getElementById('shipAttachmentUpload')?.addEventListener('change', async e => {
+      const file = e.target.files[0];
+      e.target.value = '';
+      if (!file) return;
+      if (file.type !== 'application/pdf') { alert('Bitte eine PDF-Datei wählen'); return; }
+      if (file.size > 10 * 1024 * 1024) { alert('Datei zu groß! Maximum 10 MB'); return; }
+      const ship = this._ship(char);
+      if (!ship) return;
+      App.showStatus('Lade PDF hoch …', 'info');
+      const result = await FileSync.upload(file, { ownerType: 'character', ownerId: char.id, field: 'shipAttachment', refId: ship.id });
+      if (!result.ok) { App.showStatus('PDF-Upload fehlgeschlagen', 'error'); return; }
+      if (!ship.attachments) ship.attachments = [];
+      ship.attachments.push({ id: result.data.id, filename: file.name, size: file.size });
+      this._saveAndSync(char);
+      App.showStatus('PDF hochgeladen', 'success');
+      App.renderCurrentPage();
+    });
+
+    document.querySelectorAll('#shipAttachmentsList .attachment-rm-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ship = this._ship(char);
+        if (!ship) return;
+        const id = btn.dataset.id;
+        const removed = (ship.attachments || []).find(a => a.id === id);
+        ship.attachments = (ship.attachments || []).filter(a => a.id !== id);
+        if (removed) FileSync.remove(removed.id);
+        this._saveAndSync(char);
+        App.renderCurrentPage();
+      });
     });
 
     // Status: Track-Buttons (Ansichtsmodus)
