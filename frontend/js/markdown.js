@@ -140,7 +140,7 @@ const Md = {
   _mentions(text) {
     return text.replace(this._MENTION_RE, (_, name, type, id) => {
       const cls = { person: 'person-link', location: 'location-link', quest: 'quest-link' }[type];
-      return `<span class="link-chip ${cls}" data-tab="${type}s" data-id="${id}">${name}</span>`;
+      return `<span class="link-chip mention-chip ${cls}" data-tab="${type}s" data-id="${id}">${name}</span>`;
     });
   },
 
