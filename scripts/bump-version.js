@@ -110,7 +110,7 @@ function main() {
   }
   const today = new Date().toISOString().slice(0, 10);
   const replacement =
-    `## [Unreleased]\n\n---\n\n## [${newVersion}] – ${today}\n\n${unreleasedBody}`;
+    `## [Unreleased]\n\n---\n\n## [${newVersion}] – ${today}\n\n${unreleasedBody}\n`;
   changelog = changelog.slice(0, unreleasedIdx) + replacement + changelog.slice(nextSeparatorIdx);
   writeFile('CHANGELOG.md', changelog);
 

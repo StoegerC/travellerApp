@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.0.2] – 2026-07-06
+
+### Neu
+- **Versionsverlauf zeigt die Seite beim Verlassen des Bearbeitungsmodus** — Einträge, die durch „✓ Fertig" entstehen, tragen jetzt zusätzlich ein Tab-Label (z.B. „Kampf"), damit auf einen Blick erkennbar ist, wo bearbeitet wurde. Reine Tab-Wechsel-Einträge bleiben bewusst ohne dieses Label, um den Verlauf nicht zu überladen. Nebenbei behoben: die 30-Sekunden-Drossel (max. eine Version pro Zeitfenster) konnte eine getaggte „Fertig"-Version stillschweigend verschlucken, wenn kurz zuvor ein reiner Tab-Wechsel gespeichert hatte — die Drossel gilt jetzt nur noch für ungetaggte Versionen.
+
+---
+
 ## [3.0.1] – 2026-07-06
 
 ### Neu
@@ -26,6 +33,7 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 ### Neu
 - **Cloud-Einstellungen zeigen den angemeldeten Zustand** — beim Öffnen des Cloud-Menüs mit bereits aktiver Anmeldung erscheint statt der Login-Maske eine Übersicht: automatischer Verbindungstest (neuer Endpunkt `GET /auth/me`, dient gleichzeitig als Session-Check — ein 401 zeigt eine abgelaufene/vom Admin zurückgesetzte Sitzung und fällt automatisch auf die Login-Maske zurück), der angemeldete Nutzer mit Rollen-Badges, sowie ein „Abmelden"-Button (`AuthAPI.logout()`), der die Cloud-Verbindung trennt.
 - **Admin-Seite: Besitz &amp; Speicher pro Nutzer** — neue Tabelle zeigt pro Nutzer, wie viele Charaktere/Kampagnen er angelegt hat (mit Name + Größe, aufklappbar über „Details") und wie viel Speicher das insgesamt belegt, aufgeschlüsselt in Charakter-Daten (JSON) und Medien (hochgeladene Bilder). Neuer Endpunkt `GET /admin/overview` (`db.getAdminOverview()`) löst dafür Datei-Uploads (die an einem Charakter/einer Kampagne hängen, nicht direkt am Nutzer) über deren `owner_id` auf den jeweiligen Nutzer auf. Inhalte ohne (mehr) existierenden Owner — z.B. nach Löschen eines Nutzers, dessen Charaktere/Kampagnen bewusst erhalten bleiben — erscheinen gesammelt unter „Ohne zugeordneten Nutzer" statt unsichtbar zu werden.
+
 ---
 
 ## [3.0.0] – 2026-07-06
