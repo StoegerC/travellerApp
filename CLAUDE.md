@@ -95,15 +95,28 @@ Jede neue Funktion oder größere Änderung wird in einem eigenen Branch entwick
 
 Das verhindert, dass bereits implementierte Features nochmal geplant oder falsche Annahmen über den Projektstand gemacht werden.
 
-## Changelog
+## Versionierung
 
-Abgeschlossene Features werden in **`CHANGELOG.md`** dokumentiert (Keep-a-Changelog-Format).
+Eine einzige Versionsnummer treibt alles: **`VERSION`** (Projekt-Root) ist die Quelle der
+Wahrheit. Dieselbe Nummer erscheint in `frontend/index.html` (Cache-Busting-Query `?v=` auf
+allen Script-/Style-Tags + Header-Anzeige `<small class="app-version">`), `frontend/sw.js`
+(`CACHE`-Name) und `frontend/manifest.json` (`"version"`-Feld).
 
-**Regeln für Claude:**
-- Nach Abschluss eines Features einen Eintrag unter `## [Unreleased]` ergänzen
-- Bei einem neuen Release: `[Unreleased]`-Einträge in einen versionierten Block verschieben
-  und die Versionsnummer im App-Header (`<small class="app-version">` in `frontend/index.html`)
-  auf denselben Stand bringen — beide dürfen nie auseinanderlaufen
+**Jede gemergte Änderung ist ein Release** — kein separates „Release schneiden" später,
+das vergessen werden kann.
+
+**Pflichtablauf für Claude:**
+1. Während der Arbeit an einem Feature-/Fix-Branch: Einträge wie gewohnt unter
+   `## [Unreleased]` in `CHANGELOG.md` ergänzen.
+2. Unmittelbar vor dem Merge nach `main`: `node scripts/bump-version.js <X.Y.Z>` ausführen.
+   Bumpt automatisch alle oben genannten Stellen und schneidet `[Unreleased]` zu
+   `## [X.Y.Z] – <Datum>` (Patch für Fixes, Minor für Features, Major für große
+   strukturelle Sprünge).
+3. Geänderte Dateien (inkl. `VERSION`) im selben Commit wie die Änderung committen.
+
+Gilt auch für die CSS-Ausnahme direkt auf `main` (siehe Git-Workflow oben), sofern eine
+gecachte Datei betroffen ist — das Script macht diesen Schritt günstig genug, dass es
+keinen Grund gibt ihn auszulassen.
 
 ## Todo-Liste
 
