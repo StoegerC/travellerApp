@@ -7,8 +7,6 @@ const KartePage = {
   _mapResizeHandler: null,
 
   render(character) {
-    const data    = character.notes || { locations: [] };
-    const linked  = (data.locations || []).filter(l => l.mapX != null);
     return `<h2>Karte</h2>
     <div class="map-view">
       <div class="map-search-bar">
@@ -22,36 +20,12 @@ const KartePage = {
       </div>
       <div id="mapIframeSlot" class="traveller-map-iframe"></div>
       <div id="mapWorldInfo" class="map-world-info" style="display:none"></div>
-      <div class="map-loc-bar">
-        ${linked.length
-          ? linked.map(l => `
-              <button class="map-loc-chip"
-                      data-sector="${this._esc(l.mapSector || '')}"
-                      data-hex="${this._esc(l.mapHex || '')}"
-                      data-name="${this._esc(l.name)}"
-                      data-uwp="${this._esc(l.uwp || '')}"
-                      title="${this._esc(l.sector || '')}">
-                ${this._esc(l.name)}${l.uwp ? ` <code>${this._esc(l.uwp)}</code>` : ''}
-              </button>`).join('')
-          : `<span class="map-bar-hint">Orte über "📝 Log" → "🌍 Orte" → "Auf Karte verknüpfen" hinzufügen</span>`
-        }
-      </div>
     </div>`;
   },
 
   save() {},
 
   attachListeners() {
-    document.querySelectorAll('.map-loc-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        const frame = document.getElementById('travellerMapFrame');
-        if (frame) frame.src = `https://travellermap.com/?sector=${encodeURIComponent(chip.dataset.sector)}&hex=${chip.dataset.hex}&scale=64&style=poster&options=87046`;
-        document.querySelectorAll('.map-loc-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        this._showMapWorldInfo({ type: 'world', icon: '🌐', name: chip.dataset.name, sector: chip.dataset.sector, hex: chip.dataset.hex, uwp: chip.dataset.uwp, navScale: 64 });
-      });
-    });
-
     this._attachMapSearch();
     this._initMapIframe();
   },
