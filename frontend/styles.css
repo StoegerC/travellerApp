@@ -1701,6 +1701,16 @@ button {
 
 .link-chip:hover { filter: brightness(0.9); transform: translateY(-1px); }
 
+/* "@"-Erwähnungen im Fließtext: .link-chip ist für freistehende Chip-Listen
+   gedacht (großzügiges Padding, Pillenform) - im Fließtext eingebettet wirkt
+   das wie zu viel Weißraum vor/nach dem Wort, daher hier deutlich enger. */
+.mention-chip {
+  display: inline;
+  padding: 0 3px;
+  border-radius: 4px;
+}
+.mention-chip:hover { transform: none; }
+
 .linked-items {
   display: flex;
   flex-wrap: wrap;
@@ -5659,6 +5669,17 @@ label.attachment-upload-btn {
   z-index: 100;
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   overflow: hidden;
+}
+
+/* Erwähnungs-Dropdown wird per JS unter das "@" positioniert (siehe
+   NotesPage._caretCoords) statt flush unter das ganze Textarea - braucht
+   deshalb einen vollen Rahmen/volle Rundung statt der "hängt am Input"-Optik. */
+.mention-suggestions {
+  right: auto;
+  min-width: 200px;
+  max-width: min(320px, calc(100% - 16px));
+  border-top: 1.5px solid #c7d2fe;
+  border-radius: 10px;
 }
 
 .loc-suggest-item {

@@ -336,7 +336,7 @@ const NotesPage = {
             <label>Bericht</label>
             <div class="loc-name-wrap">
               <textarea id="sessionContent" rows="14" placeholder="Bericht … ('@' verlinkt Personen/Orte/Quests)">${this._esc(s.content || '')}</textarea>
-              <div id="sessionMentionSuggestions" class="loc-suggestions" style="display:none"></div>
+              <div id="sessionMentionSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
             </div>
             <span class="md-hint">**fett** · *kursiv* · # Überschrift · - Liste · | Tabelle | · @ verlinkt Personen/Orte/Quests</span>
           </div>
@@ -1958,8 +1958,39 @@ const NotesPage = {
     });
   },
 
+  // Pixel-Position einer Zeichen-Position in einem <textarea> relativ zu
+  // dessen eigener Position (top-left = 0,0) - baut dafür einen unsichtbaren
+  // "Spiegel"-div mit identischer Schrift/Breite/Umbruch auf, misst darin die
+  // Position eines Marker-Spans und räumt danach wieder auf. Gängige Technik,
+  // da <textarea> selbst keine Caret-Koordinaten anbietet.
+  _caretCoords(textarea, position) {
+    const style = getComputedStyle(textarea);
+    const mirror = document.createElement('div');
+    ['boxSizing', 'width', 'fontFamily', 'fontSize', 'fontWeight', 'lineHeight',
+     'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
+     'borderTopWidth', 'borderRightWidth', 'borderBottomWidth', 'borderLeftWidth',
+     'letterSpacing', 'wordSpacing'].forEach(p => { mirror.style[p] = style[p]; });
+    Object.assign(mirror.style, {
+      position: 'absolute', top: '0', left: '-9999px',
+      visibility: 'hidden', whiteSpace: 'pre-wrap', wordWrap: 'break-word',
+    });
+    mirror.textContent = textarea.value.slice(0, position);
+    const marker = document.createElement('span');
+    marker.textContent = textarea.value.slice(position) || '.';
+    mirror.appendChild(marker);
+    document.body.appendChild(mirror);
+    const coords = {
+      top:    marker.offsetTop  - textarea.scrollTop,
+      left:   marker.offsetLeft - textarea.scrollLeft,
+      height: parseInt(style.lineHeight) || parseInt(style.fontSize) * 1.2,
+    };
+    document.body.removeChild(mirror);
+    return coords;
+  },
+
   // Tippt man im Journal-Bericht "@" gefolgt von Zeichen, erscheint eine
-  // Trefferliste über Personen/Orte/Quests (Substring-Suche auf Name/Titel).
+  // Trefferliste über Personen/Orte/Quests (Substring-Suche auf Name/Titel),
+  // positioniert direkt unter der "@"-Eingabestelle (siehe _caretCoords).
   // Auswahl fügt "@[Name](typ:id)" an Cursor-Position ein - Md._mentions()
   // rendert das als klickbaren Link (frontend/js/markdown.js).
   _attachMentionAutocomplete() {
@@ -1986,6 +2017,16 @@ const NotesPage = {
 
       const query = match[1].toLowerCase();
       range = { start: pos - match[0].length, end: pos };
+
+      // Dropdown unter das "@" (Start der Erwähnung) setzen statt unter das
+      // ganze Textarea - .loc-suggestions' Standard-CSS (top:100%;left:0;
+      // right:0) wird dafür per Inline-Style überschrieben.
+      const coords = this._caretCoords(textarea, range.start);
+      Object.assign(suggestEl.style, {
+        top: `${coords.top + coords.height}px`,
+        left: `${coords.left}px`,
+        right: 'auto',
+      });
 
       const results = [
         ...(data.persons   || []).filter(p => !p._deleted).map(p => ({ type: 'person',   id: p.id, label: p.name })),
