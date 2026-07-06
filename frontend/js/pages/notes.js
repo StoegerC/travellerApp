@@ -334,8 +334,11 @@ const NotesPage = {
 
           <div class="form-group">
             <label>Bericht</label>
-            <textarea id="sessionContent" rows="14" placeholder="Bericht …">${this._esc(s.content || '')}</textarea>
-            <span class="md-hint">**fett** · *kursiv* · # Überschrift · - Liste · | Tabelle |</span>
+            <div class="loc-name-wrap">
+              <textarea id="sessionContent" rows="14" placeholder="Bericht … ('@' verlinkt Personen/Orte/Quests)">${this._esc(s.content || '')}</textarea>
+              <div id="sessionMentionSuggestions" class="loc-suggestions" style="display:none"></div>
+            </div>
+            <span class="md-hint">**fett** · *kursiv* · # Überschrift · - Liste · | Tabelle | · @ verlinkt Personen/Orte/Quests</span>
           </div>
 
           <div class="form-group">
@@ -1533,6 +1536,7 @@ const NotesPage = {
           this._activeTab = tab;
           this._detailId  = id;
           this._editTags  = null;
+          this._editAttachments = null;
           App.renderCurrentPage();
         }
       });
@@ -1641,6 +1645,9 @@ const NotesPage = {
         App.renderCurrentPage();
       });
     });
+
+    // "@"-Erwähnungen im Journal-Bericht
+    this._attachMentionAutocomplete();
 
     // Tag-Picker
     this._attachTagPicker();
@@ -1939,6 +1946,88 @@ const NotesPage = {
         this._saveAndSync(char);
       });
     });
+  },
+
+  // Tippt man im Journal-Bericht "@" gefolgt von Zeichen, erscheint eine
+  // Trefferliste über Personen/Orte/Quests (Substring-Suche auf Name/Titel).
+  // Auswahl fügt "@[Name](typ:id)" an Cursor-Position ein - Md._mentions()
+  // rendert das als klickbaren Link (frontend/js/markdown.js).
+  _attachMentionAutocomplete() {
+    const textarea  = document.getElementById('sessionContent');
+    const suggestEl = document.getElementById('sessionMentionSuggestions');
+    if (!textarea || !suggestEl) return;
+
+    const data = this._d(App.currentCharacter);
+    let range = null; // { start, end } des "@query" im Text, das ersetzt wird
+
+    const closeSuggestions = () => {
+      suggestEl.style.display = 'none';
+      suggestEl.innerHTML = '';
+      range = null;
+    };
+
+    const TYPE_LABEL = { person: '👤 Person', location: '🌍 Ort', quest: '🎯 Quest' };
+
+    const update = () => {
+      const value = textarea.value;
+      const pos   = textarea.selectionStart;
+      const match = value.slice(0, pos).match(/@([^\s@[\]]*)$/);
+      if (!match) { closeSuggestions(); return; }
+
+      const query = match[1].toLowerCase();
+      range = { start: pos - match[0].length, end: pos };
+
+      const results = [
+        ...(data.persons   || []).filter(p => !p._deleted).map(p => ({ type: 'person',   id: p.id, label: p.name })),
+        ...(data.locations || []).filter(l => !l._deleted).map(l => ({ type: 'location', id: l.id, label: l.name })),
+        ...(data.quests    || []).filter(q => !q._deleted).map(q => ({ type: 'quest',    id: q.id, label: q.title })),
+      ].filter(r => r.label && r.label.toLowerCase().includes(query)).slice(0, 8);
+
+      if (!results.length) {
+        suggestEl.innerHTML = '<div class="loc-suggest-empty">Kein Treffer</div>';
+        suggestEl.style.display = '';
+        return;
+      }
+
+      suggestEl.innerHTML = results.map((r, i) => `
+        <div class="loc-suggest-item mention-suggest-item" data-idx="${i}">
+          <strong>${this._esc(r.label)}</strong>
+          <span>${TYPE_LABEL[r.type]}</span>
+        </div>`).join('');
+      suggestEl.style.display = '';
+
+      suggestEl.querySelectorAll('.mention-suggest-item').forEach(item => {
+        // mousedown statt click: feuert vor dem blur des Textarea, damit der
+        // Cursor/Fokus beim Einfügen erhalten bleibt (siehe _attachLocAutocomplete).
+        item.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          const r = results[parseInt(item.dataset.idx)];
+          if (!r || !range) return;
+          const before = value.slice(0, range.start);
+          const after  = textarea.value.slice(range.end);
+          const insertion = `@[${r.label}](${r.type}:${r.id}) `;
+          textarea.value = before + insertion + after;
+          const newPos = before.length + insertion.length;
+          textarea.focus();
+          textarea.setSelectionRange(newPos, newPos);
+          // Synthetisches input-Event statt App.renderCurrentPage(): loest den
+          // bestehenden Autosave-Mechanismus aus, ohne das Textarea (und damit
+          // Fokus/Cursor) durch einen vollen Re-Render zu ersetzen.
+          textarea.dispatchEvent(new Event('input', { bubbles: true }));
+          closeSuggestions();
+        });
+      });
+    };
+
+    textarea.addEventListener('input', update);
+    textarea.addEventListener('click', update);
+    textarea.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') update();
+    });
+    textarea.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeSuggestions();
+    });
+    textarea.addEventListener('blur', () => setTimeout(closeSuggestions, 200));
   },
 
   _attachLocAutocomplete() {
