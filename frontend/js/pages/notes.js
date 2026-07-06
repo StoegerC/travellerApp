@@ -273,6 +273,9 @@ const NotesPage = {
     if (App.editMode && !this._editTags) {
       this._editTags = JSON.parse(JSON.stringify(s.tags || { persons: [], locations: [], quests: [], events: [] }));
     }
+    if (App.editMode && !this._editAttachments) {
+      this._editAttachments = JSON.parse(JSON.stringify(s.attachments || []));
+    }
 
     const tags = App.editMode ? this._editTags : (s.tags || {});
     const taggedPersons   = (tags.persons   || []).map(pid => data.persons.find(p => p.id === pid)).filter(Boolean);
@@ -335,6 +338,21 @@ const NotesPage = {
             <span class="md-hint">**fett** · *kursiv* · # Überschrift · - Liste · | Tabelle |</span>
           </div>
 
+          <div class="form-group">
+            <label>Anhänge (PDF)</label>
+            <div id="sessionAttachmentsList" class="attachment-list">
+              ${(this._editAttachments || []).length
+                ? this._editAttachments.map(a => `
+                    <span class="attachment-chip" data-id="${a.id}">
+                      📄 ${this._esc(a.filename)}
+                      <button class="attachment-rm-btn" data-id="${a.id}" title="Anhang entfernen">×</button>
+                    </span>`).join('')
+                : '<span class="attachments-empty-hint">Keine Anhänge</span>'}
+            </div>
+            <label for="sessionAttachmentUpload" class="btn-secondary attachment-upload-btn">+ PDF hinzufügen</label>
+            <input type="file" id="sessionAttachmentUpload" accept="application/pdf" style="display:none;">
+          </div>
+
           <div class="tag-section">
             <h4>Tags</h4>
             ${this._tagPicker('persons',   taggedPersons,   data.persons,   'Personen')}
@@ -376,6 +394,13 @@ const NotesPage = {
             </div>
           </div>
           <div class="md-content">${s.content ? Md.render(s.content) : '<em>Kein Inhalt</em>'}</div>
+          ${s.attachments?.length ? `
+            <div class="attachment-list">
+              ${s.attachments.map(a => `
+                <a href="${FileSync.getUrl(a.id)}" target="_blank" rel="noopener" class="attachment-chip attachment-link">
+                  📄 ${this._esc(a.filename)}
+                </a>`).join('')}
+            </div>` : ''}
           ${taggedEvents.length ? `<div class="session-events">${taggedEvents.map(e => `<span class="tag-chip event-chip">${this._esc(e)}</span>`).join('')}</div>` : ''}
           ${taggedPersons.length || taggedLocations.length || taggedQuests.length ? `
             <div class="session-links">
@@ -1219,6 +1244,7 @@ const NotesPage = {
         inGameDate:  document.getElementById('sessionIngameDate')?.value || '',
         content:     document.getElementById('sessionContent')?.value || '',
         tags:        this._editTags || { persons: [], locations: [], quests: [], events: [] },
+        attachments: this._editAttachments || existing?.attachments || [],
         isActive:    existing?.isActive || false,
         isCampaign:  !!(document.getElementById('entryCampaignToggle')?.checked ?? existing?.isCampaign),
         createdAt:   existing?.createdAt || createdAt,
@@ -1235,10 +1261,17 @@ const NotesPage = {
         if (idx >= 0) data.sessions[idx] = entry;
         else data.sessions.push(entry);
       }
-      // _editTags intentionally NOT cleared here: autosave calls save() without
-      // re-rendering, so clearing _editTags would corrupt the picker state and
-      // lose tags on the next manual save. Navigation handlers clear it instead.
+      // Server-Datei loeschen fuer Anhaenge, die beim Bearbeiten entfernt wurden
+      // (Chip-"×"-Klick nimmt sie nur aus _editAttachments, siehe attachListeners).
+      (existing?.attachments || [])
+        .filter(old => !entry.attachments.some(a => a.id === old.id))
+        .forEach(old => FileSync.remove(old.id));
+      // _editTags/_editAttachments intentionally NOT cleared here: autosave calls
+      // save() without re-rendering, so clearing wuerde den Picker-/Anhang-Zustand
+      // korrumpieren und Aenderungen beim naechsten manuellen Speichern verlieren.
+      // Navigations-Handler clearen stattdessen.
       this._editTags = JSON.parse(JSON.stringify(entry.tags));
+      this._editAttachments = JSON.parse(JSON.stringify(entry.attachments));
 
     } else if (this._activeTab === 'persons') {
       const existing = isNew ? null : this._findEntry('persons', id, data);
@@ -1436,6 +1469,7 @@ const NotesPage = {
       this._saveAndSync(App.currentCharacter);
       this._detailId = null;
       this._editTags = null;
+      this._editAttachments = null;
       App.renderCurrentPage();
     });
 
@@ -1461,6 +1495,7 @@ const NotesPage = {
         if (row?.dataset.id) {
           this._detailId = row.dataset.id;
           this._editTags = null;
+          this._editAttachments = null;
           App.renderCurrentPage();
         }
       });
@@ -1472,6 +1507,7 @@ const NotesPage = {
         if (!App.editMode) App.editMode = true;
         this._detailId = row.dataset.id;
         this._editTags = null;
+        this._editAttachments = null;
         App.renderCurrentPage();
       }
     });
@@ -1480,6 +1516,7 @@ const NotesPage = {
       item.addEventListener('click', () => {
         this._detailId = item.dataset.id;
         this._editTags = null;
+        this._editAttachments = null;
         App.renderCurrentPage();
       });
     });
@@ -1578,6 +1615,33 @@ const NotesPage = {
       _removePersonImg(preview, btn);
     });
 
+    // Session-Anhänge (PDF) - Upload direkt beim Auswählen, Übernahme in
+    // character.notes erst beim nächsten save() (siehe _editAttachments,
+    // analog zum Personen-Bild-Upload oben).
+    document.getElementById('sessionAttachmentUpload')?.addEventListener('change', async e => {
+      const file = e.target.files[0];
+      e.target.value = '';
+      if (!file) return;
+      if (file.type !== 'application/pdf') { alert('Bitte eine PDF-Datei wählen'); return; }
+      if (file.size > 10 * 1024 * 1024) { alert('Datei zu groß! Maximum 10 MB'); return; }
+      const char = App.currentCharacter;
+      App.showStatus('Lade PDF hoch …', 'info');
+      const result = await FileSync.upload(file, { ownerType: 'character', ownerId: char.id, field: 'sessionAttachment', refId: this._detailId });
+      if (!result.ok) { App.showStatus('PDF-Upload fehlgeschlagen', 'error'); return; }
+      if (!this._editAttachments) this._editAttachments = [];
+      this._editAttachments.push({ id: result.data.id, filename: file.name, size: file.size });
+      App.showStatus('PDF hochgeladen', 'success');
+      App.renderCurrentPage();
+    });
+
+    document.querySelectorAll('.attachment-rm-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        this._editAttachments = (this._editAttachments || []).filter(a => a.id !== id);
+        App.renderCurrentPage();
+      });
+    });
+
     // Tag-Picker
     this._attachTagPicker();
 
@@ -1625,6 +1689,7 @@ const NotesPage = {
     }
     this._detailId = null;
     this._editTags = null;
+    this._editAttachments = null;
     App.renderCurrentPage();
   },
 

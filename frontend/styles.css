@@ -1815,6 +1815,67 @@ button {
   text-decoration: underline;
 }
 
+/* ── Anhänge (PDF, Journal-Einträge) ── */
+.attachment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #eef1ff;
+  color: #4a5ad4;
+  white-space: nowrap;
+}
+
+a.attachment-link {
+  text-decoration: none;
+  cursor: pointer;
+  color: #4a5ad4;
+}
+a.attachment-link:hover {
+  background: #dde3ff;
+}
+
+.attachment-rm-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.7;
+}
+.attachment-rm-btn:hover { opacity: 1; }
+
+.attachments-empty-hint {
+  font-size: 13px;
+  color: #999;
+  font-style: italic;
+}
+
+label.attachment-upload-btn {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 6px 12px;
+  background: #667eea;
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .person-edit-fields {
   flex: 1;
   min-width: 0;
@@ -6361,10 +6422,14 @@ body.dark-mode .modal-box h3 {
 /* ── Link-Chips (Session-Verknüpfungen) ── */
 body.dark-mode .link-chip,
 body.dark-mode .session-link,
-body.dark-mode .tag-chip {
+body.dark-mode .tag-chip,
+body.dark-mode .attachment-chip {
   background: #202840;
   color: #8899ee;
 }
+body.dark-mode a.attachment-link { color: #8899ee; }
+body.dark-mode a.attachment-link:hover { background: #283258; }
+body.dark-mode .attachments-empty-hint { color: #6070a0; }
 body.dark-mode .link-session-row {
   background: #161929;
   border-color: #2c3050;
