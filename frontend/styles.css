@@ -7112,6 +7112,8 @@ body.dark-mode .ptr-spinner             { border-color: #2c3050; border-top-colo
 .nc-test-ok    { color: #1b5e20; }
 .nc-test-error { color: #b71c1c; }
 
+.role-badge { font-size: 0.78em; background: #eef; color: #447; padding: 2px 7px; border-radius: 10px; margin-left: 4px; }
+
 .cloud-char-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 
 .cloud-char-item {
@@ -7143,6 +7145,7 @@ body.dark-mode .campaign-section h3   { color: #9095b8; }
 body.dark-mode .campaign-hint         { color: #6070a0; }
 body.dark-mode .campaign-id-badge     { background: #1e2040; color: #818cf8; }
 body.dark-mode .campaign-owner-badge  { background: #2a2818; color: #c8b560; }
+body.dark-mode .role-badge            { background: #1e2040; color: #818cf8; }
 body.dark-mode .campaign-member-id    { color: #9095b8; }
 body.dark-mode .campaign-members-title{ color: #6070a0; }
 body.dark-mode .btn-danger-sm         { border-color: #f87171; color: #f87171; }

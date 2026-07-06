@@ -707,24 +707,32 @@ const App = {
   },
 
   showCloudConfig() {
-    const modal    = document.getElementById('cloudConfigModal');
-    const step1    = document.getElementById('cfgStep1');
-    const step2    = document.getElementById('cfgStep2');
-    const testEl   = document.getElementById('cfgTestResult');
-    const loginEl  = document.getElementById('cfgLoginResult');
-    const urlInput = document.getElementById('cfgWorkerUrl');
+    const modal     = document.getElementById('cloudConfigModal');
+    const step1     = document.getElementById('cfgStep1');
+    const step2     = document.getElementById('cfgStep2');
+    const stepConn  = document.getElementById('cfgStepConnected');
+    const testEl    = document.getElementById('cfgTestResult');
+    const loginEl   = document.getElementById('cfgLoginResult');
+    const urlInput  = document.getElementById('cfgWorkerUrl');
 
     const showStep = n => {
-      step1.style.display = n === 1 ? '' : 'none';
-      step2.style.display = n === 2 ? '' : 'none';
+      step1.style.display    = n === 1 ? '' : 'none';
+      step2.style.display    = n === 2 ? '' : 'none';
+      stepConn.style.display = n === 'connected' ? '' : 'none';
     };
-    showStep(1);
     urlInput.value       = CloudSync.getWorkerUrl();
     testEl.textContent   = '';
     testEl.className     = 'nc-test-result';
     loginEl.textContent  = '';
     loginEl.className    = 'nc-test-result';
     modal.classList.add('visible');
+
+    if (CloudSync.isConfigured()) {
+      showStep('connected');
+      this._refreshCloudConnectedState();
+    } else {
+      showStep(1);
+    }
 
     document.getElementById('cfgTestBtn').onclick = async () => {
       const url = urlInput.value.trim();
@@ -768,6 +776,49 @@ const App = {
       if (this.currentCharacter?.syncMode === 'cloud') this._pushToCloud();
       modal.dispatchEvent(new CustomEvent('configSaved'));
     };
+
+    document.getElementById('cfgLogoutBtn').onclick = async () => {
+      const btn = document.getElementById('cfgLogoutBtn');
+      btn.disabled = true;
+      await AuthAPI.logout();
+      btn.disabled = false;
+      this.showStatus('Abgemeldet', 'info');
+      urlInput.value = CloudSync.getWorkerUrl();
+      showStep(1);
+    };
+  },
+
+  // Zeigt im bereits-verbunden-Zustand des Cloud-Dialogs automatisch das
+  // Testergebnis + den angemeldeten Nutzer. GET /auth/me dient als
+  // kombinierter Verbindungs-/Session-Test: 200 bestaetigt Erreichbarkeit
+  // UND einen noch gueltigen Token in einem Aufruf; 401 zeigt eine
+  // abgelaufene/widerrufene Session, alles andere einen Verbindungsfehler.
+  async _refreshCloudConnectedState() {
+    const connTestEl = document.getElementById('cfgConnTestResult');
+    const roleLabels = { gm: 'Meister', admin: 'Administrator' };
+    document.getElementById('cfgConnUrl').textContent = CloudSync.getWorkerUrl();
+    connTestEl.textContent = '⏳ Teste …';
+    connTestEl.className   = 'nc-test-result';
+
+    const r = await AuthAPI.me();
+    if (r.ok) {
+      connTestEl.textContent = '✓ Verbindung OK';
+      connTestEl.className   = 'nc-test-result nc-test-ok';
+      document.getElementById('cfgConnEmail').textContent = r.email;
+      document.getElementById('cfgConnRoles').innerHTML =
+        r.roles.map(role => `<span class="role-badge">${roleLabels[role] || role}</span>`).join('');
+    } else if (r.expired) {
+      connTestEl.textContent = '✗ Sitzung abgelaufen - bitte erneut anmelden';
+      connTestEl.className   = 'nc-test-result nc-test-error';
+      CloudSync.setApiKey('');
+      document.getElementById('cfgStep1').style.display    = '';
+      document.getElementById('cfgStepConnected').style.display = 'none';
+    } else {
+      connTestEl.textContent = `✗ Fehler (${r.status || r.error || 'Timeout'})`;
+      connTestEl.className   = 'nc-test-result nc-test-error';
+      document.getElementById('cfgConnEmail').textContent = '(unbekannt, keine Verbindung)';
+      document.getElementById('cfgConnRoles').innerHTML = '';
+    }
   },
 
   showLoadCharDialog(firstLaunch = false) {

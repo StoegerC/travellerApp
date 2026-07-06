@@ -38,6 +38,15 @@ publicRouter.post('/auth/login', (req, res) => {
 
 const protectedRouter = express.Router();
 
+// GET /auth/me – wer bin ich? Dient dem Cloud-Einstellungen-Dialog als
+// kombinierter Verbindungs-/Session-Test: ein 200 bestätigt gleichzeitig
+// Erreichbarkeit UND einen noch gültigen Token, ein 401 (durch checkAuth,
+// bevor diese Route ueberhaupt erreicht wird) zeigt eine abgelaufene/
+// widerrufene Session an.
+protectedRouter.get('/auth/me', (req, res) => {
+  res.json({ email: req.user.email, roles: req.user.roles });
+});
+
 // POST /auth/logout – löscht nur die aktuelle Session (andere Geräte bleiben
 // eingeloggt), Token kommt bereits authentifiziert über checkAuth an.
 protectedRouter.post('/auth/logout', (req, res) => {

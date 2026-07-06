@@ -30,6 +30,23 @@ const AuthAPI = {
     }
   },
 
+  // Dient dem Cloud-Einstellungen-Dialog als kombinierter Verbindungs-/
+  // Session-Test fuer bereits angemeldete Nutzer (siehe App.showCloudConfig).
+  async me() {
+    if (!CloudSync.isConfigured()) return { ok: false, error: 'Nicht konfiguriert' };
+    try {
+      const res = await fetch(`${CloudSync.getWorkerUrl()}/auth/me`, {
+        headers: CloudSync._headers(),
+        signal:  AbortSignal.timeout(5000),
+      });
+      if (!res.ok) return { ok: false, status: res.status, expired: res.status === 401 };
+      const data = await res.json();
+      return { ok: true, email: data.email, roles: data.roles || [] };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
   async logout() {
     if (!CloudSync.isConfigured()) return { ok: true };
     try {
