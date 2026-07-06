@@ -22,7 +22,11 @@ const FileSync = {
         method:  'POST',
         headers: CloudSync._headers(), // kein Content-Type - Browser setzt die Multipart-Boundary selbst
         body:    form,
-        signal:  AbortSignal.timeout(30000),
+        // 100-MB-PDFs (siehe backend/routes/files.js Limit) brauchen auf
+        // langsameren Verbindungen (Tailscale Funnel, mobiles Netz) deutlich
+        // laenger als die vorherigen 30s - siehe auch das 30s-Timeout bei
+        // CampaignSync.getCampaign fuer dieselbe Klasse Problem bei grossen Payloads.
+        signal:  AbortSignal.timeout(300000),
       });
       if (!res.ok) return { ok: false, status: res.status };
       return { ok: true, data: await res.json() };

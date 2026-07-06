@@ -1175,7 +1175,7 @@ const ShipPage = {
       e.target.value = '';
       if (!file) return;
       if (file.type !== 'application/pdf') { alert('Bitte eine PDF-Datei wählen'); return; }
-      if (file.size > 10 * 1024 * 1024) { alert('Datei zu groß! Maximum 10 MB'); return; }
+      if (file.size > 100 * 1024 * 1024) { alert('Datei zu groß! Maximum 100 MB'); return; }
       const ship = this._ship(char);
       if (!ship) return;
       App.showStatus('Lade PDF hoch …', 'info');

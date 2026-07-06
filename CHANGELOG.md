@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.2.1] – 2026-07-06
+
+### Geändert
+- **PDF-Größenlimit von 10 MB auf 100 MB angehoben** — betrifft Journal-Anhänge und Schiffs-Dokumente, serverseitig (`backend/routes/files.js`) und in den client-seitigen Vorab-Prüfungen. Der Upload-Timeout in `FileSync.upload()` wurde von 30s auf 5 Minuten erhöht, da 100-MB-Dateien auf langsameren Verbindungen (Tailscale Funnel, mobiles Netz) deutlich länger brauchen.
+
+---
+
 ## [3.2.0] – 2026-07-06
 
 ### Neu

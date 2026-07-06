@@ -1652,7 +1652,7 @@ const NotesPage = {
       e.target.value = '';
       if (!file) return;
       if (file.type !== 'application/pdf') { alert('Bitte eine PDF-Datei wählen'); return; }
-      if (file.size > 10 * 1024 * 1024) { alert('Datei zu groß! Maximum 10 MB'); return; }
+      if (file.size > 100 * 1024 * 1024) { alert('Datei zu groß! Maximum 100 MB'); return; }
       const char = App.currentCharacter;
       App.showStatus('Lade PDF hoch …', 'info');
       const result = await FileSync.upload(file, { ownerType: 'character', ownerId: char.id, field: 'sessionAttachment', refId: this._detailId });

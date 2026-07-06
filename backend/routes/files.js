@@ -22,7 +22,7 @@ const upload = multer({
     destination: db.UPLOAD_DIR,
     filename: (req, file, cb) => cb(null, crypto.randomBytes(16).toString('hex')),
   }),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: (req, file, cb) => cb(null, /^image\//.test(file.mimetype) || file.mimetype === 'application/pdf'),
 });
 
