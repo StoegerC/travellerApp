@@ -191,18 +191,31 @@ const NotesPage = {
   },
 
   // ─────────────────────────── SESSION JOURNAL ─────────────────────────────
+  // Case-insensitiv dedupliziert (Map nach Kleinschreibung), erste gesehene
+  // Schreibweise wird als Anzeigetext/Filterwert verwendet - sonst zaehlen
+  // "Kampf" und "kampf" als zwei getrennte Filter-Optionen.
+  _usedEventTags(data) {
+    const map = new Map();
+    data.sessions.flatMap(s => s.tags?.events || []).forEach(e => {
+      const key = e.toLowerCase();
+      if (!map.has(key)) map.set(key, e);
+    });
+    return [...map.values()];
+  },
+
   _sessionList(data) {
     const usedPersonIds   = new Set(data.sessions.flatMap(s => s.tags?.persons   || []));
     const usedLocationIds = new Set(data.sessions.flatMap(s => s.tags?.locations || []));
     const filterPersons   = data.persons.filter(p => usedPersonIds.has(p.id));
     const filterLocations = data.locations.filter(l => usedLocationIds.has(l.id));
+    const filterEvents    = this._usedEventTags(data);
 
     let html = `<div class="notes-list-header">
       <div class="person-search-row">
         <input type="text" id="sessionSearch" class="notes-search" placeholder="Sessions durchsuchen …">
         <button id="addSessionBtn" class="btn-success">+ Session</button>
       </div>
-      ${filterPersons.length || filterLocations.length ? `
+      ${filterPersons.length || filterLocations.length || filterEvents.length ? `
       <div class="session-filter-group">
         <span class="session-filter-label">Filter</span>
         <div class="session-filter-fields">
@@ -213,6 +226,10 @@ const NotesPage = {
           ${filterLocations.length ? `<select id="filterSessionLocation">
             <option value="">Alle Orte</option>
             ${filterLocations.map(l => `<option value="${this._esc(l.id)}">${this._esc(l.name)}</option>`).join('')}
+          </select>` : ''}
+          ${filterEvents.length ? `<select id="filterSessionEvent">
+            <option value="">Alle Events</option>
+            ${filterEvents.map(e => `<option value="${this._esc(e)}">${this._esc(e)}</option>`).join('')}
           </select>` : ''}
         </div>
       </div>` : ''}
@@ -461,9 +478,9 @@ const NotesPage = {
       html += '<div class="person-card-grid" id="personList">';
       this._sortedList(data.persons, 'persons').forEach(p => {
         const sessCount = data.sessions.filter(s => s.tags?.persons?.includes(p.id)).length;
-        const loc = p.locationId ? data.locations.find(l => l.id === p.locationId) : null;
+        const personLocs = (p.locationIds || []).map(lid => data.locations.find(l => l.id === lid)).filter(Boolean);
         const meta = [
-          loc       ? `📍 ${this._esc(loc.name)}` : '',
+          personLocs.length ? `📍 ${personLocs.map(l => this._esc(l.name)).join(', ')}` : '',
           sessCount ? `${sessCount} Session${sessCount !== 1 ? 's' : ''}` : ''
         ].filter(Boolean).join(' · ');
 
@@ -473,7 +490,7 @@ const NotesPage = {
                data-name="${this._esc(p.name).toLowerCase()}"
                data-status="${p.status || ''}"
                data-relation="${p.relation || ''}"
-               data-locationid="${p.locationId || ''}">
+               data-locationids="${this._esc((p.locationIds || []).join(' '))}">
             <button class="pcard-fav person-fav-btn${p.isFavorite ? ' active' : ''}" data-personid="${p.id}" title="Favorit">
               ${p.isFavorite ? '⭐' : '☆'}
             </button>
@@ -513,12 +530,19 @@ const NotesPage = {
   _personDetail(id, data) {
     const isNew = id === 'new';
     const p = isNew
-      ? { id: 'new', name: '', role: '', race: 'Mensch', description: '', status: 'alive', relation: 'neutral', image: null }
+      ? { id: 'new', name: '', role: '', race: 'Mensch', description: '', status: 'alive', relation: 'neutral', image: null, locationIds: [] }
       : this._findEntry('persons', id, data);
     if (!p) return '<p class="notes-empty">Person nicht gefunden.</p>';
 
     window._personCurrentImage       = undefined; // Altbestand-Bridge: undefined = unveraendert; null = entfernt; string = neu gesetzt (Base64, Fallback wenn Upload fehlschlaegt)
     window._personCurrentImageFileId = undefined; // gleiches Muster fuer die hochgeladene Datei-ID (Phase 2)
+
+    // Init Orts-Verknuepfungs-Staging beim ersten Betreten des Bearbeitungsmodus
+    if (App.editMode && !this._editPersonLinks) {
+      this._editPersonLinks = { locations: [...(p.locationIds || [])] };
+    }
+    const linkedLocationIds = App.editMode ? (this._editPersonLinks?.locations || []) : (p.locationIds || []);
+    const linkedLocationObjs = linkedLocationIds.map(lid => data.locations.find(l => l.id === lid)).filter(Boolean);
 
     const linkedSessions = data.sessions.filter(s => s.tags?.persons?.includes(p.id));
 
@@ -580,14 +604,9 @@ const NotesPage = {
                   </select>
                 </div>
               </div>
-              <div class="form-group"><label>Aufenthaltsort</label>
-                <select id="personLocation">
-                  <option value="">– Kein Ort –</option>
-                  ${data.locations.map(loc => `<option value="${loc.id}" ${p.locationId === loc.id ? 'selected' : ''}>${this._esc(loc.name || '(Kein Name)')}</option>`).join('')}
-                </select>
-              </div>
             </div>
           </div>
+          ${this._tagPicker('locations', linkedLocationObjs, data.locations, 'Aufenthaltsorte', '_editPersonLinks')}
           <div class="form-group"><label>Beschreibung</label>
             <div class="loc-name-wrap">
               <textarea id="personDescription" rows="5" placeholder="Aussehen, Eigenheiten, wichtige Infos …">${this._esc(p.description)}</textarea>
@@ -621,7 +640,6 @@ const NotesPage = {
           </div>
         </div>`;
     } else {
-      const viewLoc = p.locationId ? data.locations.find(l => l.id === p.locationId) : null;
       html += `
         <div class="person-view">
           <div class="person-view-header">
@@ -631,7 +649,7 @@ const NotesPage = {
               <div class="person-view-badges">
                 <span class="status-badge status-${p.status || 'unknown'}">${this._statusLabel(p.status)}</span>
                 <span class="relation-badge rel-${p.relation || 'neutral'}">${this._relationLabel(p.relation)}</span>
-                ${viewLoc ? `<span class="link-chip location-link" data-tab="locations" data-id="${viewLoc.id}">📍 ${this._esc(viewLoc.name)}</span>` : ''}
+                ${linkedLocationObjs.map(loc => `<span class="link-chip location-link" data-tab="locations" data-id="${loc.id}">📍 ${this._esc(loc.name)}</span>`).join('')}
               </div>
               ${p.role ? `<p class="person-role"><em>${this._esc(p.role)}</em></p>` : ''}
               ${p.race && p.race !== 'Mensch' ? `<p class="person-race">${this._esc(p.race)}</p>` : ''}
@@ -839,7 +857,7 @@ const NotesPage = {
     if (!l) return '<p class="notes-empty">Ort nicht gefunden.</p>';
 
     const linkedSessions = data.sessions.filter(s => s.tags?.locations?.includes(l.id));
-    const directPersons  = data.persons.filter(p => p.locationId === l.id);
+    const directPersons  = data.persons.filter(p => (p.locationIds || []).includes(l.id));
     const sessionPersonIds = data.sessions
       .filter(s => s.tags?.locations?.includes(l.id) && s.tags?.persons?.length)
       .flatMap(s => s.tags.persons)
@@ -1054,8 +1072,8 @@ const NotesPage = {
     }
 
     filtered.forEach(q => {
-      const giver  = data.persons.find(p => p.id === q.questgiverId);
-      const detail = [giver ? giver.name : '', q.reward].filter(Boolean).join(' · ');
+      const giverNames = (q.questGiverIds || []).map(pid => data.persons.find(p => p.id === pid)).filter(Boolean).map(p => p.name).join(', ');
+      const detail = [giverNames, q.reward].filter(Boolean).join(' · ');
       html += `<tr class="notes-list-item quest-list-item" data-id="${q.id}"
                   data-qstatus="${q.status || 'active'}"
                   data-name="${this._esc((q.title||'').toLowerCase())}">
@@ -1088,11 +1106,18 @@ const NotesPage = {
   _questDetail(id, data) {
     const isNew = id === 'new';
     const q = isNew
-      ? { id: 'new', title: '', description: '', objective: '', reward: '', questgiverId: '', status: 'active' }
+      ? { id: 'new', title: '', description: '', objective: '', reward: '', questGiverIds: [], locationIds: [], status: 'active' }
       : this._findEntry('quests', id, data);
     if (!q) return '<p class="notes-empty">Quest nicht gefunden.</p>';
 
-    const giver = data.persons.find(p => p.id === q.questgiverId);
+    // Init Auftraggeber-/Orts-Verknuepfungs-Staging beim ersten Betreten des Bearbeitungsmodus
+    if (App.editMode && !this._editQuestLinks) {
+      this._editQuestLinks = { persons: [...(q.questGiverIds || [])], locations: [...(q.locationIds || [])] };
+    }
+    const giverIds    = App.editMode ? (this._editQuestLinks?.persons   || []) : (q.questGiverIds || []);
+    const questLocIds = App.editMode ? (this._editQuestLinks?.locations || []) : (q.locationIds   || []);
+    const givers   = giverIds.map(pid => data.persons.find(p => p.id === pid)).filter(Boolean);
+    const questLocs = questLocIds.map(lid => data.locations.find(l => l.id === lid)).filter(Boolean);
     const linkedSessions = data.sessions.filter(s => s.tags?.quests?.includes(q.id));
 
     let html = `<div class="notes-detail">
@@ -1107,38 +1132,16 @@ const NotesPage = {
           <div class="form-group"><label>Titel</label>
             <input type="text" id="questTitle" value="${this._esc(q.title)}" placeholder="Questname">
           </div>
-          <div class="detail-form-row">
-            <div class="form-group"><label>Status</label>
-              <select id="questStatus">
-                <option value="active"    ${q.status === 'active'    ? 'selected' : ''}>Aktiv</option>
-                <option value="backlog"   ${q.status === 'backlog'   ? 'selected' : ''}>Backlog</option>
-                <option value="completed" ${q.status === 'completed' ? 'selected' : ''}>Abgeschlossen</option>
-                <option value="failed"    ${q.status === 'failed'    ? 'selected' : ''}>Gescheitert</option>
-              </select>
-            </div>
-            <div class="form-group"><label>Auftraggeber</label>
-              <div class="person-picker">
-                <div class="person-picker-field">
-                  <input type="text"   id="questGiverSearch"
-                         class="person-picker-input"
-                         value="${giver ? this._esc(giver.name) : ''}"
-                         placeholder="Person suchen …"
-                         autocomplete="off">
-                  <button type="button" class="person-picker-clear" id="questGiverClear"
-                          style="${giver ? '' : 'display:none'}">×</button>
-                </div>
-                <input type="hidden" id="questGiverId" value="${this._esc(q.questgiverId)}">
-                <div class="person-picker-dropdown" id="questGiverDropdown">
-                  ${data.persons.map(p => `
-                    <div class="person-picker-option" data-id="${this._esc(p.id)}" data-name="${this._esc(p.name)}">
-                      <span class="pp-name">${this._esc(p.name)}</span>
-                      ${p.role ? `<span class="pp-role">${this._esc(p.role)}</span>` : ''}
-                    </div>`).join('')}
-                  ${data.persons.length === 0 ? '<div class="pp-empty">Noch keine Personen angelegt</div>' : ''}
-                </div>
-              </div>
-            </div>
+          <div class="form-group"><label>Status</label>
+            <select id="questStatus">
+              <option value="active"    ${q.status === 'active'    ? 'selected' : ''}>Aktiv</option>
+              <option value="backlog"   ${q.status === 'backlog'   ? 'selected' : ''}>Backlog</option>
+              <option value="completed" ${q.status === 'completed' ? 'selected' : ''}>Abgeschlossen</option>
+              <option value="failed"    ${q.status === 'failed'    ? 'selected' : ''}>Gescheitert</option>
+            </select>
           </div>
+          ${this._tagPicker('persons',   givers,    data.persons,   'Auftraggeber', '_editQuestLinks')}
+          ${this._tagPicker('locations', questLocs, data.locations, 'Orte',         '_editQuestLinks')}
           <div class="form-group"><label>Ziel / Aufgabe</label>
             <div class="loc-name-wrap">
               <textarea id="questObjective" rows="3" placeholder="Was muss erreicht werden?">${this._esc(q.objective)}</textarea>
@@ -1179,7 +1182,8 @@ const NotesPage = {
             <h3>${this._esc(q.title || 'Ohne Titel')}</h3>
             <span class="quest-status-badge qst-${q.status || 'active'}">${this._questStatusLabel(q.status)}</span>
           </div>
-          ${giver ? `<p class="quest-giver">Auftraggeber: <span class="link-chip person-link" data-tab="persons" data-id="${giver.id}">${this._esc(giver.name)}</span></p>` : ''}
+          ${givers.length ? `<p class="quest-giver">Auftraggeber: ${givers.map(g => `<span class="link-chip person-link" data-tab="persons" data-id="${g.id}">${this._esc(g.name)}</span>`).join(' ')}</p>` : ''}
+          ${questLocs.length ? `<p class="quest-locations">Orte: ${questLocs.map(l => `<span class="link-chip location-link" data-tab="locations" data-id="${l.id}">${this._esc(l.name)}</span>`).join(' ')}</p>` : ''}
           ${q.objective ? `<div class="detail-section"><strong>Ziel</strong><div class="md-content">${Md.render(q.objective)}</div></div>` : ''}
           ${q.reward ? `<div class="detail-section"><strong>Belohnung:</strong> ${this._esc(q.reward)}</div>` : ''}
           ${q.description ? `<div class="detail-desc md-content">${Md.render(q.description)}</div>` : ''}
@@ -1196,19 +1200,26 @@ const NotesPage = {
   },
 
   // ────────────────────────── TAG-PICKER HELPER ────────────────────────────
-  _tagPicker(type, selected, all, label) {
+  // contextKey: Name der this[...]-Eigenschaft, in der die ausgewaehlten IDs pro
+  // type gespeichert werden (this[contextKey][type] = string[]). Default
+  // '_editTags' fuer den urspruenglichen Anwendungsfall (Session-Verknuepfungen).
+  // Da pro gerenderter Seite immer nur EIN Detailformular aktiv ist, kollidiert
+  // ein type (z.B. 'locations') nie zwischen zwei gleichzeitig sichtbaren
+  // Pickern - deshalb reicht data-context neben dem bestehenden data-type,
+  // ohne die IDs/Selektoren selbst um den Context erweitern zu muessen.
+  _tagPicker(type, selected, all, label, contextKey = '_editTags') {
     const selectedIds = selected.map(x => x.id);
     const available   = all.filter(x => !selectedIds.includes(x.id));
     const nameKey     = type === 'quests' ? 'title' : 'name';
 
     return `
-      <div class="tag-picker" data-type="${type}">
+      <div class="tag-picker" data-type="${type}" data-context="${contextKey}">
         <label>${label}</label>
         <div class="tag-chips" id="chips-${type}">
           ${selected.map(x => `
-            <span class="tag-chip tp-chip" data-type="${type}" data-id="${x.id}">
+            <span class="tag-chip tp-chip" data-type="${type}" data-id="${x.id}" data-context="${contextKey}">
               ${this._esc(x[nameKey])}
-              <button class="chip-rm" data-type="${type}" data-id="${x.id}">×</button>
+              <button class="chip-rm" data-type="${type}" data-id="${x.id}" data-context="${contextKey}">×</button>
             </span>`).join('')}
           <button class="chip-add-btn" data-type="${type}">+ ${label}</button>
         </div>
@@ -1216,13 +1227,13 @@ const NotesPage = {
           <input type="text" class="tp-search" data-type="${type}" placeholder="${label} suchen …">
           <button class="tp-create-btn" data-type="${type}">✚ ${this._newItemLabel(type)}</button>
           <div class="tp-create-form" id="tpcf-${type}" style="display:none">
-            <input type="text" class="tp-create-input" data-type="${type}" placeholder="Name …">
-            <button class="tp-create-save btn-primary" data-type="${type}">Erstellen</button>
+            <input type="text" class="tp-create-input" data-type="${type}" data-context="${contextKey}" placeholder="Name …">
+            <button class="tp-create-save btn-primary" data-type="${type}" data-context="${contextKey}">Erstellen</button>
           </div>
           <div class="tp-options" id="tpo-${type}">
             ${available.map(x => `
               <label class="tp-option">
-                <input type="checkbox" data-type="${type}" data-id="${x.id}">
+                <input type="checkbox" data-type="${type}" data-id="${x.id}" data-context="${contextKey}">
                 ${this._esc(x[nameKey])}
               </label>`).join('')}
             ${available.length === 0 ? '<p class="tp-empty">Keine weiteren Einträge</p>' : ''}
@@ -1310,7 +1321,7 @@ const NotesPage = {
         description: document.getElementById('personDescription')?.value || '',
         status:      document.getElementById('personStatus')?.value || 'alive',
         relation:    document.getElementById('personRelation')?.value || 'neutral',
-        locationId:  document.getElementById('personLocation')?.value || null,
+        locationIds: this._editPersonLinks?.locations || existing?.locationIds || [],
         image:       window._personCurrentImage       !== undefined ? window._personCurrentImage       : (existing?.image ?? null),
         imageFileId: window._personCurrentImageFileId !== undefined ? window._personCurrentImageFileId : (existing?.imageFileId ?? null),
         isFavorite:  existing?.isFavorite || false,
@@ -1386,7 +1397,8 @@ const NotesPage = {
         id:           isNew ? ('q' + Date.now()) : id,
         title:        document.getElementById('questTitle')?.value?.trim() || '',
         status:       document.getElementById('questStatus')?.value || 'active',
-        questgiverId: document.getElementById('questGiverId')?.value || '',
+        questGiverIds: this._editQuestLinks?.persons   || existing?.questGiverIds || [],
+        locationIds:   this._editQuestLinks?.locations || existing?.locationIds   || [],
         objective:    document.getElementById('questObjective')?.value || '',
         reward:       document.getElementById('questReward')?.value?.trim() || '',
         description:  document.getElementById('questDescription')?.value || '',
@@ -1497,6 +1509,8 @@ const NotesPage = {
       this._detailId = null;
       this._editTags = null;
       this._editAttachments = null;
+      this._editPersonLinks = null;
+      this._editQuestLinks = null;
       App.renderCurrentPage();
     });
 
@@ -1535,6 +1549,7 @@ const NotesPage = {
         this._detailId = row.dataset.id;
         this._editTags = null;
         this._editAttachments = null;
+        this._editQuestLinks = null;
         App.renderCurrentPage();
       }
     });
@@ -1544,6 +1559,7 @@ const NotesPage = {
         this._detailId = item.dataset.id;
         this._editTags = null;
         this._editAttachments = null;
+        this._editPersonLinks = null;
         App.renderCurrentPage();
       });
     });
@@ -1561,6 +1577,8 @@ const NotesPage = {
           this._detailId  = id;
           this._editTags  = null;
           this._editAttachments = null;
+          this._editPersonLinks = null;
+          this._editQuestLinks = null;
           App.renderCurrentPage();
         }
       });
@@ -1576,6 +1594,7 @@ const NotesPage = {
     document.getElementById('addPersonBtn')?.addEventListener('click', () => {
       if (!App.editMode) App.editMode = true;
       this._detailId = 'new';
+      this._editPersonLinks = null;
       App.renderCurrentPage();
     });
     document.getElementById('addLocationBtn')?.addEventListener('click', () => {
@@ -1586,6 +1605,7 @@ const NotesPage = {
     document.getElementById('addQuestBtn')?.addEventListener('click', () => {
       if (!App.editMode) App.editMode = true;
       this._detailId = 'new';
+      this._editQuestLinks = null;
       App.renderCurrentPage();
     });
 
@@ -1701,9 +1721,6 @@ const NotesPage = {
     // Quest-Filter-Tabs
     this._attachQuestFilter();
 
-    // Auftraggeber-Picker
-    this._attachQuestGiverPicker();
-
     // In-Game-Datum im Journal
     this._attachTravDatePicker('sessionDateYear', 'sessionDateDay', 'sessionIngameDate', 'sessionDatePreview');
 
@@ -1731,11 +1748,16 @@ const NotesPage = {
     this._detailId = null;
     this._editTags = null;
     this._editAttachments = null;
+    this._editPersonLinks = null;
+    this._editQuestLinks = null;
     App.renderCurrentPage();
   },
 
   _attachTagPicker() {
-    if (!this._editTags) return;
+    // Nicht mehr auf this._editTags pruefen - Tag-Picker koennen jetzt auch
+    // von this._editPersonLinks/_editQuestLinks getrieben sein. Ob ueberhaupt
+    // einer im aktuell gerenderten Formular vorkommt, zeigt sich direkt am DOM.
+    if (!document.querySelector('.tag-picker')) return;
 
     // Öffnen/Schließen der Dropdowns
     document.querySelectorAll('.chip-add-btn').forEach(btn => {
@@ -1767,9 +1789,11 @@ const NotesPage = {
         if (!cb.checked) return;
         const type = cb.dataset.type;
         const id   = cb.dataset.id;
-        if (!this._editTags[type]) this._editTags[type] = [];
-        if (!this._editTags[type].includes(id)) {
-          this._editTags[type].push(id);
+        const ctx  = cb.dataset.context || '_editTags';
+        if (!this[ctx]) this[ctx] = {};
+        if (!this[ctx][type]) this[ctx][type] = [];
+        if (!this[ctx][type].includes(id)) {
+          this[ctx][type].push(id);
         }
         document.getElementById(`tpd-${type}`).style.display = 'none';
         // Chip in DOM einfügen ohne Full-Rerender
@@ -1784,10 +1808,11 @@ const NotesPage = {
         chip.className = 'tag-chip tp-chip';
         chip.dataset.type = type;
         chip.dataset.id   = id;
-        chip.innerHTML = `${this._esc(item[nameKey])}<button class="chip-rm" data-type="${type}" data-id="${id}">×</button>`;
+        chip.dataset.context = ctx;
+        chip.innerHTML = `${this._esc(item[nameKey])}<button class="chip-rm" data-type="${type}" data-id="${id}" data-context="${ctx}">×</button>`;
         chip.querySelector('.chip-rm').addEventListener('click', (e) => {
           e.stopPropagation();
-          this._removeTag(type, id, chip);
+          this._removeTag(type, id, chip, ctx);
         });
         if (addBtn) chipsEl.insertBefore(chip, addBtn);
         // Option aus Dropdown entfernen
@@ -1807,7 +1832,7 @@ const NotesPage = {
     });
 
     // Neuen Eintrag anlegen und als Chip hinzufügen
-    const doCreate = (type) => {
+    const doCreate = (type, ctx) => {
       const input = document.querySelector(`.tp-create-input[data-type="${type}"]`);
       const name  = input?.value?.trim();
       if (!name) return;
@@ -1825,8 +1850,9 @@ const NotesPage = {
       data[type].push(newItem);
       char.notes = data;
 
-      if (!this._editTags[type]) this._editTags[type] = [];
-      this._editTags[type].push(newItem.id);
+      if (!this[ctx]) this[ctx] = {};
+      if (!this[ctx][type]) this[ctx][type] = [];
+      this[ctx][type].push(newItem.id);
 
       // Chip in DOM einfügen
       const chipsEl = document.getElementById(`chips-${type}`);
@@ -1835,10 +1861,11 @@ const NotesPage = {
       chip.className = 'tag-chip tp-chip';
       chip.dataset.type = type;
       chip.dataset.id   = newItem.id;
-      chip.innerHTML = `${this._esc(name)}<button class="chip-rm" data-type="${type}" data-id="${newItem.id}">×</button>`;
+      chip.dataset.context = ctx;
+      chip.innerHTML = `${this._esc(name)}<button class="chip-rm" data-type="${type}" data-id="${newItem.id}" data-context="${ctx}">×</button>`;
       chip.querySelector('.chip-rm').addEventListener('click', (e) => {
         e.stopPropagation();
-        this._removeTag(type, newItem.id, chip);
+        this._removeTag(type, newItem.id, chip, ctx);
       });
       if (addBtn) chipsEl.insertBefore(chip, addBtn);
 
@@ -1851,12 +1878,12 @@ const NotesPage = {
     };
 
     document.querySelectorAll('.tp-create-save').forEach(btn => {
-      btn.addEventListener('click', () => doCreate(btn.dataset.type));
+      btn.addEventListener('click', () => doCreate(btn.dataset.type, btn.dataset.context || '_editTags'));
     });
 
     document.querySelectorAll('.tp-create-input').forEach(input => {
       input.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); doCreate(input.dataset.type); }
+        if (e.key === 'Enter') { e.preventDefault(); doCreate(input.dataset.type, input.dataset.context || '_editTags'); }
       });
     });
 
@@ -1866,15 +1893,16 @@ const NotesPage = {
         e.stopPropagation();
         const type = btn.dataset.type;
         const id   = btn.dataset.id;
+        const ctx  = btn.dataset.context || '_editTags';
         const chip = btn.closest('.tp-chip');
-        this._removeTag(type, id, chip);
+        this._removeTag(type, id, chip, ctx);
       });
     });
   },
 
-  _removeTag(type, id, chipEl) {
-    if (!this._editTags || !this._editTags[type]) return;
-    this._editTags[type] = this._editTags[type].filter(x => x !== id);
+  _removeTag(type, id, chipEl, ctx = '_editTags') {
+    if (!this[ctx] || !this[ctx][type]) return;
+    this[ctx][type] = this[ctx][type].filter(x => x !== id);
     chipEl?.remove();
     // Option zurück ins Dropdown setzen
     const data    = this._d(App.currentCharacter);
@@ -1885,21 +1913,22 @@ const NotesPage = {
     if (!optList) return;
     const opt = document.createElement('label');
     opt.className = 'tp-option';
-    opt.innerHTML = `<input type="checkbox" data-type="${type}" data-id="${id}">${this._esc(item[nameKey])}`;
+    opt.innerHTML = `<input type="checkbox" data-type="${type}" data-id="${id}" data-context="${ctx}">${this._esc(item[nameKey])}`;
     opt.querySelector('input').addEventListener('change', (e) => {
       if (!e.target.checked) return;
       e.target.closest('label').style.display = 'none';
-      if (!this._editTags[type]) this._editTags[type] = [];
-      this._editTags[type].push(id);
+      if (!this[ctx]) this[ctx] = {};
+      if (!this[ctx][type]) this[ctx][type] = [];
+      this[ctx][type].push(id);
       const chipsEl = document.getElementById(`chips-${type}`);
       const addBtn  = chipsEl?.querySelector('.chip-add-btn');
       const chip    = document.createElement('span');
       chip.className = 'tag-chip tp-chip';
-      chip.dataset.type = type; chip.dataset.id = id;
-      chip.innerHTML = `${this._esc(item[nameKey])}<button class="chip-rm" data-type="${type}" data-id="${id}">×</button>`;
+      chip.dataset.type = type; chip.dataset.id = id; chip.dataset.context = ctx;
+      chip.innerHTML = `${this._esc(item[nameKey])}<button class="chip-rm" data-type="${type}" data-id="${id}" data-context="${ctx}">×</button>`;
       chip.querySelector('.chip-rm').addEventListener('click', (ev) => {
         ev.stopPropagation();
-        this._removeTag(type, id, chip);
+        this._removeTag(type, id, chip, ctx);
       });
       if (addBtn) chipsEl.insertBefore(chip, addBtn);
     });
@@ -1959,7 +1988,7 @@ const NotesPage = {
       document.querySelectorAll('.person-list-item').forEach(item => {
         const nameMatch     = (item.dataset.name || '').includes(term);
         const relationMatch = !relation || item.dataset.relation   === relation;
-        const locationMatch = !location || item.dataset.locationid === location;
+        const locationMatch = !location || (item.dataset.locationids || '').split(' ').includes(location);
         item.style.display = (nameMatch && relationMatch && locationMatch) ? '' : 'none';
       });
     };
@@ -2193,12 +2222,14 @@ const NotesPage = {
     const search     = document.getElementById('sessionSearch');
     const personSel  = document.getElementById('filterSessionPerson');
     const locationSel = document.getElementById('filterSessionLocation');
+    const eventSel   = document.getElementById('filterSessionEvent');
     if (!search) return;
 
     const applyFilter = () => {
       const term       = search.value.toLowerCase();
       const personId   = personSel?.value   || '';
       const locationId = locationSel?.value || '';
+      const event      = (eventSel?.value || '').toLowerCase();
       const sessions   = App.currentCharacter?.notes?.sessions || [];
       document.querySelectorAll('#sessionList .notes-list-item').forEach(item => {
         const s = sessions.find(x => x.id === item.dataset.id);
@@ -2208,12 +2239,14 @@ const NotesPage = {
           (s.content || '').toLowerCase().includes(term);
         const personMatch   = !personId   || (s.tags?.persons   || []).includes(personId);
         const locationMatch = !locationId || (s.tags?.locations || []).includes(locationId);
-        item.style.display = (textMatch && personMatch && locationMatch) ? '' : 'none';
+        const eventMatch    = !event      || (s.tags?.events || []).some(e => e.toLowerCase() === event);
+        item.style.display = (textMatch && personMatch && locationMatch && eventMatch) ? '' : 'none';
       });
     };
 
     search.addEventListener('input', applyFilter);
     personSel?.addEventListener('change', applyFilter);
+    eventSel?.addEventListener('change', applyFilter);
     locationSel?.addEventListener('change', applyFilter);
   },
 
@@ -2235,46 +2268,6 @@ const NotesPage = {
     statusSel?.addEventListener('change', e => {
       this._questFilterVal = e.target.value;
       App.renderCurrentPage();
-    });
-  },
-
-  _attachQuestGiverPicker() {
-    const searchEl   = document.getElementById('questGiverSearch');
-    const idEl       = document.getElementById('questGiverId');
-    const dropdown   = document.getElementById('questGiverDropdown');
-    const clearBtn   = document.getElementById('questGiverClear');
-    if (!searchEl || !idEl || !dropdown) return;
-
-    const show = () => { dropdown.style.display = 'block'; };
-    const hide = () => { dropdown.style.display = 'none'; };
-
-    const filter = () => {
-      const q = searchEl.value.toLowerCase();
-      dropdown.querySelectorAll('.person-picker-option').forEach(opt => {
-        opt.style.display = opt.dataset.name.toLowerCase().includes(q) ? '' : 'none';
-      });
-      show();
-    };
-
-    searchEl.addEventListener('focus', () => filter());
-    searchEl.addEventListener('input', () => filter());
-    searchEl.addEventListener('blur',  () => setTimeout(hide, 200));
-
-    dropdown.querySelectorAll('.person-picker-option').forEach(opt => {
-      opt.addEventListener('mousedown', e => {
-        e.preventDefault(); // keep focus on input so blur fires after selection
-        searchEl.value    = opt.dataset.name;
-        idEl.value        = opt.dataset.id;
-        if (clearBtn) clearBtn.style.display = '';
-        hide();
-      });
-    });
-
-    clearBtn?.addEventListener('click', () => {
-      searchEl.value  = '';
-      idEl.value      = '';
-      clearBtn.style.display = 'none';
-      filter();
     });
   },
 

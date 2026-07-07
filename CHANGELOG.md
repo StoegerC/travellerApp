@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.4.0] – 2026-07-07
+
+### Neu
+- **Mehrfach-Verknüpfungen bei Personen/Quests + Event-Tag-Filter im Journal.** Personen können jetzt mehrere Aufenthaltsorte haben (`locationIds[]` statt einem einzelnen `locationId`), Quests können mehrere Auftraggeber (`questGiverIds[]`, ersetzt den bisherigen Einzel-Auftraggeber-Suchpicker) und neu auch mehrere Orte (`locationIds[]`) zugewiesen bekommen. Alle drei nutzen denselben, dafür generalisierten Tag-Picker (Chip-Liste + Such-Dropdown + Inline-„Neu anlegen"), der bisher nur für die Personen-/Orte-/Quests-Verknüpfungen einer Journal-Session verfügbar war. Zusätzlich: ein Filter-Dropdown für Event-Tags im Journal (bisher wurden die frei vergebenen Event-Tags einer Session nur in der Session selbst angezeigt, aber nirgends aggregiert durchsuchbar) — analog zu den bestehenden Personen-/Orte-Filtern der Session-Liste. Altbestand mit den vorherigen Einzel-Feldern (`locationId`, `questgiverId`) wird beim Laden automatisch in die neuen Mehrfach-Felder übernommen, ohne die alten Felder zu entfernen.
+
+---
+
 ## [3.3.0] – 2026-07-07
 
 ### Neu

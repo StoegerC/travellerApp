@@ -1990,6 +1990,7 @@ label.attachment-upload-btn {
 .person-role { font-size: 14px; color: #666; font-style: italic; margin: 0 0 4px; }
 .person-race { font-size: 13px; color: #888; margin: 0 0 8px; }
 .quest-giver { font-size: 14px; color: #444; margin: 4px 0 8px; }
+.quest-locations { font-size: 14px; color: #444; margin: 4px 0 8px; }
 
 .loc-meta {
   display: flex;
@@ -2962,95 +2963,6 @@ label.attachment-upload-btn {
   font-size: 13px;
   color: #888;
   margin: 0;
-}
-
-/* ===== PERSON PICKER (Auftraggeber-Suche) ===== */
-.person-picker {
-  position: relative;
-}
-
-.person-picker-field {
-  display: flex;
-  align-items: center;
-  border: 1.5px solid #ddd;
-  border-radius: 8px;
-  background: white;
-  overflow: hidden;
-  min-height: 44px;
-}
-
-.person-picker-input {
-  flex: 1;
-  border: none;
-  outline: none;
-  padding: 10px 12px;
-  font-size: 15px;
-  background: transparent;
-  min-width: 0;
-}
-
-.person-picker-clear {
-  flex-shrink: 0;
-  padding: 0 12px;
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: #999;
-  cursor: pointer;
-  line-height: 1;
-  min-height: 44px;
-}
-
-.person-picker-clear:hover {
-  color: #555;
-}
-
-.person-picker-dropdown {
-  display: none;
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  background: white;
-  border: 1.5px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-  z-index: 200;
-  max-height: 240px;
-  overflow-y: auto;
-}
-
-.person-picker-option {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 10px 14px;
-  cursor: pointer;
-  transition: background 0.1s;
-  min-height: 44px;
-}
-
-.person-picker-option:hover,
-.person-picker-option:active {
-  background: #f0f2ff;
-}
-
-.pp-name {
-  font-weight: 600;
-  font-size: 14px;
-  color: #333;
-}
-
-.pp-role {
-  font-size: 12px;
-  color: #888;
-}
-
-.pp-empty {
-  padding: 12px 14px;
-  font-size: 13px;
-  color: #aaa;
-  font-style: italic;
 }
 
 /* ═══════════════════════════════════════════
@@ -6615,25 +6527,6 @@ body.dark-mode .detail-section {
 body.dark-mode .detail-section strong { color: #9095b8; }
 body.dark-mode .person-role { color: #8890b0; }
 body.dark-mode .person-race { color: #6068a0; }
-
-/* ── Person Picker (Auftraggeber) ── */
-body.dark-mode .person-picker-field {
-  background: #1d2035;
-  border-color: #2c3050;
-}
-body.dark-mode .person-picker-dropdown {
-  background: #161929;
-  border-color: #2c3050;
-}
-body.dark-mode .person-picker-option {
-  color: #c8cce8;
-}
-body.dark-mode .person-picker-option:hover {
-  background: #252840;
-}
-body.dark-mode .pp-name { color: #dde0f5; }
-body.dark-mode .pp-role { color: #6068a0; }
-body.dark-mode .pp-empty { color: #4a5070; }
 
 /* ── Ort-Bearbeitungsformular ── */
 body.dark-mode .loc-suggestions {

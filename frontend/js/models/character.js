@@ -274,12 +274,24 @@ class Character {
       };
     }
 
-    // Aktuelles Format
+    // Aktuelles Format. Additive Migration pro Person/Quest: alte
+    // Einzel-Felder (locationId/questgiverId) werden in die neuen
+    // Mehrfach-Felder uebernommen, aber nicht entfernt - fuer den Fall,
+    // dass irgendwo noch Code auf das alte Feld schaut.
+    const persons = (Array.isArray(raw.persons) ? raw.persons : []).map(p => ({
+      ...p,
+      locationIds: Array.isArray(p.locationIds) ? p.locationIds : (p.locationId ? [p.locationId] : []),
+    }));
+    const quests = (Array.isArray(raw.quests) ? raw.quests : []).map(q => ({
+      ...q,
+      questGiverIds: Array.isArray(q.questGiverIds) ? q.questGiverIds : (q.questgiverId ? [q.questgiverId] : []),
+      locationIds:   Array.isArray(q.locationIds)   ? q.locationIds   : [],
+    }));
     return {
       sessions:  Array.isArray(raw.sessions)  ? raw.sessions  : [],
-      persons:   Array.isArray(raw.persons)   ? raw.persons   : [],
+      persons,
       locations: Array.isArray(raw.locations) ? raw.locations : [],
-      quests:    Array.isArray(raw.quests)    ? raw.quests    : []
+      quests,
     };
   }
 
