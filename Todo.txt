@@ -15,20 +15,16 @@ DATENHALTUNG
     CHANGELOG.md. Noch offen aus Phase 3: alle Geräte (iPhone, weitere Browser,
     GitHub-Pages-Zugriff) müssen sich einmalig neu mit E-Mail+Passwort anmelden, da der
     alte gemeinsame API-Key beim Cutover sofort ungültig wurde.
-[ ] Backup-Strategie für die neue SQLite-DB (ersetzt den alten „Cloudflare-Backup
-    nach GitHub Actions"-Punkt — z.B. nächtliches Kopieren von backend/data/traveller.db
-    + backend/uploads/ an einen zweiten Ort)
 [ ] Charakter per QR-Code oder Link teilen (Base64-JSON)
+[ ] Rollback (Admin-Seite, Snapshot wiederherstellen) sauberer gegen gleichzeitige
+    Geräte-Pushes absichern — aktuell kann ein Gerät mit noch nicht synchronisierten
+    lokalen Änderungen einen Rollback beim nächsten eigenen Speichern teilweise wieder
+    rückgängig machen (Sync-Modell ist "lokal gewinnt bei Push-Konflikt"). Admin-UI weist
+    nur mit einem Hinweistext darauf hin, löst es aber nicht strukturell.
 
 CHARAKTERVERWALTUNG
 [ ] Skill-Level -1 (nicht vorhanden) vs. 0 (Level 0) klar in der UI unterscheiden
 [ ] Regel-System-Switch (character.system wird gesetzt aber nie ausgewertet)
-
-NOTIZEN / VERKNÜPFUNGEN
-[ ] Person kann mehrere Orte haben (aktuell nur ein locationId)
-[ ] Quest: Ortsverknüpfung hinzufügen
-[ ] Quest: mehrere Auftraggeber ermöglichen
-[ ] Events in Session-Tags auswerten (werden gesammelt aber nirgendwo angezeigt)
 
 UI / UX
 [ ] Würfelwurf-Widget: 2d6 + Modifikator direkt in der App
