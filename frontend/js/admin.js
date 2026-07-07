@@ -25,6 +25,9 @@ const AdminApp = {
     document.getElementById('loginBtn').addEventListener('click', () => this.login());
     document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
     document.getElementById('createUserBtn').addEventListener('click', () => this.createUser());
+    document.getElementById('orphanedCleanupBtn').addEventListener('click', () => this.cleanupOrphanedFiles());
+    document.getElementById('snapshotTarget').addEventListener('change', () => this.loadSnapshotList());
+    document.getElementById('snapshotRestoreBtn').addEventListener('click', () => this.restoreSnapshot());
 
     if (this.url && this.token) {
       const ok = await this.tryShowMain();
@@ -83,6 +86,7 @@ const AdminApp = {
     this.renderStats(stats);
     this.loadUsers();
     this.loadOverview();
+    this.loadOrphanedFiles();
     return true;
   },
 
@@ -115,6 +119,8 @@ const AdminApp = {
     const res = await this.apiFetch('/admin/overview');
     if (!res.ok) return;
     const data = await res.json();
+    this._overviewData = data;
+    this.renderSnapshotTargets(data);
     const rows = [...data.users];
     // "Verwaist" nur anzeigen, wenn tatsaechlich etwas ohne (aktuellen) Owner
     // existiert - z.B. nach Loeschen eines Nutzers (Charaktere/Kampagnen
@@ -210,6 +216,98 @@ const AdminApp = {
     document.getElementById('newUserEmail').value = '';
     this.loadUsers();
     this.loadOverview();
+  },
+
+  // ── Verwaiste Mediendateien ─────────────────────────────────────────────
+
+  async loadOrphanedFiles() {
+    const res = await this.apiFetch('/admin/orphaned-files');
+    if (!res.ok) return;
+    const files = await res.json();
+    document.getElementById('orphanedTableBody').innerHTML = files.map(f => `
+      <tr>
+        <td>${this._esc(f.filename)}</td>
+        <td>${this._fmtBytes(f.size)}</td>
+        <td>${f.ageDays} Tage</td>
+        <td class="row-actions">
+          <button class="btn-secondary" data-restore-id="${f.id}">↩ Wiederherstellen</button>
+        </td>
+      </tr>`).join('');
+    document.getElementById('orphanedEmptyHint').classList.toggle('hidden', files.length > 0);
+    document.getElementById('orphanedCleanupBtn').textContent = `🗑 ${files.length} verwaiste Dateien löschen`;
+    document.getElementById('orphanedCleanupBtn').classList.toggle('hidden', files.length === 0);
+
+    document.querySelectorAll('[data-restore-id]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const res = await this.apiFetch(`/admin/orphaned-files/${btn.dataset.restoreId}/restore`, { method: 'POST' });
+        if (!res.ok) { alert(await res.text()); return; }
+        this.loadOrphanedFiles();
+        this.loadOverview();
+      });
+    });
+  },
+
+  async cleanupOrphanedFiles() {
+    const count = document.querySelectorAll('#orphanedTableBody tr').length;
+    if (!count) return;
+    if (!confirm(`${count} verwaiste Datei(en) endgültig löschen? Das kann nicht rückgängig gemacht werden.`)) return;
+    const res = await this.apiFetch('/admin/orphaned-files/cleanup', { method: 'POST' });
+    if (!res.ok) { alert(await res.text()); return; }
+    this.loadOrphanedFiles();
+    this.loadOverview();
+    this.tryShowMain();
+  },
+
+  // ── Snapshot-Rollback ────────────────────────────────────────────────────
+
+  renderSnapshotTargets(data) {
+    const options = [];
+    const addAll = (owner) => {
+      owner.characters.forEach(c => options.push({ type: 'character', id: c.id, label: `👤 ${c.name || 'Namenlos'}` }));
+      owner.campaigns.forEach(c  => options.push({ type: 'campaign',  id: c.id, label: `🏕 ${c.name || 'Namenlos'}` }));
+    };
+    data.users.forEach(addAll);
+    addAll(data.orphaned);
+
+    const select = document.getElementById('snapshotTarget');
+    const prev = select.value;
+    select.innerHTML = options.map(o => `<option value="${o.type}:${this._esc(o.id)}">${this._esc(o.label)}</option>`).join('');
+    if (options.some(o => `${o.type}:${o.id}` === prev)) select.value = prev;
+    this.loadSnapshotList();
+  },
+
+  async loadSnapshotList() {
+    const val = document.getElementById('snapshotTarget').value;
+    const listEl = document.getElementById('snapshotList');
+    if (!val) { listEl.innerHTML = ''; return; }
+    const [type, id] = val.split(':');
+    const res = await this.apiFetch(`/admin/backup-snapshots?type=${type}&id=${encodeURIComponent(id)}`);
+    if (!res.ok) { listEl.innerHTML = ''; return; }
+    const snapshots = await res.json();
+    listEl.innerHTML = snapshots.length
+      ? snapshots.map(s => `<option value="${s.commit}">${new Date(s.date).toLocaleString('de-AT')} — ${this._esc(s.message)}</option>`).join('')
+      : '<option value="" disabled>Keine Snapshots gefunden</option>';
+  },
+
+  async restoreSnapshot() {
+    const val = document.getElementById('snapshotTarget').value;
+    const commit = document.getElementById('snapshotList').value;
+    const errEl = document.getElementById('snapshotError');
+    if (!val || !commit) { errEl.textContent = 'Bitte Ziel und Snapshot wählen'; return; }
+    const [type, id] = val.split(':');
+    const label = document.getElementById('snapshotTarget').selectedOptions[0]?.textContent || id;
+    const dateLabel = document.getElementById('snapshotList').selectedOptions[0]?.textContent || commit;
+    if (!confirm(`„${label}" wirklich auf den Stand vom ${dateLabel} zurücksetzen? Der aktuelle Stand geht dabei verloren (außer er steckt selbst schon in einem älteren Snapshot).`)) return;
+
+    const res = await this.apiFetch('/admin/backup-snapshots/restore', {
+      method: 'POST', body: JSON.stringify({ type, id, commit }),
+    });
+    if (!res.ok) { errEl.textContent = await res.text(); return; }
+    errEl.textContent = '';
+    document.getElementById('snapshotHint').textContent =
+      '✓ Wiederhergestellt. Alle Geräte sollten die App einmal neu laden, bevor dort weitergespeichert wird - sonst können noch nicht synchronisierte lokale Änderungen den Rollback teilweise rückgängig machen.';
+    this.loadOverview();
+    this.loadOrphanedFiles();
   },
 
   _esc(s) {

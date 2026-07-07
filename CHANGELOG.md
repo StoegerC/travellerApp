@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.3.0] – 2026-07-07
+
+### Neu
+- **Server-Daten-Backup: Git-Versionierung + Medien-Wiederherstellung.** Bisher gab es keine echte Versionierung der Server-Inhalte — jetzt ein täglicher Snapshot aller Charaktere/Kampagnen als JSON in ein separates, privates GitHub-Repo (`backend/backup-to-git.js`, neuer LaunchAgent `com.traveller.backup.plist.example`), committed und gepusht per SSH-Deploy-Key. Medien-Dateien (Bilder, PDFs) werden beim Ersetzen/Entfernen nicht mehr sofort von Platte/DB gelöscht (`FileSync.remove()`-Aufrufe aus `metadata.js`, `equipment.js`, `ship.js`, `notes.js` entfernt) — stattdessen listet die Admin-Oberfläche verwaiste (nicht mehr referenzierte, mindestens 30 Tage alte) Dateien und erlaubt manuelles Löschen oder automatisches Wiederherstellen an die ursprüngliche Stelle im Charakter-JSON (`backend/orphan-scan.js`, neue Endpunkte in `backend/routes/admin.js`). Zusätzlich: gezielter Rollback eines einzelnen Charakters oder einer einzelnen Kampagne auf einen älteren Git-Snapshot direkt aus der Admin-Oberfläche.
+
+---
+
 ## [3.2.2] – 2026-07-06
 
 ### Behoben

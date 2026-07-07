@@ -708,11 +708,12 @@ const EquipmentPage = {
         if (!file) return;
         const result = await FileSync.upload(file, { ownerType: 'character', ownerId: window.currentCharacter.id, field: 'equipmentImage', refId: item.id });
         if (!result.ok) { App.showStatus('Bild-Upload fehlgeschlagen', 'error'); return; }
-        const oldFileId = traits.imageFileId;
+        // Kein FileSync.remove() mehr fuer das alte Bild - siehe Plan
+        // "Server-Daten-Backup": still ersetzen, Aufraeumen nur noch ueber
+        // die Admin-Seite (Verlauf-Rueckwaerts-Kompatibilitaet).
         traits.image = null;
         traits.imageFileId = result.data.id;
         document.getElementById('traitsImgPreview').innerHTML = `<img src="${FileSync.getUrl(traits.imageFileId)}">`;
-        if (oldFileId) FileSync.remove(oldFileId);
       });
 
       document.getElementById('traitsSaveBtn').addEventListener('click', () => {
