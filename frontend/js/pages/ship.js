@@ -1171,8 +1171,9 @@ const ShipPage = {
       const ship = this._ship(char);
       if (!ship || !ship.images?.length) return;
       if (!confirm('Dieses Bild entfernen?')) return;
-      const [removed] = ship.images.splice(ship.imageIndex, 1);
-      if (removed && !removed.startsWith('data:')) FileSync.remove(removed);
+      // Kein FileSync.remove() mehr - siehe Plan "Server-Daten-Backup":
+      // still ersetzen, Aufraeumen nur noch ueber die Admin-Seite.
+      ship.images.splice(ship.imageIndex, 1);
       ship.imageIndex = Math.min(ship.imageIndex, Math.max(0, ship.images.length - 1));
       this._saveAndSync(char);
       App.renderCurrentPage();
@@ -1209,9 +1210,9 @@ const ShipPage = {
         const ship = this._ship(char);
         if (!ship) return;
         const id = btn.dataset.id;
-        const removed = (ship.attachments || []).find(a => a.id === id);
+        // Kein FileSync.remove() mehr - siehe Plan "Server-Daten-Backup":
+        // still entfernen, Aufraeumen nur noch ueber die Admin-Seite.
         ship.attachments = (ship.attachments || []).filter(a => a.id !== id);
-        if (removed) FileSync.remove(removed.id);
         this._saveAndSync(char);
         App.renderCurrentPage();
       });

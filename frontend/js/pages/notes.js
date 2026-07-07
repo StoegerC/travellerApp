@@ -1289,11 +1289,10 @@ const NotesPage = {
         if (idx >= 0) data.sessions[idx] = entry;
         else data.sessions.push(entry);
       }
-      // Server-Datei loeschen fuer Anhaenge, die beim Bearbeiten entfernt wurden
-      // (Chip-"×"-Klick nimmt sie nur aus _editAttachments, siehe attachListeners).
-      (existing?.attachments || [])
-        .filter(old => !entry.attachments.some(a => a.id === old.id))
-        .forEach(old => FileSync.remove(old.id));
+      // Kein FileSync.remove() mehr fuer beim Bearbeiten entfernte Anhaenge
+      // (Chip-"×"-Klick nimmt sie nur aus _editAttachments, siehe
+      // attachListeners) - siehe Plan "Server-Daten-Backup": still entfernen,
+      // Aufraeumen nur noch ueber die Admin-Seite.
       // _editTags/_editAttachments intentionally NOT cleared here: autosave calls
       // save() without re-rendering, so clearing wuerde den Picker-/Anhang-Zustand
       // korrumpieren und Aenderungen beim naechsten manuellen Speichern verlieren.
@@ -1337,9 +1336,9 @@ const NotesPage = {
         if (idx >= 0) data.persons[idx] = entry;
         else data.persons.push(entry); // fremder Eintrag, erstmalig uebernommen (siehe sessions-Kommentar oben)
       }
-      if (existing?.imageFileId && existing.imageFileId !== entry.imageFileId) {
-        FileSync.remove(existing.imageFileId);
-      }
+      // Kein FileSync.remove() mehr fuer das alte Personenbild - siehe Plan
+      // "Server-Daten-Backup": still ersetzen, Aufraeumen nur noch ueber die
+      // Admin-Seite.
 
     } else if (this._activeTab === 'locations') {
       const existing = isNew ? null : this._findEntry('locations', id, data);
@@ -1609,7 +1608,10 @@ const NotesPage = {
           canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
           canvas.toBlob(async blob => {
             const char   = App.currentCharacter;
-            const result = await FileSync.upload(blob, { ownerType: 'character', ownerId: char.id, field: 'personImage' });
+            // refId ermoeglicht das automatische Wiederherstellen ueber die
+            // Admin-Seite (siehe backend/orphan-scan.js), analog zu
+            // sessionAttachment weiter unten.
+            const result = await FileSync.upload(blob, { ownerType: 'character', ownerId: char.id, field: 'personImage', refId: this._detailId });
             if (!result.ok) { App.showStatus('Bild-Upload fehlgeschlagen', 'error'); return; }
             window._personCurrentImage       = null;
             window._personCurrentImageFileId = result.data.id;

@@ -322,6 +322,7 @@ const stmtInsertFile = db.prepare(`
 const stmtGetFile          = db.prepare('SELECT * FROM files WHERE id = ?');
 const stmtDeleteFile       = db.prepare('DELETE FROM files WHERE id = ?');
 const stmtListFilesByOwner = db.prepare('SELECT * FROM files WHERE owner_type = ? AND owner_id = ?');
+const stmtListAllFiles     = db.prepare('SELECT * FROM files');
 
 function insertFile({ id, ownerType, ownerId, field, refId, filename, mimetype, size, uploader }) {
   const uploadedAt = new Date().toISOString();
@@ -349,6 +350,16 @@ function deleteFile(id) {
 
 function listFilesByOwner(ownerType, ownerId) {
   return stmtListFilesByOwner.all(ownerType, ownerId).map(row => ({ id: row.id }));
+}
+
+// Fuer den Admin-Scan nach verwaisten Mediendateien (siehe orphan-scan.js) -
+// im Unterschied zu listFilesByOwner() ohne Owner-Filter, mit allen Feldern.
+function listAllFiles() {
+  return stmtListAllFiles.all().map(row => ({
+    id: row.id, ownerType: row.owner_type, ownerId: row.owner_id, field: row.field,
+    refId: row.ref_id, filename: row.filename, mimetype: row.mimetype, size: row.size,
+    uploadedAt: row.uploaded_at,
+  }));
 }
 
 const stmtFileStats = db.prepare('SELECT COUNT(*) AS count, COALESCE(SUM(size), 0) AS totalSize FROM files');
@@ -515,7 +526,7 @@ module.exports = {
   getCampaign, listCampaigns, campaignExists, insertCampaign, updateCampaign, deleteCampaign,
   updateCampaignNotes, updateCampaignShips,
   upsertCampaign,
-  insertFile, getFile, deleteFile, listFilesByOwner, getFileStats, getAdminOverview,
+  insertFile, getFile, deleteFile, listFilesByOwner, listAllFiles, getFileStats, getAdminOverview,
   insertUser, getUserByEmail, getUserById, listUsers, setPasswordHash, setUserRoles, deleteUser,
   createSession, getSessionUser, deleteSession, invalidateUserSessions,
 };

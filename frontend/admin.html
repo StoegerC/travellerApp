@@ -131,6 +131,37 @@
       </table>
     </div>
 
+    <div class="panel" style="max-width: none;">
+      <h2>Verwaiste Mediendateien</h2>
+      <p class="subtitle">Von keinem Charakter/keiner Kampagne mehr referenziert, mindestens 30 Tage alt. Werden NICHT automatisch gelöscht.</p>
+      <table>
+        <thead><tr><th>Dateiname</th><th>Größe</th><th>Alter</th><th></th></tr></thead>
+        <tbody id="orphanedTableBody"></tbody>
+      </table>
+      <p class="subtitle hidden" id="orphanedEmptyHint">Keine verwaisten Dateien gefunden.</p>
+      <button class="btn-danger" id="orphanedCleanupBtn">🗑 Verwaiste Dateien löschen</button>
+    </div>
+
+    <div class="panel">
+      <h2>Snapshot wiederherstellen</h2>
+      <p class="subtitle">Setzt einen einzelnen Charakter oder eine einzelne Kampagne auf einen älteren Stand aus dem täglichen Git-Backup zurück. Andere Charaktere/Kampagnen bleiben unangetastet.</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Charakter oder Kampagne</label>
+          <select id="snapshotTarget"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Snapshot</label>
+          <select id="snapshotList"></select>
+        </div>
+      </div>
+      <button class="btn-danger" id="snapshotRestoreBtn">Wiederherstellen</button>
+      <p class="error" id="snapshotError"></p>
+      <p class="subtitle" id="snapshotHint"></p>
+    </div>
+
     <button class="btn-secondary" id="logoutBtn">Abmelden</button>
   </div>
 

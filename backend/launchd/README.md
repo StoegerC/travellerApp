@@ -25,6 +25,26 @@ tail -f backend/data/backend.log         # laufende Logs
 tail -f backend/data/backend.error.log   # Fehler-Logs
 ```
 
+## Zweiter Job: tägliches Git-Backup
+
+`com.traveller.backup.plist.example` nach `~/Library/LaunchAgents/com.traveller.backup.plist`
+kopieren (gleiche Platzhalter-Ersetzung wie oben), dann:
+
+```bash
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.traveller.backup.plist
+```
+
+Läuft täglich um 03:00 Uhr (`StartCalendarInterval`), dumpt alle Charaktere/Kampagnen als JSON
+in das separate private Backup-Repo (`backend/backup-to-git.js`, siehe dortiger Kommentar) und
+pusht. Voraussetzung: SSH-Deploy-Key unter `~/.ssh/traveller_backup_deploy` liegt bereits vor
+und ist im Backup-Repo unter Settings → Deploy keys mit Schreibrecht hinterlegt.
+
+```bash
+launchctl bootout gui/$(id -u)/com.traveller.backup   # stoppen + Autostart deaktivieren
+tail -f backend/data/backup.log
+tail -f backend/data/backup.error.log
+```
+
 ## Hinweis
 
 Das eigentliche Plist liegt bewusst außerhalb des Repos (`~/Library/LaunchAgents/`) — das ist

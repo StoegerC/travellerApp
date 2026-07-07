@@ -210,8 +210,11 @@ const MetadataPage = {
       const meta = App.currentCharacter.metadata;
       if (!meta.portraits.length) return;
       if (!confirm('Dieses Portrait entfernen?')) return;
-      const [removed] = meta.portraits.splice(meta.portraitIndex, 1);
-      if (removed && !removed.startsWith('data:')) FileSync.remove(removed);
+      // Kein FileSync.remove() mehr hier - die Datei bleibt liegen (siehe
+      // Plan "Server-Daten-Backup": still ersetzen statt sofort loeschen,
+      // damit eine aeltere Charakter-Version aus dem Verlauf noch darauf
+      // verweisen kann). Aufraeumen laeuft nur noch ueber die Admin-Seite.
+      meta.portraits.splice(meta.portraitIndex, 1);
       meta.portraitIndex = Math.min(meta.portraitIndex, Math.max(0, meta.portraits.length - 1));
       App._doSave();
       App.renderCurrentPage();
