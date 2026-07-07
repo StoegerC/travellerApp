@@ -14,6 +14,7 @@
  */
 const express = require('express');
 const db = require('../db');
+const { ownsCharacter, isCampaignMember } = require('../authz');
 
 const router = express.Router();
 
@@ -22,16 +23,6 @@ function isValidCampaignId(id) {
 }
 
 function isGm(user) { return user.roles.includes('gm'); }
-
-function ownsCharacter(userId, charId) {
-  const char = db.getCharacter(charId);
-  return !!char && char.ownerId === userId;
-}
-
-function isCampaignMember(campaign, userId) {
-  if (campaign.ownerId === userId) return true;
-  return (campaign.members || []).some(m => ownsCharacter(userId, m.charId));
-}
 
 // GET /campaigns – Liste bleibt bewusst offen (nur id/name/memberCount, keine
 // Inhalte) - noetig damit man einer Kampagne per ID/Name beitreten kann.
@@ -44,7 +35,7 @@ router.get('/campaign/:id', (req, res) => {
   if (!isValidCampaignId(req.params.id)) return res.status(400).send('Invalid campaign ID');
   const campaign = db.getCampaign(req.params.id);
   if (!campaign) return res.status(404).send('Not Found');
-  if (!isCampaignMember(campaign, req.user.id) && !isGm(req.user)) return res.status(403).send('Forbidden');
+  if (!isCampaignMember(db, campaign, req.user.id) && !isGm(req.user)) return res.status(403).send('Forbidden');
   res.json(campaign);
 });
 
@@ -58,7 +49,7 @@ router.post('/campaign/:id', (req, res) => {
 
   const { name, charId } = req.body || {};
   if (!charId) return res.status(400).send('Missing charId');
-  if (!ownsCharacter(req.user.id, charId)) return res.status(403).send('Forbidden');
+  if (!ownsCharacter(db, req.user.id, charId)) return res.status(403).send('Forbidden');
 
   const campaign = {
     id,
@@ -77,28 +68,38 @@ router.post('/campaign/:id', (req, res) => {
 router.get('/campaign/:id/ships', (req, res) => {
   const campaign = db.getCampaign(req.params.id);
   if (!campaign) return res.status(404).send('Not Found');
-  if (!isCampaignMember(campaign, req.user.id) && !isGm(req.user)) return res.status(403).send('Forbidden');
+  if (!isCampaignMember(db, campaign, req.user.id) && !isGm(req.user)) return res.status(403).send('Forbidden');
   res.json(campaign.ships || []);
 });
 
 // PUT /campaign/:id/ships – atomarer Merge statt last-write-wins, siehe
 // db.updateCampaignShips (Bilder werden dort weiterhin defensiv gestrippt).
+// Zwei getrennte Pruefungen: ownsCharacter (der angegebene charId gehoert
+// wirklich dem Aufrufer - wichtig fuer die crewRoles-Zuordnung in db.js) UND
+// isCampaignMember (der Aufrufer darf ueberhaupt in DIESE Kampagne schreiben -
+// fehlte bisher komplett, siehe CHANGELOG "Kampagnen-Autorisierungsluecke").
 router.put('/campaign/:id/ships', (req, res) => {
   const { charId, ships } = req.body || {};
   if (!charId || !Array.isArray(ships)) return res.status(400).send('Invalid JSON');
-  if (!ownsCharacter(req.user.id, charId)) return res.status(403).send('Forbidden');
+  if (!ownsCharacter(db, req.user.id, charId)) return res.status(403).send('Forbidden');
+  const existing = db.getCampaign(req.params.id);
+  if (!existing) return res.status(404).send('Not Found');
+  if (!isCampaignMember(db, existing, req.user.id)) return res.status(403).send('Forbidden');
   const campaign = db.updateCampaignShips(req.params.id, charId, ships);
-  if (!campaign) return res.status(404).send('Not Found');
   res.json(campaign.ships);
 });
 
 // PUT /campaign/:id/notes – atomarer Merge statt last-write-wins, siehe
-// db.updateCampaignNotes.
+// db.updateCampaignNotes. Membership-Pruefung analog zu /ships oben - vorher
+// konnte JEDER authentifizierte Nutzer in JEDE Kampagne schreiben, nicht nur
+// Mitglieder (siehe CHANGELOG "Kampagnen-Autorisierungsluecke").
 router.put('/campaign/:id/notes', (req, res) => {
   const { entries } = req.body || {};
   if (!entries || typeof entries !== 'object') return res.status(400).send('Invalid JSON');
+  const existing = db.getCampaign(req.params.id);
+  if (!existing) return res.status(404).send('Not Found');
+  if (!isCampaignMember(db, existing, req.user.id)) return res.status(403).send('Forbidden');
   const campaign = db.updateCampaignNotes(req.params.id, entries);
-  if (!campaign) return res.status(404).send('Not Found');
   res.json(campaign.notes);
 });
 
@@ -106,7 +107,7 @@ router.put('/campaign/:id/notes', (req, res) => {
 router.put('/campaign/:id/join', (req, res) => {
   const { charId } = req.body || {};
   if (!charId) return res.status(400).send('Missing charId');
-  if (!ownsCharacter(req.user.id, charId)) return res.status(403).send('Forbidden');
+  if (!ownsCharacter(db, req.user.id, charId)) return res.status(403).send('Forbidden');
   const campaign = db.updateCampaign(req.params.id, c => {
     if (!c.members.find(m => m.charId === charId)) {
       c.members.push({ charId, joinedAt: new Date().toISOString() });
@@ -120,7 +121,7 @@ router.put('/campaign/:id/join', (req, res) => {
 router.put('/campaign/:id/leave', (req, res) => {
   const { charId } = req.body || {};
   if (!charId) return res.status(400).send('Missing charId');
-  if (!ownsCharacter(req.user.id, charId)) return res.status(403).send('Forbidden');
+  if (!ownsCharacter(db, req.user.id, charId)) return res.status(403).send('Forbidden');
   const campaign = db.updateCampaign(req.params.id, c => {
     c.members = c.members.filter(m => m.charId !== charId);
   });

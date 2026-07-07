@@ -131,7 +131,7 @@ const AttributesPage = {
         if (App.editMode) {
           html += `
             <div class="skill-item">
-              <label>${skill.name}</label>
+              <label>${this._esc(skill.name)}</label>
               <input type="number" class="skill-level skill-level-input" data-index="${globalIndex}" value="${level}" min="-3" max="9">
             </div>
           `;
@@ -139,7 +139,7 @@ const AttributesPage = {
           const learned = level >= 0;
           html += `
             <div class="skill-item ${learned ? 'skill-item--learned' : 'skill-item--unlearned'}">
-              <span class="skill-label">${skill.name}</span>
+              <span class="skill-label">${this._esc(skill.name)}</span>
               ${learned ? `<span class="skill-badge">${level}</span>` : ''}
             </div>
           `;

@@ -172,7 +172,7 @@ const AdminApp = {
     document.getElementById('userTableBody').innerHTML = users.map(u => `
       <tr>
         <td>${this._esc(u.email)}</td>
-        <td>${u.roles.map(r => `<span class="role-tag">${r}</span>`).join('') || '–'}</td>
+        <td>${u.roles.map(r => `<span class="role-tag">${this._esc(r)}</span>`).join('') || '–'}</td>
         <td>${u.hasPassword ? '✓ gesetzt' : '– noch nicht gesetzt'}</td>
         <td class="row-actions">
           <button class="btn-secondary" data-action="toggle-gm" data-id="${u.id}" data-roles='${JSON.stringify(u.roles)}'>${u.roles.includes('gm') ? 'Meister entziehen' : '+ Meister'}</button>

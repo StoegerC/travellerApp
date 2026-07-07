@@ -16,6 +16,16 @@ const crypto  = require('crypto');
 const path    = require('path');
 const fs      = require('fs');
 const db      = require('../db');
+const { ownsCharacter, isCampaignMember } = require('../authz');
+
+// Prueft, ob req.user tatsaechlich Zugriff auf den behaupteten Owner
+// (Charakter oder Kampagne) hat - fehlte bisher komplett, der Client konnte
+// ownerId frei waehlen (siehe CHANGELOG "Kampagnen-Autorisierungsluecke").
+function userCanAccessOwner(user, ownerType, ownerId) {
+  if (ownerType === 'character') return ownsCharacter(db, user.id, ownerId);
+  const campaign = db.getCampaign(ownerId);
+  return isCampaignMember(db, campaign, user.id);
+}
 
 const upload = multer({
   storage: multer.diskStorage({
@@ -79,6 +89,10 @@ protectedRouter.post('/files', (req, res) => {
     const { ownerType, ownerId, field, refId } = req.body || {};
     if (!ownerType || !ownerId) return res.status(400).send('Missing ownerType/ownerId');
     if (!['character', 'campaign'].includes(ownerType)) return res.status(400).send('Invalid ownerType');
+    if (!userCanAccessOwner(req.user, ownerType, ownerId)) {
+      fs.unlink(req.file.path, () => {});
+      return res.status(403).send('Forbidden');
+    }
     const record = db.insertFile({
       id:       req.file.filename,
       ownerType, ownerId, field, refId,
@@ -94,6 +108,9 @@ protectedRouter.post('/files', (req, res) => {
 protectedRouter.delete('/files/:id', (req, res) => {
   const file = db.getFile(req.params.id);
   if (!file) return res.status(404).send('Not Found');
+  if (!userCanAccessOwner(req.user, file.ownerType, file.ownerId)) {
+    return res.status(403).send('Forbidden');
+  }
   fs.unlink(path.join(db.UPLOAD_DIR, file.id), () => {});
   db.deleteFile(req.params.id);
   res.status(200).send('OK');

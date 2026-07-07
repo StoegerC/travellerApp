@@ -9,6 +9,15 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.4.1] – 2026-07-07
+
+### Sicherheit
+- **Kampagnen-Autorisierungslücke behoben** — `PUT /campaign/:id/notes` und `PUT /campaign/:id/ships` prüften bisher nur, ob der jeweilige Charakter dem Aufrufer gehört, nicht aber, ob dieser überhaupt Mitglied der Ziel-Kampagne ist. Dadurch konnte jeder authentifizierte Nutzer beliebige Inhalte (NPCs, Orte, Schiffe) in **jede** Kampagne auf dem Server schreiben, solange er deren ID kannte — mit zwei echten Test-Accounts nachgestellt und bestätigt. Neue gemeinsame Helfer `ownsCharacter`/`isCampaignMember` (`backend/authz.js`, vorher lokal in `routes/campaigns.js` dupliziert) schließen die Lücke.
+- **`POST /files` und `DELETE /files/:id` vertrauten der clientseitig angegebenen `ownerId` blind** — ein Nutzer konnte eine Datei behaupten lassen, sie gehöre zu einem fremden Charakter/einer fremden Kampagne (POST), bzw. jede Datei per bekannter ID löschen, ohne Zugriffsrecht auf deren Owner zu haben (DELETE). Beide Endpunkte prüfen jetzt über dieselben `authz.js`-Helfer, dass der Aufrufer den behaupteten/gespeicherten Owner tatsächlich besitzt bzw. Mitglied davon ist.
+- **Gespeichertes XSS über benutzerdefinierte Skill-Namen behoben** (`frontend/js/pages/attributes.js`) — `skill.name` wurde in Bearbeitungs- und Leseansicht ungeescaped gerendert; ein per `prompt()` eingegebener Skill-Name mit HTML/JS wurde bei jedem Öffnen des Attribute-Tabs ausgeführt (auch nach Sync auf andere Geräte/Kampagnen-Mitglieder). Zusätzlich `App._esc()` (fehlte `"`-Escaping, anders als alle Seiten-`_esc()`) und eine unescapte Rollen-Anzeige in `admin.js` gehärtet.
+
+---
+
 ## [3.4.0] – 2026-07-07
 
 ### Neu
