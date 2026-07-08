@@ -1,0 +1,41 @@
+# Templated systemd-Unit für die Prod/Test-Architektur auf dem Raspberry Pi.
+# Ein Instanzname (prod/test) wählt Arbeitsverzeichnis UND Env-Datei — dadurch
+# eine einzige Unit-Definition statt zwei duplizierten. Ersetzt die frühere
+# Ein-Instanz-Vorlage traveller-backend.service.
+#
+# Installation:
+#   sudo cp backend/systemd/traveller@.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now traveller@prod
+#   sudo systemctl enable --now traveller@test
+#
+# Erwartet zwei getrennte Checkouts und zwei Env-Dateien (siehe backend/deploy/README.md):
+#   /srv/traveller-prod/  + /etc/traveller/prod.env
+#   /srv/traveller-test/  + /etc/traveller/test.env
+#
+# Daten liegen bewusst AUSSERHALB des Checkouts (DB_PATH/UPLOAD_DIR in der
+# Env-Datei), damit git pull / Redeploy sie nie berührt und Prod/Test physisch
+# nichts teilen.
+
+[Unit]
+Description=Traveller Charsheet Backend (%i)
+After=network.target
+
+[Service]
+Type=simple
+User=traveller
+WorkingDirectory=/srv/traveller-%i/backend
+ExecStart=/usr/bin/node server.js
+EnvironmentFile=/etc/traveller/%i.env
+Restart=on-failure
+RestartSec=5
+
+# Etwas Härtung — der Dienst braucht nur sein eigenes Datenverzeichnis schreibbar.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/traveller/%i
+
+[Install]
+WantedBy=multi-user.target

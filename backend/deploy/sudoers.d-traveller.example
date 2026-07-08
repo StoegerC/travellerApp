@@ -1,0 +1,20 @@
+# Least-Privilege-Rechte für den Dienst-User "traveller", damit die Deploy-/
+# Auto-Update-Skripte gezielt Dienste neu starten dürfen — ohne dem User
+# allgemeine sudo-Rechte zu geben.
+#
+# Installation:
+#   sudo cp backend/deploy/sudoers.d-traveller.example /etc/sudoers.d/traveller
+#   sudo chmod 440 /etc/sudoers.d/traveller
+#   sudo visudo -c   # Syntax prüfen
+#
+# Pfad zu systemctl auf Raspberry Pi OS / Debian: /usr/bin/systemctl
+
+# Test-Auto-Update (auto-update.sh)
+traveller ALL=(root) NOPASSWD: /usr/bin/systemctl restart traveller@test.service
+
+# Manuelles Prod-Deploy (deploy-prod.sh)
+traveller ALL=(root) NOPASSWD: /usr/bin/systemctl restart traveller@prod.service
+
+# Prod→Test-Datenkopie (copy-prod-to-test.sh)
+traveller ALL=(root) NOPASSWD: /usr/bin/systemctl stop traveller@test.service
+traveller ALL=(root) NOPASSWD: /usr/bin/systemctl start traveller@test.service

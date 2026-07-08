@@ -1,0 +1,17 @@
+# Poll-Timer für das Test-Auto-Update. Prüft alle 5 Minuten auf neue Commits
+# (siehe auto-update.sh) und startet Test bei Bedarf neu. NUR für "test"
+# aktivieren:
+#   sudo systemctl enable --now traveller-autoupdate@test.timer
+#
+# Für "prod" NICHT aktivieren — das Skript würde sich ohnehin verweigern.
+
+[Unit]
+Description=Traveller Auto-Update Timer (%i)
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Unit=traveller-autoupdate@%i.service
+
+[Install]
+WantedBy=timers.target

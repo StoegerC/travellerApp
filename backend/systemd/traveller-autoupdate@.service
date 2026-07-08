@@ -1,0 +1,20 @@
+# Auto-Update-Job für EINE Instanz. In der Praxis nur für "test" aktiviert —
+# das Skript verweigert sich für "prod" (Prod wird bewusst manuell per
+# backend/deploy/deploy-prod.sh aktualisiert, siehe README).
+#
+# Läuft zeitgesteuert über traveller-autoupdate@.timer.
+#
+# Installation (nur Test!):
+#   sudo cp backend/systemd/traveller-autoupdate@.{service,timer} /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now traveller-autoupdate@test.timer
+
+[Unit]
+Description=Traveller Auto-Update (%i)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=traveller
+ExecStart=/srv/traveller-%i/backend/deploy/auto-update.sh %i
