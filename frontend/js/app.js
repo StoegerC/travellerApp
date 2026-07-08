@@ -729,10 +729,12 @@ const App = {
     const loginEl   = document.getElementById('cfgLoginResult');
     const urlInput  = document.getElementById('cfgWorkerUrl');
 
+    const stepSetPw = document.getElementById('cfgStepSetPw');
     const showStep = n => {
-      step1.style.display    = n === 1 ? '' : 'none';
-      step2.style.display    = n === 2 ? '' : 'none';
-      stepConn.style.display = n === 'connected' ? '' : 'none';
+      step1.style.display     = n === 1 ? '' : 'none';
+      step2.style.display     = n === 2 ? '' : 'none';
+      stepSetPw.style.display = n === 'setpw' ? '' : 'none';
+      stepConn.style.display  = n === 'connected' ? '' : 'none';
     };
     urlInput.value       = CloudSync.getWorkerUrl();
     testEl.textContent   = '';
@@ -785,10 +787,70 @@ const App = {
         loginEl.className   = 'nc-test-result nc-test-error';
         return;
       }
+      // Erst-Login mit Setup-Token: der Server laesst diese Session an keine
+      // andere Route, bis ein eigenes Passwort gesetzt ist (requirePasswordSet).
+      if (r.mustChangePassword) {
+        document.getElementById('cfgSetPw').value  = '';
+        document.getElementById('cfgSetPw2').value = '';
+        document.getElementById('cfgSetPwResult').textContent = '';
+        this._pendingSetupToken = password;
+        showStep('setpw');
+        return;
+      }
       modal.classList.remove('visible');
       this.showStatus('Angemeldet ✓', 'success');
       if (this.currentCharacter?.syncMode === 'cloud') this._pushToCloud();
       modal.dispatchEvent(new CustomEvent('configSaved'));
+    };
+
+    const finishConnected = () => {
+      modal.classList.remove('visible');
+      this.showStatus('Angemeldet ✓', 'success');
+      if (this.currentCharacter?.syncMode === 'cloud') this._pushToCloud();
+      modal.dispatchEvent(new CustomEvent('configSaved'));
+    };
+
+    document.getElementById('cfgSetPwBtn').onclick = async () => {
+      const resultEl = document.getElementById('cfgSetPwResult');
+      const pw  = document.getElementById('cfgSetPw').value;
+      const pw2 = document.getElementById('cfgSetPw2').value;
+      if (pw.length < 8)  { resultEl.textContent = '⚠ Mindestens 8 Zeichen'; resultEl.className = 'nc-test-result nc-test-error'; return; }
+      if (pw !== pw2)     { resultEl.textContent = '⚠ Passwörter stimmen nicht überein'; resultEl.className = 'nc-test-result nc-test-error'; return; }
+      const btn = document.getElementById('cfgSetPwBtn');
+      btn.disabled = true;
+      resultEl.textContent = '⏳ Setze Passwort …';
+      resultEl.className   = 'nc-test-result';
+      const r = await AuthAPI.changePassword(this._pendingSetupToken || '', pw);
+      btn.disabled = false;
+      if (!r.ok) {
+        resultEl.textContent = `✗ ${r.error || 'Fehlgeschlagen'}`;
+        resultEl.className   = 'nc-test-result nc-test-error';
+        return;
+      }
+      this._pendingSetupToken = null;
+      finishConnected();
+    };
+
+    document.getElementById('cfgChangePwBtn').onclick = async () => {
+      const resultEl = document.getElementById('cfgPwResult');
+      const cur = document.getElementById('cfgCurrentPw').value;
+      const nw  = document.getElementById('cfgNewPw').value;
+      if (nw.length < 8) { resultEl.textContent = '⚠ Neues Passwort min. 8 Zeichen'; resultEl.className = 'nc-test-result nc-test-error'; return; }
+      const btn = document.getElementById('cfgChangePwBtn');
+      btn.disabled = true;
+      resultEl.textContent = '⏳ Ändere …';
+      resultEl.className   = 'nc-test-result';
+      const r = await AuthAPI.changePassword(cur, nw);
+      btn.disabled = false;
+      if (!r.ok) {
+        resultEl.textContent = `✗ ${r.error || 'Fehlgeschlagen'}`;
+        resultEl.className   = 'nc-test-result nc-test-error';
+        return;
+      }
+      document.getElementById('cfgCurrentPw').value = '';
+      document.getElementById('cfgNewPw').value     = '';
+      resultEl.textContent = '✓ Passwort geändert';
+      resultEl.className   = 'nc-test-result nc-test-ok';
     };
 
     document.getElementById('cfgLogoutBtn').onclick = async () => {
@@ -1166,18 +1228,27 @@ const App = {
     this._startCampaignPoll(rawId);
     this.renderCurrentPage();
     this.showStatus(`Kampagne „${name}" erstellt ✓`, 'success');
+    // Der Beitritts-Code ist das einzige, was Mitspieler zum Beitreten
+    // brauchen - er steht dauerhaft im Kampagnen-Panel (Charakter-Tab), hier
+    // einmal prominent, damit der Ersteller ihn direkt weitergeben kann.
+    if (r.data?.joinCode) {
+      alert(`Kampagne „${name}" erstellt.\n\nBeitritts-Code für deine Mitspieler:\n\n    ${r.data.joinCode}\n\n(Später jederzeit im Kampagnen-Panel auf dem Charakter-Tab sichtbar.)`);
+    }
   },
 
   async joinCampaign() {
     const char = this.currentCharacter;
     if (!char) return;
     const id = (document.getElementById('campaignJoinId').value.trim() || '').toLowerCase();
+    const joinCode = document.getElementById('campaignJoinCode').value.trim();
     if (!id) { this.showStatus('Bitte Kampagnen-ID eingeben', 'error'); return; }
+    if (!joinCode) { this.showStatus('Bitte Beitritts-Code eingeben', 'error'); return; }
     const btn = document.getElementById('campaignJoinBtn');
     btn.disabled = true;
-    const r = await CampaignSync.join(id, char.id);
+    const r = await CampaignSync.join(id, char.id, joinCode);
     btn.disabled = false;
     if (r.notFound) { this.showStatus('Kampagne nicht gefunden', 'error'); return; }
+    if (r.status === 403) { this.showStatus('Falscher oder fehlender Beitritts-Code', 'error'); return; }
     if (!r.ok) { this.showStatus(`Fehler: ${r.error || 'HTTP ' + r.status}`, 'error'); return; }
     const rGet = await CampaignSync.getCampaign(id);
     if (!rGet.ok) { this.showStatus('Kampagne beigetreten, Laden fehlgeschlagen', 'error'); return; }

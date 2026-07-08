@@ -8,6 +8,7 @@
  */
 const express = require('express');
 const db = require('../db');
+const { checkQuota } = require('../quota');
 
 const router = express.Router();
 
@@ -42,8 +43,14 @@ router.put('/char/:id', (req, res) => {
   const existing = db.getCharacter(req.params.id);
   if (existing && existing.ownerId !== req.user.id) return res.status(403).send('Forbidden');
 
+  const body = JSON.stringify(req.body);
+  // Der bisherige Stand dieses Charakters zaehlt nicht mit - sonst schluege ein
+  // reines Speichern ohne Groessenzuwachs am Limit fehl.
+  const quota = checkQuota(req.user.id, Buffer.byteLength(body, 'utf8'), { excludeCharId: req.params.id });
+  if (!quota.ok) return res.status(413).send(quota.error);
+
   const expected = req.headers['if-unmodified-since-version'] || null;
-  const result = db.putCharacter(req.params.id, JSON.stringify(req.body), expected, req.user.id);
+  const result = db.putCharacter(req.params.id, body, expected, req.user.id);
   if (!result.ok) {
     return res.status(409).json({ data: JSON.parse(result.data), updatedAt: result.updatedAt });
   }

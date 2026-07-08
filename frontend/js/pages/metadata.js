@@ -293,6 +293,9 @@ const MetadataPage = {
           <span class="campaign-id-badge">${this._esc(camp.id)}</span>
           ${isOwner ? '<span class="campaign-owner-badge">Owner</span>' : ''}
         </div>
+        ${isOwner && camp.joinCode
+          ? `<p class="campaign-joincode">Beitritts-Code: <code>${this._esc(camp.joinCode)}</code> <span class="campaign-id-hint">(an Mitspieler weitergeben)</span></p>`
+          : ''}
         <div class="campaign-members">
           <p class="campaign-members-title">Mitglieder (${camp.members.length}):</p>
           <ul class="campaign-member-list">

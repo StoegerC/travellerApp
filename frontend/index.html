@@ -10,7 +10,7 @@
   <title>Traveller – Charakterdatenblatt</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=3.4.2">
+  <link rel="stylesheet" href="styles.css?v=3.5.0">
   <script>
   (function(){
     var c=document.createElement('canvas'); c.width=c.height=64;
@@ -75,7 +75,7 @@
             <circle cx="34" cy="18" r="1.5" fill="#60a5fa"/>
           </svg>
           <div class="header-title">
-            <h1>Traveller <small class="app-version">v3.4.2</small></h1>
+            <h1>Traveller <small class="app-version">v3.5.0</small></h1>
             <span id="charNameDisplay" class="char-name-display"></span>
           </div>
         </div>
@@ -235,14 +235,15 @@
         </div>
       </div>
       <div id="cfgStep2" style="display:none">
-        <p class="vh-hint">Anmelden. Falls für diesen Account noch kein Passwort gesetzt
-          ist, legst du hier mit deiner Eingabe eines fest.</p>
+        <p class="vh-hint">Anmelden. Beim ersten Login gibst du als Passwort den
+          Setup-Token ein, den dir der Administrator gegeben hat - du legst dann
+          direkt danach dein eigenes Passwort fest.</p>
         <div class="form-group">
           <label>E-Mail</label>
           <input type="email" id="cfgEmail" autocomplete="username">
         </div>
         <div class="form-group">
-          <label>Passwort</label>
+          <label>Passwort / Setup-Token</label>
           <input type="password" id="cfgPassword" autocomplete="current-password" minlength="8">
         </div>
         <div class="nc-action-row">
@@ -253,12 +254,48 @@
           <button id="cfgLoginBtn" class="btn-success">Anmelden</button>
         </div>
       </div>
+      <!-- Erst-Login: eigenes Passwort setzen (must_change_password) -->
+      <div id="cfgStepSetPw" style="display:none">
+        <p class="vh-hint">Erster Login erkannt - bitte jetzt ein eigenes Passwort
+          festlegen. Der Setup-Token wird damit ungültig.</p>
+        <div class="form-group">
+          <label>Neues Passwort (min. 8 Zeichen)</label>
+          <input type="password" id="cfgSetPw" autocomplete="new-password" minlength="8">
+        </div>
+        <div class="form-group">
+          <label>Neues Passwort wiederholen</label>
+          <input type="password" id="cfgSetPw2" autocomplete="new-password" minlength="8">
+        </div>
+        <div class="nc-action-row">
+          <span id="cfgSetPwResult" class="nc-test-result"></span>
+        </div>
+        <div class="nc-action-row nc-btn-row">
+          <button id="cfgSetPwBtn" class="btn-success">Passwort festlegen</button>
+        </div>
+      </div>
       <div id="cfgStepConnected" style="display:none">
         <div class="nc-action-row">
           <span id="cfgConnTestResult" class="nc-test-result"></span>
         </div>
         <p class="vh-hint">Server: <strong id="cfgConnUrl"></strong></p>
         <p class="vh-hint">Angemeldet als <strong id="cfgConnEmail"></strong> <span id="cfgConnRoles"></span></p>
+
+        <details id="cfgPwChange" class="cfg-pw-change">
+          <summary>Passwort ändern</summary>
+          <div class="form-group">
+            <label>Aktuelles Passwort</label>
+            <input type="password" id="cfgCurrentPw" autocomplete="current-password" minlength="8">
+          </div>
+          <div class="form-group">
+            <label>Neues Passwort (min. 8 Zeichen)</label>
+            <input type="password" id="cfgNewPw" autocomplete="new-password" minlength="8">
+          </div>
+          <div class="nc-action-row">
+            <button id="cfgChangePwBtn" class="btn-success">Passwort ändern</button>
+            <span id="cfgPwResult" class="nc-test-result"></span>
+          </div>
+        </details>
+
         <div class="nc-action-row nc-btn-row">
           <button id="cfgLogoutBtn" class="btn-danger">Abmelden</button>
         </div>
@@ -311,6 +348,10 @@
           <label>Kampagnen-ID eingeben</label>
           <input type="text" id="campaignJoinId" placeholder="spinward26" autocomplete="off">
         </div>
+        <div class="form-group">
+          <label>Beitritts-Code <span class="campaign-id-hint">(vom Kampagnen-Ersteller)</span></label>
+          <input type="text" id="campaignJoinCode" placeholder="Code" autocomplete="off">
+        </div>
         <button id="campaignJoinBtn" class="btn-success campaign-btn">Beitreten</button>
       </div>
     </div>
@@ -357,26 +398,26 @@
     </div>
   </div>
 
-  <script src="js/cloudsync.js?v=3.4.2"></script>
-  <script src="js/auth.js?v=3.4.2"></script>
-  <script src="js/campaign.js?v=3.4.2"></script>
-  <script src="js/filesync.js?v=3.4.2"></script>
-  <script src="js/markdown.js?v=3.4.2"></script>
-  <script src="js/mention-autocomplete.js?v=3.4.2"></script>
-  <script src="js/data/skills.js?v=3.4.2"></script>
-  <script src="js/models/character.js?v=3.4.2"></script>
-  <script src="js/sync-merge.js?v=3.4.2"></script>
-  <script src="js/storage.js?v=3.4.2"></script>
-  <script src="js/pages/metadata.js?v=3.4.2"></script>
-  <script src="js/pages/attributes.js?v=3.4.2"></script>
-  <script src="js/pages/finances.js?v=3.4.2"></script>
-  <script src="js/pages/equipment.js?v=3.4.2"></script>
-  <script src="js/pages/ship.js?v=3.4.2"></script>
-  <script src="js/pages/career.js?v=3.4.2"></script>
-  <script src="js/pages/notes.js?v=3.4.2"></script>
-  <script src="js/pages/karte.js?v=3.4.2"></script>
-  <script src="js/pages/combat.js?v=3.4.2"></script>
-  <script src="js/app.js?v=3.4.2"></script>
+  <script src="js/cloudsync.js?v=3.5.0"></script>
+  <script src="js/auth.js?v=3.5.0"></script>
+  <script src="js/campaign.js?v=3.5.0"></script>
+  <script src="js/filesync.js?v=3.5.0"></script>
+  <script src="js/markdown.js?v=3.5.0"></script>
+  <script src="js/mention-autocomplete.js?v=3.5.0"></script>
+  <script src="js/data/skills.js?v=3.5.0"></script>
+  <script src="js/models/character.js?v=3.5.0"></script>
+  <script src="js/sync-merge.js?v=3.5.0"></script>
+  <script src="js/storage.js?v=3.5.0"></script>
+  <script src="js/pages/metadata.js?v=3.5.0"></script>
+  <script src="js/pages/attributes.js?v=3.5.0"></script>
+  <script src="js/pages/finances.js?v=3.5.0"></script>
+  <script src="js/pages/equipment.js?v=3.5.0"></script>
+  <script src="js/pages/ship.js?v=3.5.0"></script>
+  <script src="js/pages/career.js?v=3.5.0"></script>
+  <script src="js/pages/notes.js?v=3.5.0"></script>
+  <script src="js/pages/karte.js?v=3.5.0"></script>
+  <script src="js/pages/combat.js?v=3.5.0"></script>
+  <script src="js/app.js?v=3.5.0"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

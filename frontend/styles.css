@@ -7837,3 +7837,42 @@ body.dark-mode .camp-ext-row td { color: #666; }
 body.dark-mode .meta-age-field label { color: #aaa; }
 body.dark-mode .meta-age-field input { background: #1e2140; border-color: #3a3f6b; color: #dde; }
 body.dark-mode .meta-birthdate { color: #888; }
+
+/* ===== SICHERHEIT: BEITRITTS-CODE & PASSWORT-ÄNDERN ===== */
+.campaign-joincode {
+  margin: 8px 0;
+  font-size: 0.9rem;
+  color: #444;
+}
+.campaign-joincode code {
+  background: #eef0f5;
+  border: 1px solid #ccd;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  user-select: all;
+}
+.cfg-pw-change {
+  margin: 14px 0;
+  padding: 10px 0;
+  border-top: 1px solid #e0e0e8;
+}
+.cfg-pw-change summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 6px 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+/* ===== DARK MODE: SICHERHEIT ===== */
+body.dark-mode .campaign-joincode { color: #bbc; }
+body.dark-mode .campaign-joincode code {
+  background: #1e2140;
+  border-color: #3a3f6b;
+  color: #dde;
+}
+body.dark-mode .cfg-pw-change { border-top-color: #3a3f6b; }
