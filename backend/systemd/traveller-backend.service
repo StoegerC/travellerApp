@@ -1,3 +1,7 @@
+# ABGELÖST durch die getemplatete traveller@.service (Prod/Test-Architektur,
+# siehe backend/deploy/README.md). Diese Ein-Instanz-Vorlage bleibt nur als
+# Referenz für ein einfaches Einzel-Setup ohne Test-Server erhalten.
+#
 # Vorlage für den späteren Raspberry-Pi-Einsatz (systemd, Linux).
 # Auf dem Mac heute nicht nutzbar (kein systemd) — dort läuft der Server
 # übergangsweise manuell per `npm start`.

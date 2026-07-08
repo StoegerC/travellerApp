@@ -1,0 +1,12 @@
+# Löst den täglichen Prod-Backup aus (03:00, wie zuvor der LaunchAgent).
+# Persistent=true holt einen verpassten Lauf nach, falls der Pi um 03:00 aus war.
+
+[Unit]
+Description=Traveller täglicher Daten-Backup Timer (prod)
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

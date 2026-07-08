@@ -1,0 +1,22 @@
+# Täglicher Daten-Snapshot ins private Git-Backup-Repo. Ersetzt auf dem Pi den
+# bisherigen macOS-LaunchAgent (backend/launchd/com.traveller.backup.plist.example).
+#
+# NUR FÜR PROD. Test hat keine Backup-Konfiguration und darf dieses Repo nie
+# beschreiben — deshalb existiert bewusst keine getemplatete @-Variante hiervon.
+#
+# Installation:
+#   sudo cp backend/systemd/traveller-backup.{service,timer} /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now traveller-backup.timer
+
+[Unit]
+Description=Traveller täglicher Daten-Backup nach Git (prod)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=traveller
+WorkingDirectory=/srv/traveller-prod/backend
+ExecStart=/usr/bin/node backup-to-git.js
+EnvironmentFile=/etc/traveller/prod.env
