@@ -3,27 +3,19 @@ Traveller Charsheet – Offene Aufgaben
 Abgeschlossene Features siehe CHANGELOG.md
 
 CODE-QUALITÄT
-[ ] Tests für backend/authz.js + frontend/js/sync-merge.js (pure Funktionen,
-    node --test ohne neue Abhängigkeit — dort lagen die letzten ernsten Bugs).
-    Erste Test-Suite existiert bereits: backend/test/ (Auth-Härtung), gleiches
-    Muster übernehmen.
-[ ] notes.js aufteilen (2.274 Zeilen; Sub-Tabs als natürliche Schnittlinien),
-    ship.js (1.548) beobachten
+[ ] notes.js weiter verkleinern (jetzt 1.994 Zeilen nach Auslagern des
+    Travellermap-Clusters in notes-travellermap.js). Ein Per-Sub-Tab-Split ist
+    KEIN sauberer Schnitt: save() und attachListeners() verweben alle vier Tabs
+    in je einem monolithischen Methodenkörper — dafür müssten diese zwei
+    Methoden zuerst in _saveSession/_attachSession/… zerlegt werden
+    (verhaltensändernd, nur im Browser testbar). Nächster risikoarmer
+    Mixin-Kandidat: das Tag-Picker-System (_tagPicker/_attachTagPicker/_removeTag).
+[ ] ship.js (1.548 Zeilen) beobachten
 
 KAMPAGNE
 [ ] Entfernen propagiert via Sync (entferntes Gerät erkennt Ausschluss beim Poll)
 
 DATENHALTUNG
-[ ] Selbst gehostetes Backend (Plan: ~/.claude/plans/lively-moseying-jellyfish.md) —
-    Phase 1 läuft live: Server + SQLite + Endpunkt-Parität + Tailscale-Funnel-Tunnel +
-    macOS-Autostart (launchd) stehen, echte Migration gegen den produktiven Worker
-    gefahren, erstes Gerät umgestellt und Sync verifiziert. Noch offen: restliche Geräte
-    umstellen, ein paar Tage beobachten, dann Cloudflare Worker/KV abschalten.
-    Phase 2 (Datei-Uploads) und Phase 3 (Nutzerverwaltung/Login) sind umgesetzt, siehe
-    CHANGELOG.md. Noch offen aus Phase 3: alle Geräte (iPhone, weitere Browser,
-    GitHub-Pages-Zugriff) müssen sich einmalig neu mit E-Mail+Passwort anmelden, da der
-    alte gemeinsame API-Key beim Cutover sofort ungültig wurde.
-[ ] Charakter per QR-Code oder Link teilen (Base64-JSON)
 [ ] Rollback (Admin-Seite, Snapshot wiederherstellen) sauberer gegen gleichzeitige
     Geräte-Pushes absichern — aktuell kann ein Gerät mit noch nicht synchronisierten
     lokalen Änderungen einen Rollback beim nächsten eigenen Speichern teilweise wieder
@@ -31,12 +23,9 @@ DATENHALTUNG
     nur mit einem Hinweistext darauf hin, löst es aber nicht strukturell.
 
 CHARAKTERVERWALTUNG
-[ ] Skill-Level -1 (nicht vorhanden) vs. 0 (Level 0) klar in der UI unterscheiden
 [ ] Regel-System-Switch (character.system wird gesetzt aber nie ausgewertet)
 
 UI / UX
-[ ] Passwort selbst ändern im Cloud-Dialog (aktuell nur Admin-Reset möglich,
-    der zudem das Erst-Login-Übernahmefenster wieder öffnet)
 [ ] Sync-Fehler deutlicher machen: Warnung "Änderungen noch nicht hochgeladen"
     bzw. Zähler ausstehender Pushes statt nur dezentem Header-Badge
 [ ] Erwähnungen aktualisieren: "@[Name](typ:id)" friert den Namen ein —
