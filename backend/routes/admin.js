@@ -10,6 +10,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const { execFileSync } = require('child_process');
 const db = require('../db');
+const { hashPassword } = require('../auth');
 const orphanScan = require('../orphan-scan');
 const { CLONE_DIR, GIT_ENV } = require('../git-backup-config');
 
@@ -31,7 +32,30 @@ function sanitizeRoles(roles) {
 }
 
 function publicUser(u) {
-  return { id: u.id, email: u.email, roles: u.roles, createdAt: u.createdAt, hasPassword: u.hasPassword };
+  return {
+    id: u.id, email: u.email, roles: u.roles, createdAt: u.createdAt,
+    hasPassword: u.hasPassword, mustChangePassword: u.mustChangePassword,
+  };
+}
+
+// Einmaliger Setup-Token: ersetzt das fruehere "der erste Login setzt das
+// Passwort" (siehe routes/auth.js). Wird genau einmal im Response
+// zurueckgegeben und ist danach nirgends mehr auslesbar - gespeichert wird nur
+// sein scrypt-Hash. base64url statt hex, damit er bei gleicher Entropie kuerzer
+// abzutippen ist; deutlich laenger als die 8-Zeichen-Mindestlaenge des
+// Login-Endpunkts, an der er sonst scheitern wuerde.
+function generateSetupToken() {
+  return crypto.randomBytes(24).toString('base64url');
+}
+
+// Verhindert, dass sich der letzte Administrator selbst aussperrt - danach
+// kaeme man nur noch per direktem DB-Zugriff wieder herein. Prueft die Wirkung
+// der geplanten Aenderung, nicht die Absicht: nextRoles=null bedeutet "Nutzer
+// wird geloescht".
+function wouldRemoveLastAdmin(targetUser, nextRoles) {
+  if (!targetUser.roles.includes('admin')) return false;        // war nie Admin
+  if (nextRoles && nextRoles.includes('admin')) return false;   // bleibt Admin
+  return db.countAdmins() <= 1;
 }
 
 // GET /admin/users
@@ -39,38 +63,61 @@ router.get('/admin/users', (req, res) => {
   res.json(db.listUsers().map(publicUser));
 });
 
-// POST /admin/users – legt einen Nutzer ohne Passwort an (setzt es selbst
-// beim ersten Login, siehe backend/routes/auth.js).
-router.post('/admin/users', (req, res) => {
+// POST /admin/users – legt einen Nutzer mit einmaligem Setup-Token an. Der
+// Token steht NUR in dieser einen Antwort; der Admin gibt ihn dem Nutzer
+// weiter, der sich damit einmal anmeldet und sofort ein eigenes Passwort setzt.
+router.post('/admin/users', async (req, res) => {
   const { email, roles } = req.body || {};
   if (!isValidEmail(email)) return res.status(400).send('Ungültige E-Mail');
   if (db.getUserByEmail(email)) return res.status(409).send('E-Mail bereits vergeben');
-  const user = db.insertUser({ id: crypto.randomBytes(12).toString('hex'), email, roles: sanitizeRoles(roles) });
-  res.status(201).json(publicUser(user));
+
+  const setupToken = generateSetupToken();
+  const user = db.insertUser({
+    id: crypto.randomBytes(12).toString('hex'),
+    email,
+    roles: sanitizeRoles(roles),
+    passwordHash: await hashPassword(setupToken),
+    mustChangePassword: true,
+  });
+  res.status(201).json({ ...publicUser(user), setupToken });
 });
 
 // PUT /admin/users/:id/roles
 router.put('/admin/users/:id/roles', (req, res) => {
   const user = db.getUserById(req.params.id);
   if (!user) return res.status(404).send('Not Found');
-  db.setUserRoles(user.id, sanitizeRoles((req.body || {}).roles));
+  const nextRoles = sanitizeRoles((req.body || {}).roles);
+  if (wouldRemoveLastAdmin(user, nextRoles)) {
+    return res.status(409).send('Der letzte Administrator kann sich die Admin-Rolle nicht entziehen');
+  }
+  db.setUserRoles(user.id, nextRoles);
   res.json(publicUser(db.getUserById(user.id)));
 });
 
-// PUT /admin/users/:id/reset-password – zwingt neues Passwort beim naechsten
-// Login, invalidiert alle bestehenden Sessions (erzwungener Re-Login).
-router.put('/admin/users/:id/reset-password', (req, res) => {
+// PUT /admin/users/:id/reset-password – vergibt einen neuen einmaligen
+// Setup-Token und invalidiert alle bestehenden Sessions (erzwungener
+// Re-Login). Frueher wurde hier password_hash einfach auf NULL gesetzt, was
+// das Konto bis zum naechsten Login fuer jeden uebernehmbar machte, der die
+// E-Mail kannte.
+router.put('/admin/users/:id/reset-password', async (req, res) => {
   const user = db.getUserById(req.params.id);
   if (!user) return res.status(404).send('Not Found');
-  db.setPasswordHash(user.id, null);
+  const setupToken = generateSetupToken();
+  db.setPasswordHash(user.id, await hashPassword(setupToken), true);
   db.invalidateUserSessions(user.id);
-  res.status(200).send('OK');
+  res.json({ setupToken });
 });
 
 // DELETE /admin/users/:id – Charaktere/Kampagnen bleiben erhalten (nur
 // herrenlos), siehe db.deleteUser-Kommentar.
 router.delete('/admin/users/:id', (req, res) => {
-  db.deleteUser(req.params.id);
+  const user = db.getUserById(req.params.id);
+  if (!user) return res.status(404).send('Not Found');
+  if (user.id === req.user.id) return res.status(409).send('Das eigene Konto kann nicht gelöscht werden');
+  if (wouldRemoveLastAdmin(user, null)) {
+    return res.status(409).send('Der letzte Administrator kann nicht gelöscht werden');
+  }
+  db.deleteUser(user.id);
   res.status(200).send('OK');
 });
 
@@ -130,15 +177,31 @@ function backupRepoReady() {
   return fs.existsSync(`${CLONE_DIR}/.git`);
 }
 
+// type/id/commit landen als Argumente in git-Aufrufen und als Pfad im
+// Backup-Repo. execFileSync verhindert zwar eine Shell-Injection, nicht aber
+// dass ein Wert wie "--upload-pack=..." als git-Option gelesen wird oder ein
+// "../.." aus dem characters/-Verzeichnis herausfuehrt. Beides hier abfangen,
+// bevor der Wert das Repo erreicht.
+const COMMIT_RE = /^[0-9a-f]{7,40}$/i;
+const ENTITY_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+// Rueckgabe: { ok, relPath } bzw. { ok: false, error }
+function resolveSnapshotPath(type, id) {
+  if (!['character', 'campaign'].includes(type)) return { ok: false, error: 'Invalid type' };
+  if (typeof id !== 'string' || !ENTITY_ID_RE.test(id)) return { ok: false, error: 'Invalid id' };
+  return { ok: true, relPath: `${type === 'character' ? 'characters' : 'campaigns'}/${id}.json` };
+}
+
 // GET /admin/backup-snapshots?type=character|campaign&id=<id> – Commits, bei
 // denen sich GENAU diese eine Datei im Backup-Repo geaendert hat (kein
 // globaler Commit-Browser noetig, siehe backup-to-git.js fuer das Schema
 // characters/<id>.json bzw. campaigns/<id>.json).
 router.get('/admin/backup-snapshots', (req, res) => {
   const { type, id } = req.query;
-  if (!['character', 'campaign'].includes(type) || !id) return res.status(400).send('Invalid type/id');
+  const resolved = resolveSnapshotPath(type, id);
+  if (!resolved.ok) return res.status(400).send(resolved.error);
   if (!backupRepoReady()) return res.json([]);
-  const relPath = `${type === 'character' ? 'characters' : 'campaigns'}/${id}.json`;
+  const { relPath } = resolved;
   try { git(['pull', '--ff-only']); } catch { /* best effort - Liste zeigt dann evtl. nicht den allerneuesten Stand */ }
   let log;
   try {
@@ -164,9 +227,11 @@ router.get('/admin/backup-snapshots', (req, res) => {
 // Admin-UI weist deshalb darauf hin, dass Geraete vorher neu laden sollten.
 router.post('/admin/backup-snapshots/restore', (req, res) => {
   const { type, id, commit } = req.body || {};
-  if (!['character', 'campaign'].includes(type) || !id || !commit) return res.status(400).send('Invalid body');
+  const resolved = resolveSnapshotPath(type, id);
+  if (!resolved.ok) return res.status(400).send(resolved.error);
+  if (typeof commit !== 'string' || !COMMIT_RE.test(commit)) return res.status(400).send('Invalid commit');
   if (!backupRepoReady()) return res.status(404).send('Backup-Repo nicht verfügbar');
-  const relPath = `${type === 'character' ? 'characters' : 'campaigns'}/${id}.json`;
+  const { relPath } = resolved;
   let content;
   try {
     content = git(['show', `${commit}:${relPath}`]);
@@ -184,3 +249,7 @@ router.post('/admin/backup-snapshots/restore', (req, res) => {
 });
 
 module.exports = router;
+// Fuer Tests (backend/test/): reine Helfer ohne Express-Kontext.
+module.exports.resolveSnapshotPath = resolveSnapshotPath;
+module.exports.wouldRemoveLastAdmin = wouldRemoveLastAdmin;
+module.exports.generateSetupToken = generateSetupToken;

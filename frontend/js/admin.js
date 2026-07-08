@@ -60,11 +60,37 @@ const AdminApp = {
       this.token = data.token;
       localStorage.setItem('traveller_worker_url', url);
       localStorage.setItem('traveller_cloud_key', data.token);
+      // Erst-Login mit Setup-Token: der Server laesst diese Session an keine
+      // Admin-Route, bis ein eigenes Passwort gesetzt ist. Minimaler
+      // Inline-Flow per prompt(), damit die Admin-Seite kein eigenes Modal braucht.
+      if (data.mustChangePassword && !(await this.forcePasswordChange(password))) {
+        errEl.textContent = 'Passwort setzen abgebrochen - bitte erneut anmelden.';
+        return;
+      }
       const ok = await this.tryShowMain();
       if (!ok) errEl.textContent = 'Angemeldet, aber kein Administrator-Konto.';
     } catch (e) {
       errEl.textContent = e.message;
     }
+  },
+
+  // Zwingt beim Erst-Login (Setup-Token) sofort ein eigenes Passwort. Nutzt
+  // POST /auth/password (currentPassword = der Setup-Token) und uebernimmt die
+  // frische Session aus der Antwort.
+  async forcePasswordChange(setupToken) {
+    const newPw = prompt('Erster Login: bitte ein eigenes Passwort festlegen (min. 8 Zeichen).');
+    if (newPw == null || newPw.length < 8) { alert('Passwort muss mindestens 8 Zeichen haben.'); return false; }
+    const res = await this.apiFetch('/auth/password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword: setupToken, newPassword: newPw }),
+    }).catch(() => null);
+    if (!res || !res.ok) { alert('Passwort setzen fehlgeschlagen.'); return false; }
+    const data = await res.json();
+    if (data.token) {
+      this.token = data.token;
+      localStorage.setItem('traveller_cloud_key', data.token);
+    }
+    return true;
   },
 
   logout() {
@@ -196,7 +222,13 @@ const AdminApp = {
       await this.apiFetch(`/admin/users/${id}/roles`, { method: 'PUT', body: JSON.stringify({ roles: next }) });
     } else if (action === 'reset') {
       if (!confirm('Passwort dieses Nutzers zurücksetzen? Alle Geräte werden abgemeldet.')) return;
-      await this.apiFetch(`/admin/users/${id}/reset-password`, { method: 'PUT', body: JSON.stringify({}) });
+      const res = await this.apiFetch(`/admin/users/${id}/reset-password`, { method: 'PUT', body: JSON.stringify({}) });
+      if (res.ok) {
+        const { setupToken } = await res.json();
+        prompt('Neuer einmaliger Setup-Token (an den Nutzer weitergeben - er setzt beim nächsten Login ein eigenes Passwort):', setupToken);
+      } else {
+        alert(await res.text());
+      }
     } else if (action === 'delete') {
       if (!confirm(`Nutzer „${btn.dataset.email}" wirklich löschen? Charaktere/Kampagnen bleiben erhalten.`)) return;
       await this.apiFetch(`/admin/users/${id}`, { method: 'DELETE' });
@@ -214,6 +246,10 @@ const AdminApp = {
     if (!res.ok) { errEl.textContent = await res.text(); return; }
     errEl.textContent = '';
     document.getElementById('newUserEmail').value = '';
+    const { setupToken } = await res.json();
+    // Der Token steht NUR in dieser einen Antwort - danach ist er nur noch als
+    // Hash gespeichert. Deshalb hier prominent zum Kopieren anbieten.
+    prompt(`Nutzer „${email}" angelegt.\n\nEinmaliger Setup-Token (an den Nutzer weitergeben - er meldet sich damit einmal an und setzt sofort ein eigenes Passwort):`, setupToken);
     this.loadUsers();
     this.loadOverview();
   },

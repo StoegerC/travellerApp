@@ -4,7 +4,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-const { checkAuth, requireRole } = require('./auth');
+const { checkAuth, requireRole, requirePasswordSet } = require('./auth');
+const startupTasks = require('./startup-tasks');
 const authRoutes = require('./routes/auth');
 const characterRoutes = require('./routes/characters');
 const campaignRoutes = require('./routes/campaigns');
@@ -51,6 +52,10 @@ app.use(authRoutes.publicRouter);
 // Ab hier: Bearer-Session-Auth Pflicht (Phase 3, ersetzt den frueheren
 // geteilten API_KEY vollstaendig - kein Parallelbetrieb)
 app.use(checkAuth);
+// Wer noch mit seinem einmaligen Setup-Token angemeldet ist, kommt nur an
+// /auth/me, /auth/password und /auth/logout - sonst waere der Token ein
+// vollwertiges Dauerpasswort.
+app.use(requirePasswordSet);
 app.use(authRoutes.protectedRouter);
 app.use(characterRoutes);
 app.use(campaignRoutes);
@@ -63,6 +68,18 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Server error' });
 });
 
-app.listen(PORT, HOST, () => {
-  console.log(`Traveller Charsheet Backend läuft auf http://${HOST}:${PORT}`);
+// Bewusst KEIN app.set('trust proxy'): der Server steht hinter einem Tunnel
+// (Tailscale Funnel/cloudflared), der X-Forwarded-For selbst setzt. Wuerden wir
+// dem Header vertrauen, koennte ein Angreifer ihn frei waehlen und damit das
+// Login-Rate-Limit (Schluessel: E-Mail + req.ip) pro Versuch umgehen. So teilen
+// sich zwar alle Clients dieselbe req.ip, der E-Mail-Anteil des Schluessels
+// bremst Brute-Force aber weiterhin pro Konto.
+
+startupTasks.run().then(() => {
+  app.listen(PORT, HOST, () => {
+    console.log(`Traveller Charsheet Backend läuft auf http://${HOST}:${PORT}`);
+  });
+}).catch(err => {
+  console.error('Start abgebrochen - Wartungsschritte fehlgeschlagen:', err);
+  process.exit(1);
 });

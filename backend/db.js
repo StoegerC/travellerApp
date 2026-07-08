@@ -72,13 +72,18 @@ db.exec(`
   -- Nutzerverwaltung (Phase 3). roles: JSON-Array additiver Zusatzrechte
   -- ("gm", "admin") auf einer gemeinsamen Basis - jeder eingeloggte Nutzer
   -- darf eigene Charaktere/Kampagnen anlegen, unabhaengig von roles.
-  -- password_hash NULL = noch kein Passwort gesetzt (Erst-Login/Reset-Fall).
+  -- password_hash haelt seit der Sicherheitshaertung immer einen Hash: bei
+  -- Neuanlage/Reset den des einmaligen Setup-Tokens (must_change_password=1),
+  -- danach den des selbst gesetzten Passworts. Vorher war das Feld NULL und
+  -- der erste Login setzte das Passwort einfach - wer die E-Mail kannte und
+  -- schneller war als der eigentliche Nutzer, uebernahm das Konto.
   CREATE TABLE IF NOT EXISTS users (
-    id            TEXT PRIMARY KEY,
-    email         TEXT UNIQUE NOT NULL,
-    password_hash TEXT,
-    roles         TEXT NOT NULL DEFAULT '[]',
-    created_at    TEXT NOT NULL
+    id                   TEXT PRIMARY KEY,
+    email                TEXT UNIQUE NOT NULL,
+    password_hash        TEXT,
+    roles                TEXT NOT NULL DEFAULT '[]',
+    created_at           TEXT NOT NULL,
+    must_change_password INTEGER NOT NULL DEFAULT 0
   );
 
   -- Mehrere gleichzeitige Sessions pro Nutzer (mehrere Geraete), im Gegensatz
@@ -92,12 +97,18 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions (user_id);
 `);
 
-// Nachrüst-Migration: falls eine ältere DB-Datei ohne owner_id existiert
-// (CREATE TABLE IF NOT EXISTS legt die Spalte dann nicht nachträglich an).
-const hasOwnerId = db.prepare("SELECT 1 FROM pragma_table_info('characters') WHERE name = 'owner_id'").get();
-if (!hasOwnerId) {
-  db.exec('ALTER TABLE characters ADD COLUMN owner_id TEXT');
+// Nachrüst-Migrationen: CREATE TABLE IF NOT EXISTS legt fehlende Spalten auf
+// einer bereits existierenden DB-Datei nicht nachträglich an.
+function _addColumnIfMissing(table, column, definition) {
+  const exists = db.prepare(`SELECT 1 FROM pragma_table_info('${table}') WHERE name = ?`).get(column);
+  if (!exists) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
 }
+_addColumnIfMissing('characters', 'owner_id', 'TEXT');
+// Bestandsnutzer, die zum Zeitpunkt der Haertung noch gar kein Passwort haben
+// (password_hash IS NULL), bekommen weiter unten in ensurePasswordSetForAll()
+// einen Setup-Token - sie duerfen nicht einfach als "fertig eingerichtet"
+// durchrutschen, sonst bliebe genau das Uebernahme-Fenster offen.
+_addColumnIfMissing('users', 'must_change_password', 'INTEGER NOT NULL DEFAULT 0');
 
 // node:sqlite kennt kein db.transaction(fn) wie better-sqlite3 – manuell mit
 // BEGIN/COMMIT/ROLLBACK nachgebaut.
@@ -446,15 +457,17 @@ function _unlinkFilesForOwner(ownerType, ownerId) {
 // ── Nutzer & Sessions (Phase 3) ─────────────────────────────────────────────
 
 const stmtInsertUser      = db.prepare(`
-  INSERT INTO users (id, email, password_hash, roles, created_at)
-  VALUES (@id, @email, @passwordHash, @roles, @createdAt)
+  INSERT INTO users (id, email, password_hash, roles, created_at, must_change_password)
+  VALUES (@id, @email, @passwordHash, @roles, @createdAt, @mustChangePassword)
 `);
 const stmtGetUserByEmail  = db.prepare('SELECT * FROM users WHERE email = ?');
 const stmtGetUserById     = db.prepare('SELECT * FROM users WHERE id = ?');
 const stmtListUsers       = db.prepare('SELECT * FROM users ORDER BY email');
-const stmtSetPasswordHash = db.prepare('UPDATE users SET password_hash = ? WHERE id = ?');
+const stmtSetPasswordHash = db.prepare('UPDATE users SET password_hash = ?, must_change_password = ? WHERE id = ?');
 const stmtSetUserRoles    = db.prepare('UPDATE users SET roles = ? WHERE id = ?');
 const stmtDeleteUser      = db.prepare('DELETE FROM users WHERE id = ?');
+const stmtCountAdmins     = db.prepare(`SELECT COUNT(*) AS n FROM users WHERE EXISTS (
+  SELECT 1 FROM json_each(users.roles) WHERE json_each.value = 'admin')`);
 
 function _rowToUser(row) {
   if (!row) return null;
@@ -462,12 +475,20 @@ function _rowToUser(row) {
     id: row.id, email: row.email, passwordHash: row.password_hash,
     roles: JSON.parse(row.roles), createdAt: row.created_at,
     hasPassword: row.password_hash != null,
+    // true = das gespeicherte Passwort ist ein einmaliger Setup-Token, der
+    // beim naechsten Login gegen ein selbst gewaehltes ersetzt werden muss.
+    mustChangePassword: row.must_change_password === 1,
   };
 }
 
-function insertUser({ id, email, roles = [] }) {
+// passwordHash ist der Hash des einmaligen Setup-Tokens (siehe routes/admin.js);
+// mustChangePassword=true zwingt den Nutzer beim ersten Login zu einem eigenen.
+function insertUser({ id, email, roles = [], passwordHash = null, mustChangePassword = true }) {
   const createdAt = new Date().toISOString();
-  stmtInsertUser.run({ id, email, passwordHash: null, roles: JSON.stringify(roles), createdAt });
+  stmtInsertUser.run({
+    id, email, passwordHash, roles: JSON.stringify(roles), createdAt,
+    mustChangePassword: mustChangePassword ? 1 : 0,
+  });
   return _rowToUser(stmtGetUserById.get(id));
 }
 
@@ -475,8 +496,21 @@ function getUserByEmail(email) { return _rowToUser(stmtGetUserByEmail.get(email)
 function getUserById(id)       { return _rowToUser(stmtGetUserById.get(id)); }
 function listUsers()           { return stmtListUsers.all().map(_rowToUser); }
 
-function setPasswordHash(userId, hash) { stmtSetPasswordHash.run(hash, userId); }
+// Wieviele Nutzer haben das admin-Flag? Basis der Lockout-Sperre in
+// routes/admin.js (letzten Administrator weder loeschen noch degradieren -
+// sonst kaeme man nur noch per direktem DB-Zugriff wieder rein).
+function countAdmins() { return stmtCountAdmins.get().n; }
+
+function setPasswordHash(userId, hash, mustChangePassword = false) {
+  stmtSetPasswordHash.run(hash, mustChangePassword ? 1 : 0, userId);
+}
 function setUserRoles(userId, roles)   { stmtSetUserRoles.run(JSON.stringify(roles), userId); }
+
+// Bestandsnutzer ohne Passwort (Alt-Zustand "wird beim ersten Login gesetzt")
+// haetten die Uebernahme-Luecke behalten. Der Aufrufer (server.js) vergibt
+// ihnen einen Setup-Token und gibt ihn einmalig im Log aus.
+const stmtUsersWithoutPassword = db.prepare('SELECT * FROM users WHERE password_hash IS NULL');
+function listUsersWithoutPassword() { return stmtUsersWithoutPassword.all().map(_rowToUser); }
 
 // Loescht den Nutzer + alle seine Sessions (erzwingt Logout auf allen
 // Geraeten). Charaktere/Kampagnen mit diesem owner_id bleiben bestehen
@@ -499,6 +533,17 @@ const stmtGetSession            = db.prepare('SELECT * FROM sessions WHERE token
 const stmtTouchSession          = db.prepare('UPDATE sessions SET last_seen_at = ? WHERE token = ?');
 const stmtDeleteSession         = db.prepare('DELETE FROM sessions WHERE token = ?');
 const stmtDeleteSessionsForUser = db.prepare('DELETE FROM sessions WHERE user_id = ?');
+const stmtDeleteExpiredSessions = db.prepare('DELETE FROM sessions WHERE last_seen_at < ?');
+
+// last_seen_at wurde bisher zwar gepflegt, aber nie ausgewertet - ein einmal
+// abgegriffener oder auf einem alten Geraet vergessener Token blieb fuer immer
+// gueltig. Idle-Ablauf ueber SESSION_IDLE_DAYS (Default 90).
+const SESSION_IDLE_DAYS = Number(process.env.SESSION_IDLE_DAYS) || 90;
+const SESSION_IDLE_MS   = SESSION_IDLE_DAYS * 24 * 60 * 60 * 1000;
+
+function _idleCutoffIso(now = Date.now()) {
+  return new Date(now - SESSION_IDLE_MS).toISOString();
+}
 
 function createSession(userId) {
   const token = crypto.randomBytes(32).toString('hex');
@@ -508,16 +553,58 @@ function createSession(userId) {
 }
 
 // Liefert den zur Session gehoerenden Nutzer (oder null bei ungueltigem/
-// abgelaufenem Token) und aktualisiert last_seen_at nebenbei.
+// abgelaufenem Token) und aktualisiert last_seen_at nebenbei. Eine seit
+// SESSION_IDLE_DAYS unbenutzte Session wird dabei geloescht statt nur
+// abgelehnt - sonst sammeln sich tote Zeilen unbegrenzt an.
 function getSessionUser(token) {
   const row = stmtGetSession.get(token);
   if (!row) return null;
+  if (row.last_seen_at < _idleCutoffIso()) {
+    stmtDeleteSession.run(token);
+    return null;
+  }
   stmtTouchSession.run(new Date().toISOString(), token);
   return getUserById(row.user_id);
 }
 
+// Beim Serverstart aufgerufen (server.js): raeumt Sessions weg, die waehrend
+// einer Ausfallzeit abgelaufen sind. Rueckgabe = Anzahl geloeschter Zeilen.
+function deleteExpiredSessions() {
+  return stmtDeleteExpiredSessions.run(_idleCutoffIso()).changes;
+}
+
 function deleteSession(token)            { stmtDeleteSession.run(token); }
 function invalidateUserSessions(userId)  { stmtDeleteSessionsForUser.run(userId); }
+
+// ── Speicher-Quota (pro Nutzer) ─────────────────────────────────────────────
+
+// Summe aus Charakter-JSON + Kampagnen-JSON + hochgeladenen Medien eines
+// Nutzers. Dieselbe Auflösungs-Logik wie getAdminOverview() (Dateien haengen
+// an Charakter/Kampagne, nicht direkt am Nutzer), nur auf einen Nutzer
+// beschraenkt und ohne die Namens-/Detailauflistung.
+const stmtUserCharBytes = db.prepare(
+  'SELECT COALESCE(SUM(LENGTH(CAST(data AS BLOB))), 0) AS bytes FROM characters WHERE owner_id = ?'
+);
+const stmtUserCampBytes = db.prepare(
+  'SELECT COALESCE(SUM(LENGTH(CAST(data AS BLOB))), 0) AS bytes FROM campaigns WHERE owner_id = ?'
+);
+const stmtUserMediaBytes = db.prepare(`
+  SELECT COALESCE(SUM(f.size), 0) AS bytes FROM files f
+  WHERE (f.owner_type = 'character' AND f.owner_id IN (SELECT id FROM characters WHERE owner_id = @userId))
+     OR (f.owner_type = 'campaign'  AND f.owner_id IN (SELECT id FROM campaigns  WHERE owner_id = @userId))
+`);
+
+// excludeCharId: beim Ueberschreiben eines bestehenden Charakters zaehlt
+// dessen aktueller Stand nicht mit, sonst wuerde ein reines Speichern ohne
+// Groessenzuwachs faelschlich am Limit scheitern.
+function getUserUsageBytes(userId, { excludeCharId = null } = {}) {
+  let charBytes = stmtUserCharBytes.get(userId).bytes;
+  if (excludeCharId) {
+    const row = stmtGetChar.get(excludeCharId);
+    if (row && row.owner_id === userId) charBytes -= Buffer.byteLength(row.data, 'utf8');
+  }
+  return charBytes + stmtUserCampBytes.get(userId).bytes + stmtUserMediaBytes.get({ userId }).bytes;
+}
 
 module.exports = {
   db,
@@ -528,5 +615,7 @@ module.exports = {
   upsertCampaign,
   insertFile, getFile, deleteFile, listFilesByOwner, listAllFiles, getFileStats, getAdminOverview,
   insertUser, getUserByEmail, getUserById, listUsers, setPasswordHash, setUserRoles, deleteUser,
-  createSession, getSessionUser, deleteSession, invalidateUserSessions,
+  countAdmins, listUsersWithoutPassword,
+  createSession, getSessionUser, deleteSession, invalidateUserSessions, deleteExpiredSessions,
+  getUserUsageBytes,
 };

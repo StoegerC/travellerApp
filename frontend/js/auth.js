@@ -24,7 +24,33 @@ const AuthAPI = {
       const data = await res.json();
       CloudSync.setWorkerUrl(workerUrl);
       CloudSync.setApiKey(data.token);
-      return { ok: true, email: data.email, roles: data.roles || [] };
+      return { ok: true, email: data.email, roles: data.roles || [], mustChangePassword: !!data.mustChangePassword };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
+  // Eigenes Passwort setzen/aendern. Deckt den Erst-Login mit Setup-Token
+  // (currentPassword = Token) und den spaeteren freiwilligen Wechsel ab. Der
+  // Server verwirft dabei alle bestehenden Sessions und liefert eine frische
+  // zurueck, die hier sofort uebernommen wird - sonst waere man direkt nach dem
+  // Setzen wieder ausgeloggt.
+  async changePassword(currentPassword, newPassword) {
+    if (!CloudSync.isConfigured()) return { ok: false, error: 'Nicht konfiguriert' };
+    try {
+      const res = await fetch(`${CloudSync.getWorkerUrl()}/auth/password`, {
+        method:  'POST',
+        headers: { ...CloudSync._headers(), 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ currentPassword, newPassword }),
+        signal:  AbortSignal.timeout(10000),
+      });
+      if (!res.ok) {
+        const message = await res.text().catch(() => '');
+        return { ok: false, status: res.status, error: message || 'Passwortänderung fehlgeschlagen' };
+      }
+      const data = await res.json();
+      if (data.token) CloudSync.setApiKey(data.token);
+      return { ok: true };
     } catch (e) {
       return { ok: false, error: e.message };
     }

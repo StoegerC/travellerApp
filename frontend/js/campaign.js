@@ -99,12 +99,15 @@ const CampaignSync = {
     }
   },
 
-  async join(id, charId) {
+  // joinCode: seit der Sicherheitshaertung Pflicht fuer Nicht-Mitglieder
+  // (siehe backend/routes/campaigns.js) - ohne gueltigen Code antwortet der
+  // Server mit 403.
+  async join(id, charId, joinCode) {
     try {
       const res = await fetch(this._url(`/campaign/${id}/join`), {
         method:  'PUT',
         headers: { ...this._headers(), 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ charId }),
+        body:    JSON.stringify({ charId, joinCode }),
         signal:  AbortSignal.timeout(5000),
       });
       if (res.status === 404) return { ok: false, notFound: true };

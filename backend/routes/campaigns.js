@@ -13,6 +13,7 @@
  * dem aufrufenden Nutzer gehoert.
  */
 const express = require('express');
+const crypto = require('crypto');
 const db = require('../db');
 const { ownsCharacter, isCampaignMember } = require('../authz');
 
@@ -23,6 +24,26 @@ function isValidCampaignId(id) {
 }
 
 function isGm(user) { return user.roles.includes('gm'); }
+
+// Beitritts-Code: bisher konnte JEDER authentifizierte Nutzer JEDER Kampagne
+// beitreten (geprueft wurde nur, dass ihm der angegebene Charakter gehoert) und
+// danach deren Notizen, Schiffe und Dateien schreiben. Die
+// Mitgliedschaftspruefungen aus 3.4.1 liefen damit faktisch ins Leere, weil man
+// sich die Mitgliedschaft selbst geben konnte. Der Code lebt im Kampagnen-Blob
+// und ist nur fuer Mitglieder lesbar (GET /campaign/:id ist mitgliedsgeschuetzt).
+function generateJoinCode() {
+  return crypto.randomBytes(6).toString('base64url');
+}
+
+// Zeitkonstanter Vergleich, damit der Code nicht zeichenweise erraten werden
+// kann. Bei Laengenunterschied wirft timingSafeEqual, deshalb vorher pruefen -
+// die Laenge ist ohnehin bekannt (immer generateJoinCode()-Format).
+function joinCodeMatches(expected, provided) {
+  const a = Buffer.from(String(expected ?? ''), 'utf8');
+  const b = Buffer.from(String(provided ?? ''), 'utf8');
+  if (a.length === 0 || a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
 
 // GET /campaigns – Liste bleibt bewusst offen (nur id/name/memberCount, keine
 // Inhalte) - noetig damit man einer Kampagne per ID/Name beitreten kann.
@@ -41,7 +62,8 @@ router.get('/campaign/:id', (req, res) => {
 
 // POST /campaign/:id – erstellen (409 wenn bereits vorhanden). ownerId kommt
 // aus der Session, nicht mehr aus dem Body. charId (der beitretende eigene
-// Charakter) muss dem Aufrufer gehoeren.
+// Charakter) muss dem Aufrufer gehoeren. Der Beitritts-Code wird serverseitig
+// erzeugt und dem Ersteller zurueckgegeben - er gibt ihn an seine Mitspieler weiter.
 router.post('/campaign/:id', (req, res) => {
   const { id } = req.params;
   if (!isValidCampaignId(id)) return res.status(400).send('Invalid campaign ID');
@@ -55,6 +77,7 @@ router.post('/campaign/:id', (req, res) => {
     id,
     name: name || id,
     ownerId: req.user.id,
+    joinCode: generateJoinCode(),
     createdAt: new Date().toISOString(),
     members: [{ charId, joinedAt: new Date().toISOString() }],
     notes: { sessions: [], persons: [], locations: [], quests: [] },
@@ -103,11 +126,22 @@ router.put('/campaign/:id/notes', (req, res) => {
   res.json(campaign.notes);
 });
 
-// PUT /campaign/:id/join – nur mit eigenem Charakter
+// PUT /campaign/:id/join – nur mit eigenem Charakter UND gueltigem
+// Beitritts-Code. Wer bereits Mitglied ist (z.B. weitere Charaktere derselben
+// Person) oder die Kampagne besitzt, braucht den Code nicht erneut.
 router.put('/campaign/:id/join', (req, res) => {
-  const { charId } = req.body || {};
+  const { charId, joinCode } = req.body || {};
   if (!charId) return res.status(400).send('Missing charId');
   if (!ownsCharacter(db, req.user.id, charId)) return res.status(403).send('Forbidden');
+
+  const existing = db.getCampaign(req.params.id);
+  if (!existing) return res.status(404).send('Not Found');
+
+  const alreadyIn = isCampaignMember(db, existing, req.user.id);
+  if (!alreadyIn && !joinCodeMatches(existing.joinCode, joinCode)) {
+    return res.status(403).send('Falscher oder fehlender Beitritts-Code');
+  }
+
   const campaign = db.updateCampaign(req.params.id, c => {
     if (!c.members.find(m => m.charId === charId)) {
       c.members.push({ charId, joinedAt: new Date().toISOString() });
@@ -150,3 +184,6 @@ router.delete('/campaign/:id', (req, res) => {
 });
 
 module.exports = router;
+// Fuer Tests (backend/test/): reine Helfer ohne Express-Kontext.
+module.exports.joinCodeMatches = joinCodeMatches;
+module.exports.generateJoinCode = generateJoinCode;

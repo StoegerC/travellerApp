@@ -17,6 +17,16 @@ const path    = require('path');
 const fs      = require('fs');
 const db      = require('../db');
 const { ownsCharacter, isCampaignMember } = require('../authz');
+const { checkQuota } = require('../quota');
+
+// Wem wird die Datei auf die Quota geschrieben? Nicht dem Hochladenden, sondern
+// dem Besitzer des Ziels - genauso rechnet db.getUserUsageBytes() (Dateien
+// haengen an Charakter/Kampagne, nicht am Uploader). Sonst waere die Rechnung
+// inkonsistent, sobald ein Mitspieler etwas in eine fremde Kampagne laedt.
+function quotaOwnerId(ownerType, ownerId) {
+  if (ownerType === 'character') return db.getCharacter(ownerId)?.ownerId || null;
+  return db.getCampaign(ownerId)?.ownerId || null;
+}
 
 // Prueft, ob req.user tatsaechlich Zugriff auf den behaupteten Owner
 // (Charakter oder Kampagne) hat - fehlte bisher komplett, der Client konnte
@@ -92,6 +102,14 @@ protectedRouter.post('/files', (req, res) => {
     if (!userCanAccessOwner(req.user, ownerType, ownerId)) {
       fs.unlink(req.file.path, () => {});
       return res.status(403).send('Forbidden');
+    }
+    // Quota erst hier: multer hat die Datei zu diesem Zeitpunkt bereits auf
+    // Platte geschrieben, deshalb bei Ueberschreitung wieder wegraeumen.
+    const chargeTo = quotaOwnerId(ownerType, ownerId);
+    const quota = chargeTo ? checkQuota(chargeTo, req.file.size) : { ok: true };
+    if (!quota.ok) {
+      fs.unlink(req.file.path, () => {});
+      return res.status(413).send(quota.error);
     }
     const record = db.insertFile({
       id:       req.file.filename,

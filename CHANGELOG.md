@@ -9,6 +9,21 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.5.0] – 2026-07-08
+
+### Sicherheit
+- **Backend-Härtung (Fortsetzung des Code-Reviews 2026-07-08).** Sieben Punkte aus dem Review umgesetzt, alle end-to-end gegen einen laufenden Server geprüft und durch eine erste Backend-Test-Suite abgesichert (`backend/test/`, 16 Tests über Nodes eingebautes `node --test`, kein neues Paket):
+  - **Konto-Übernahmefenster geschlossen.** Bisher galt „hat ein Nutzer noch kein Passwort, wird das erste übermittelte einfach übernommen" — wer die E-Mail kannte und vor dem echten Nutzer da war, übernahm das Konto, und nach jedem Admin-Reset ging dieses Fenster erneut auf. Stattdessen vergibt der Admin (bzw. `create-admin.js`) jetzt einen einmaligen **Setup-Token**, mit dem sich der Nutzer genau einmal anmeldet und dabei sofort ein eigenes Passwort setzen muss (`must_change_password`, neue Middleware `requirePasswordSet` lässt eine solche Session nur an `/auth/me`, `/auth/password`, `/auth/logout`). Der Token steht nur einmalig in der Server-Antwort/im Log, gespeichert ist nur sein Hash.
+  - **Passwort selbst ändern** (`POST /auth/password`) — gab es vorher gar nicht, nur den Admin-Reset. Deckt zugleich den Erst-Login-Fall ab.
+  - **Login-Rate-Limit** (5 Fehlversuche pro E-Mail+IP, dann 15 Min. Sperre) + **`scrypt` asynchron** statt `scryptSync`, das bei jedem Login-Versuch den Event-Loop blockierte — zusammen war `/auth/login` der billigste DoS-Hebel und ein offenes Brute-Force-Ziel.
+  - **Session-Ablauf**: `last_seen_at` wurde gepflegt, aber nie geprüft — eine Session galt ewig. Jetzt Idle-Ablauf nach `SESSION_IDLE_DAYS` (Default 90), Aufräumen beim Serverstart.
+  - **Kampagnen-Beitritt braucht einen Beitritts-Code.** Vorher konnte jeder eingeloggte Nutzer jeder Kampagne beitreten und danach ihre Notizen/Schiffe/Dateien schreiben — die Mitgliedschaftsprüfungen aus 3.4.1 liefen damit ins Leere. Der Code wird serverseitig erzeugt, ist nur für Mitglieder sichtbar (Kampagnen-Panel) und zeitkonstant verglichen.
+  - **Admin-Lockout verhindert**: der letzte Administrator kann sich die Admin-Rolle nicht entziehen und sich nicht löschen; das eigene Konto ist generell nicht löschbar.
+  - **Speicher-Quota pro Nutzer** (Default 2 GiB, über `USER_QUOTA_BYTES` einstellbar, 0 = unbegrenzt) auf `PUT /char/:id` und `POST /files` — vorher konnte ein Nutzer unbegrenzt 100-MB-PDFs hochladen und die Platte des selbst gehosteten Servers füllen.
+  - Nebenbei: `/admin/backup-snapshots` validiert `type`/`id`/`commit` jetzt streng (verhindert Pfad-Traversal ins Backup-Repo und als `git`-Optionen interpretierte Werte); Bestandsdaten (passwortlose Nutzer, Kampagnen ohne Code) werden beim ersten Start dieser Version automatisch migriert und die dabei erzeugten Tokens/Codes einmalig ins Server-Log geschrieben.
+
+---
+
 ## [3.4.2] – 2026-07-08
 
 ### Sicherheit

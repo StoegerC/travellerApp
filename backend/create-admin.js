@@ -1,19 +1,25 @@
 #!/usr/bin/env node
 /**
  * Einmaliges Bootstrap-Script (Phase 3 / Nutzerverwaltung): legt einen
- * Administrator-Account an (Passwort wird beim ersten Login gesetzt, siehe
- * backend/routes/auth.js) und ordnet optional alle aktuell besitzerlosen
+ * Administrator-Account an und ordnet optional alle aktuell besitzerlosen
  * Bestandscharaktere/-kampagnen diesem Account zu.
  *
  * Löst das Henne-Ei-Problem: ohne mindestens einen Administrator kann sich
  * niemand einloggen, um weitere Nutzer anzulegen.
+ *
+ * Gibt einen einmaligen Setup-Token aus, mit dem sich der Administrator genau
+ * einmal anmeldet und dabei sofort ein eigenes Passwort setzt (siehe
+ * backend/routes/auth.js). Früher wurde das Passwort schlicht beim ersten Login
+ * gesetzt - wer die E-Mail kannte und schneller war, übernahm das Konto.
  *
  * Aufruf:
  *   node backend/create-admin.js <email>
  *   node backend/create-admin.js <email> --claim-existing
  */
 require('dotenv').config();
+const crypto = require('crypto');
 const db = require('./db');
+const { hashPassword } = require('./auth');
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -25,7 +31,7 @@ function isValidEmail(email) {
   return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-function main() {
+async function main() {
   const { email, claimExisting } = parseArgs();
   if (!isValidEmail(email)) {
     console.error('Aufruf: node backend/create-admin.js <email> [--claim-existing]');
@@ -36,9 +42,21 @@ function main() {
   if (user) {
     console.log(`Nutzer ${email} existiert bereits (id=${user.id}), Rollen: ${user.roles.join(', ') || '(keine)'}`);
   } else {
-    user = db.insertUser({ id: `user-${Date.now()}`, email, roles: ['admin'] });
+    const setupToken = crypto.randomBytes(24).toString('base64url');
+    user = db.insertUser({
+      id: `user-${Date.now()}`,
+      email,
+      roles: ['admin'],
+      passwordHash: await hashPassword(setupToken),
+      mustChangePassword: true,
+    });
     console.log(`Administrator angelegt: ${email} (id=${user.id})`);
-    console.log('Passwort wird beim ersten Login in der App gesetzt.');
+    console.log('');
+    console.log(`  Setup-Token: ${setupToken}`);
+    console.log('');
+    console.log('Damit einmal in der App anmelden (als Passwort eingeben) - die App verlangt');
+    console.log('danach sofort ein eigenes Passwort. Der Token steht nur hier und ist danach');
+    console.log('nur noch als Hash gespeichert.');
   }
 
   if (!claimExisting) return;
@@ -67,4 +85,4 @@ function main() {
   }
 }
 
-main();
+main().catch(err => { console.error(err); process.exit(1); });
