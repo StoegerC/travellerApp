@@ -47,7 +47,7 @@ const MetadataPage = {
 
     // ── Portrait-Widget (gemeinsam für Lese- und Bearbeitungsmodus) ─────
     const portraitDisplay = current
-      ? `<img class="portrait-img" src="${current}" alt="Portrait">`
+      ? `<img class="portrait-img" src="${this._esc(current)}" alt="Portrait">`
       : `<div class="portrait-placeholder">Kein Portrait</div>`;
 
     const navButtons = total > 1 ? `
