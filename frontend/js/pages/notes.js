@@ -182,7 +182,7 @@ const NotesPage = {
     let html = '<div class="notes-subtabs">';
     tabs.forEach(t => {
       const active = this._activeTab === t.id ? ' active' : '';
-      html += `<button class="notes-subtab-btn${active}" data-tab="${t.id}">
+      html += `<button class="notes-subtab-btn${active}" data-tab="${this._esc(t.id)}">
         ${t.label}${t.count !== null ? `<span class="subtab-count">${t.count}</span>` : ''}
       </button>`;
     });
@@ -253,7 +253,7 @@ const NotesPage = {
         const detail   = [events, tagCount ? `+${tagCount} Verknüpf.` : ''].filter(Boolean).join(' · ');
         const personIds   = (s.tags?.persons   || []).join(' ');
         const locationIds = (s.tags?.locations || []).join(' ');
-        html += `<tr class="notes-list-item" data-id="${s.id}"
+        html += `<tr class="notes-list-item" data-id="${this._esc(s.id)}"
                   data-personids="${this._esc(personIds)}"
                   data-locationids="${this._esc(locationIds)}">
           <td class="nt-date-col">${this._esc(s.inGameDate || '')}</td>
@@ -265,7 +265,7 @@ const NotesPage = {
         </tr>`;
       });
       this._extEntries('sessions').forEach(s => {
-        html += `<tr class="camp-ext-row notes-list-item" data-id="${s.id}">
+        html += `<tr class="camp-ext-row notes-list-item" data-id="${this._esc(s.id)}">
           <td class="nt-date-col">${this._esc(s.inGameDate || '')}</td>
           <td><span class="nli-title-inline">${this._esc(s.title || 'Ohne Titel')}</span></td>
           <td class="nt-detail-col"></td>
@@ -303,10 +303,10 @@ const NotesPage = {
     let html = `<div class="notes-detail">
       <div class="notes-detail-header">
         <button class="btn-back" id="backBtn">← Zurück</button>
-        ${!isNew ? `<button class="btn-session-active${s.isActive ? ' is-active' : ''}" id="setActiveSessionBtn" data-id="${s.id}">
+        ${!isNew ? `<button class="btn-session-active${s.isActive ? ' is-active' : ''}" id="setActiveSessionBtn" data-id="${this._esc(s.id)}">
           ${s.isActive ? '● Aktiv' : 'Aktiv schalten'}
         </button>` : ''}
-        ${!isNew && App.editMode ? `<button class="btn-danger btn-icon" id="deleteItemBtn" data-id="${s.id}">🗑</button>` : ''}
+        ${!isNew && App.editMode ? `<button class="btn-danger btn-icon" id="deleteItemBtn" data-id="${this._esc(s.id)}">🗑</button>` : ''}
       </div>`;
 
     if (App.editMode) {
@@ -325,7 +325,7 @@ const NotesPage = {
                   <div class="trav-date-field-wrap">
                     <span class="trav-date-sub-label">Jahr</span>
                     <input type="number" id="sessionDateYear" class="trav-date-num-inp"
-                           value="${s.inGameDate ? s.inGameDate.split('-')[0] : ''}"
+                           value="${s.inGameDate ? this._esc(s.inGameDate.split('-')[0]) : ''}"
                            min="0" max="9999" placeholder="z.B. 1106">
                   </div>
                   <div class="trav-date-field-wrap">
@@ -341,7 +341,7 @@ const NotesPage = {
             </div>
             <div class="form-group">
               <label>Erstellt am</label>
-              <input type="datetime-local" id="entryCreatedAt" value="${s.createdAt ? s.createdAt.slice(0,16) : new Date().toISOString().slice(0,16)}">
+              <input type="datetime-local" id="entryCreatedAt" value="${s.createdAt ? this._esc(s.createdAt.slice(0,16)) : new Date().toISOString().slice(0,16)}">
             </div>
           </div>
           <div class="form-group">
@@ -363,9 +363,9 @@ const NotesPage = {
             <div id="sessionAttachmentsList" class="attachment-list">
               ${(this._editAttachments || []).length
                 ? this._editAttachments.map(a => `
-                    <span class="attachment-chip" data-id="${a.id}">
+                    <span class="attachment-chip" data-id="${this._esc(a.id)}">
                       📄 ${this._esc(a.filename)}
-                      <button class="attachment-rm-btn" data-id="${a.id}" title="Anhang entfernen">×</button>
+                      <button class="attachment-rm-btn" data-id="${this._esc(a.id)}" title="Anhang entfernen">×</button>
                     </span>`).join('')
                 : '<span class="attachments-empty-hint">Keine Anhänge</span>'}
             </div>
@@ -417,7 +417,7 @@ const NotesPage = {
           ${s.attachments?.length ? `
             <div class="attachment-list">
               ${s.attachments.map(a => `
-                <a href="${FileSync.getUrl(a.id)}" target="_blank" rel="noopener" class="attachment-chip attachment-link">
+                <a href="${this._esc(FileSync.getUrl(a.id))}" target="_blank" rel="noopener" class="attachment-chip attachment-link">
                   📄 ${this._esc(a.filename)}
                 </a>`).join('')}
             </div>` : ''}
@@ -425,13 +425,13 @@ const NotesPage = {
           ${taggedPersons.length || taggedLocations.length || taggedQuests.length ? `
             <div class="session-links">
               ${taggedPersons.length ? `<div class="session-link-group"><strong>Personen:</strong>
-                ${taggedPersons.map(p => `<span class="link-chip person-link" data-tab="persons" data-id="${p.id}">${this._esc(p.name)}</span>`).join('')}
+                ${taggedPersons.map(p => `<span class="link-chip person-link" data-tab="persons" data-id="${this._esc(p.id)}">${this._esc(p.name)}</span>`).join('')}
               </div>` : ''}
               ${taggedLocations.length ? `<div class="session-link-group"><strong>Orte:</strong>
-                ${taggedLocations.map(l => `<span class="link-chip location-link" data-tab="locations" data-id="${l.id}">${this._esc(l.name)}</span>`).join('')}
+                ${taggedLocations.map(l => `<span class="link-chip location-link" data-tab="locations" data-id="${this._esc(l.id)}">${this._esc(l.name)}</span>`).join('')}
               </div>` : ''}
               ${taggedQuests.length ? `<div class="session-link-group"><strong>Quests:</strong>
-                ${taggedQuests.map(q => `<span class="link-chip quest-link" data-tab="quests" data-id="${q.id}">${this._esc(q.title)}</span>`).join('')}
+                ${taggedQuests.map(q => `<span class="link-chip quest-link" data-tab="quests" data-id="${this._esc(q.id)}">${this._esc(q.title)}</span>`).join('')}
               </div>` : ''}
             </div>` : ''}
         </div>`;
@@ -486,25 +486,25 @@ const NotesPage = {
 
         html += `
           <div class="person-card notes-list-item person-list-item"
-               data-id="${p.id}"
+               data-id="${this._esc(p.id)}"
                data-name="${this._esc(p.name).toLowerCase()}"
-               data-status="${p.status || ''}"
-               data-relation="${p.relation || ''}"
+               data-status="${this._esc(p.status || '')}"
+               data-relation="${this._esc(p.relation || '')}"
                data-locationids="${this._esc((p.locationIds || []).join(' '))}">
-            <button class="pcard-fav person-fav-btn${p.isFavorite ? ' active' : ''}" data-personid="${p.id}" title="Favorit">
+            <button class="pcard-fav person-fav-btn${p.isFavorite ? ' active' : ''}" data-personid="${this._esc(p.id)}" title="Favorit">
               ${p.isFavorite ? '⭐' : '☆'}
             </button>
             <div class="pcard-img">
               ${this._personImgSrc(p)
-                ? `<img src="${this._personImgSrc(p)}" class="pcard-avatar-img">`
+                ? `<img src="${this._esc(this._personImgSrc(p))}" class="pcard-avatar-img">`
                 : `<span class="pcard-avatar-ph">👤</span>`}
             </div>
             <div class="pcard-body">
               <div class="pcard-name">${this._esc(p.name || '(Kein Name)')}</div>
               ${p.role ? `<div class="pcard-role">${this._esc(p.role)}</div>` : ''}
               <div class="pcard-badges">
-                <span class="status-badge status-${p.status || 'unknown'}">${this._statusLabel(p.status)}</span>
-                <span class="relation-badge rel-${p.relation || 'neutral'}">${this._relationLabel(p.relation)}</span>
+                <span class="status-badge status-${this._esc(p.status || 'unknown')}">${this._statusLabel(p.status)}</span>
+                <span class="relation-badge rel-${this._esc(p.relation || 'neutral')}">${this._relationLabel(p.relation)}</span>
               </div>
               ${meta ? `<div class="pcard-meta">${meta}</div>` : ''}
               ${p.isCampaign ? '<div class="pcard-meta"><span class="camp-share-badge" title="In Kampagne geteilt">🏕 Kampagne</span></div>' : ''}
@@ -516,7 +516,7 @@ const NotesPage = {
       if (extPersons.length) {
         html += `<div class="camp-ext-section"><span class="camp-ext-label">🏕 Von Mitspielern</span><div class="person-card-grid">`;
         extPersons.forEach(p => {
-          html += `<div class="camp-ext-entry pcard-ext person-card notes-list-item" data-id="${p.id}">
+          html += `<div class="camp-ext-entry pcard-ext person-card notes-list-item" data-id="${this._esc(p.id)}">
             <span class="pcard-name">${this._esc(p.name || '(Kein Name)')}</span>
             ${p.role ? `<span class="pcard-role">${this._esc(p.role)}</span>` : ''}
           </div>`;
@@ -549,7 +549,7 @@ const NotesPage = {
     let html = `<div class="notes-detail">
       <div class="notes-detail-header">
         <button class="btn-back" id="backBtn">← Zurück</button>
-        ${!isNew && App.editMode ? `<button class="btn-danger btn-icon" id="deleteItemBtn" data-id="${p.id}">🗑</button>` : ''}
+        ${!isNew && App.editMode ? `<button class="btn-danger btn-icon" id="deleteItemBtn" data-id="${this._esc(p.id)}">🗑</button>` : ''}
       </div>`;
 
     if (App.editMode) {
@@ -559,7 +559,7 @@ const NotesPage = {
             <div class="person-edit-image">
               <div id="personImgPreview" class="person-img-wrap">
                 ${this._personImgSrc(p)
-                  ? `<img src="${this._personImgSrc(p)}" class="person-img-edit">`
+                  ? `<img src="${this._esc(this._personImgSrc(p))}" class="person-img-edit">`
                   : `<div class="person-img-placeholder">👤</div>`}
               </div>
               <label for="personImgUpload" class="person-img-upload-btn">Bild wählen</label>
@@ -616,7 +616,7 @@ const NotesPage = {
           </div>
           <div class="form-group form-group-ts">
             <label>Erstellt am</label>
-            <input type="datetime-local" id="entryCreatedAt" value="${p.createdAt ? p.createdAt.slice(0,16) : new Date().toISOString().slice(0,16)}">
+            <input type="datetime-local" id="entryCreatedAt" value="${p.createdAt ? this._esc(p.createdAt.slice(0,16)) : new Date().toISOString().slice(0,16)}">
           </div>
           ${isNew ? (() => {
             const active = this._activeSession(data);
@@ -643,13 +643,13 @@ const NotesPage = {
       html += `
         <div class="person-view">
           <div class="person-view-header">
-            ${this._personImgSrc(p) ? `<img src="${this._personImgSrc(p)}" class="person-img-view">` : ''}
+            ${this._personImgSrc(p) ? `<img src="${this._esc(this._personImgSrc(p))}" class="person-img-view">` : ''}
             <div class="person-view-meta">
               <h3>${this._esc(p.name || '(Kein Name)')}</h3>
               <div class="person-view-badges">
-                <span class="status-badge status-${p.status || 'unknown'}">${this._statusLabel(p.status)}</span>
-                <span class="relation-badge rel-${p.relation || 'neutral'}">${this._relationLabel(p.relation)}</span>
-                ${linkedLocationObjs.map(loc => `<span class="link-chip location-link" data-tab="locations" data-id="${loc.id}">📍 ${this._esc(loc.name)}</span>`).join('')}
+                <span class="status-badge status-${this._esc(p.status || 'unknown')}">${this._statusLabel(p.status)}</span>
+                <span class="relation-badge rel-${this._esc(p.relation || 'neutral')}">${this._relationLabel(p.relation)}</span>
+                ${linkedLocationObjs.map(loc => `<span class="link-chip location-link" data-tab="locations" data-id="${this._esc(loc.id)}">📍 ${this._esc(loc.name)}</span>`).join('')}
               </div>
               ${p.role ? `<p class="person-role"><em>${this._esc(p.role)}</em></p>` : ''}
               ${p.race && p.race !== 'Mensch' ? `<p class="person-race">${this._esc(p.race)}</p>` : ''}
@@ -660,7 +660,7 @@ const NotesPage = {
             <h4>Erscheint in Sessions</h4>
             <div class="linked-items">
               ${linkedSessions.map(s => `
-                <span class="link-chip session-link" data-tab="sessions" data-id="${s.id}">
+                <span class="link-chip session-link" data-tab="sessions" data-id="${this._esc(s.id)}">
                   ${s.sessionDate ? this._esc(s.sessionDate) + ' – ' : ''}${this._esc(s.title || 'Ohne Titel')}
                 </span>`).join('')}
             </div>` : ''}
@@ -814,23 +814,23 @@ const NotesPage = {
     } else {
       this._sortedList(data.locations, 'locations').forEach(l => {
         const detail = [l.sector, l.uwp].filter(Boolean).join(' ');
-        html += `<tr class="notes-list-item location-list-item" data-id="${l.id}"
+        html += `<tr class="notes-list-item location-list-item" data-id="${this._esc(l.id)}"
                    data-name="${this._esc((l.name||'').toLowerCase())}"
-                   data-locstatus="${l.status || ''}">
+                   data-locstatus="${this._esc(l.status || '')}">
           <td class="nt-date-col">${this._esc(l.visitedDate || '')}</td>
           <td>
             <span class="nli-title-inline">${this._esc(l.name || '(Kein Name)')}</span>
-            ${l.mapX != null ? `<button class="loc-list-map-btn" data-locid="${l.id}" title="Auf Karte zeigen">🗺</button>` : ''}
+            ${l.mapX != null ? `<button class="loc-list-map-btn" data-locid="${this._esc(l.id)}" title="Auf Karte zeigen">🗺</button>` : ''}
           </td>
           <td class="nt-detail-col">${this._esc(detail)}</td>
-          <td class="nt-status-col"><span class="loc-status-badge loc-${l.status||'known'}">${this._locStatusLabel(l.status)}</span></td>
+          <td class="nt-status-col"><span class="loc-status-badge loc-${this._esc(l.status||'known')}">${this._locStatusLabel(l.status)}</span></td>
           <td class="nt-camp-col">${l.isCampaign ? '🏕' : ''}</td>
           <td class="nt-date-col nt-created">${(l.createdAt||'').slice(0,10)}</td>
         </tr>`;
       });
       this._extEntries('locations').forEach(l => {
         const detail = [l.sector, l.uwp].filter(Boolean).join(' ');
-        html += `<tr class="camp-ext-row notes-list-item" data-id="${l.id}">
+        html += `<tr class="camp-ext-row notes-list-item" data-id="${this._esc(l.id)}">
           <td></td>
           <td><span class="nli-title-inline">${this._esc(l.name || '(Kein Name)')}</span></td>
           <td class="nt-detail-col">${this._esc(detail)}</td>
@@ -871,7 +871,7 @@ const NotesPage = {
     let html = `<div class="notes-detail">
       <div class="notes-detail-header">
         <button class="btn-back" id="backBtn">← Zurück</button>
-        ${!isNew && App.editMode ? `<button class="btn-danger btn-icon" id="deleteItemBtn" data-id="${l.id}">🗑</button>` : ''}
+        ${!isNew && App.editMode ? `<button class="btn-danger btn-icon" id="deleteItemBtn" data-id="${this._esc(l.id)}">🗑</button>` : ''}
       </div>`;
 
     if (App.editMode) {
@@ -889,8 +889,8 @@ const NotesPage = {
                 🗺 Verknüpft: ${this._esc(l.mapSector || '')} ${this._esc(l.mapHex || '')}
                 <button id="locMapUnlink" class="loc-map-unlink">× Entfernen</button>
               </div>` : ''}
-            <input type="hidden" id="locMapX"      value="${l.mapX      ?? ''}">
-            <input type="hidden" id="locMapY"      value="${l.mapY      ?? ''}">
+            <input type="hidden" id="locMapX"      value="${this._esc(String(l.mapX ?? ''))}">
+            <input type="hidden" id="locMapY"      value="${this._esc(String(l.mapY ?? ''))}">
             <input type="hidden" id="locMapSector" value="${this._esc(l.mapSector || '')}">
             <input type="hidden" id="locMapHex"    value="${this._esc(l.mapHex    || '')}">
           </div>
@@ -917,7 +917,7 @@ const NotesPage = {
                   <div class="trav-date-field-wrap">
                     <span class="trav-date-sub-label">Jahr</span>
                     <input type="number" id="travDateYear" class="trav-date-num-inp"
-                           value="${l.visitedDate ? l.visitedDate.split('-')[0] : ''}"
+                           value="${l.visitedDate ? this._esc(l.visitedDate.split('-')[0]) : ''}"
                            min="0" max="9999" placeholder="z.B. 1106">
                   </div>
                   <div class="trav-date-field-wrap">
@@ -948,7 +948,7 @@ const NotesPage = {
           </div>
           <div class="form-group form-group-ts">
             <label>Erstellt am</label>
-            <input type="datetime-local" id="entryCreatedAt" value="${l.createdAt ? l.createdAt.slice(0,16) : new Date().toISOString().slice(0,16)}">
+            <input type="datetime-local" id="entryCreatedAt" value="${l.createdAt ? this._esc(l.createdAt.slice(0,16)) : new Date().toISOString().slice(0,16)}">
           </div>
           ${isNew ? (() => {
             const active = this._activeSession(data);
@@ -976,13 +976,13 @@ const NotesPage = {
         <div class="location-view">
           <div class="location-view-header">
             <h3>${this._esc(l.name || '(Kein Name)')}</h3>
-            <span class="loc-status-badge loc-${l.status || 'known'}">${this._locStatusLabel(l.status)}</span>
+            <span class="loc-status-badge loc-${this._esc(l.status || 'known')}">${this._locStatusLabel(l.status)}</span>
           </div>
           <div class="loc-meta">
             ${l.sector ? `<span>📍 ${this._esc(l.sector)}</span>` : ''}
             ${l.visitedDate ? `<span>📅 ${this._esc(l.visitedDate)}</span>` : ''}
             ${l.mapX != null
-              ? `<button class="btn-map-show" id="showOnMapBtn" data-locid="${l.id}">🗺 Auf Karte zeigen</button>`
+              ? `<button class="btn-map-show" id="showOnMapBtn" data-locid="${this._esc(l.id)}">🗺 Auf Karte zeigen</button>`
               : ''}
           </div>
           ${l.uwp ? (() => {
@@ -1009,17 +1009,17 @@ const NotesPage = {
           ${linkedSessions.length ? `
             <h4>Erwähnt in Sessions</h4>
             <div class="linked-items">
-              ${linkedSessions.map(s => `<span class="link-chip session-link" data-tab="sessions" data-id="${s.id}">${s.sessionDate ? this._esc(s.sessionDate) + ' – ' : ''}${this._esc(s.title || 'Ohne Titel')}</span>`).join('')}
+              ${linkedSessions.map(s => `<span class="link-chip session-link" data-tab="sessions" data-id="${this._esc(s.id)}">${s.sessionDate ? this._esc(s.sessionDate) + ' – ' : ''}${this._esc(s.title || 'Ohne Titel')}</span>`).join('')}
             </div>` : ''}
           ${directPersons.length ? `
             <h4>Personen hier</h4>
             <div class="linked-items">
-              ${directPersons.map(p => `<span class="link-chip person-link" data-tab="persons" data-id="${p.id}">📍 ${this._esc(p.name)}</span>`).join('')}
+              ${directPersons.map(p => `<span class="link-chip person-link" data-tab="persons" data-id="${this._esc(p.id)}">📍 ${this._esc(p.name)}</span>`).join('')}
             </div>` : ''}
           ${sessionPersons.length ? `
             <h4>Aus Sessions bekannt</h4>
             <div class="linked-items">
-              ${sessionPersons.map(p => `<span class="link-chip person-link" data-tab="persons" data-id="${p.id}">${this._esc(p.name)}</span>`).join('')}
+              ${sessionPersons.map(p => `<span class="link-chip person-link" data-tab="persons" data-id="${this._esc(p.id)}">${this._esc(p.name)}</span>`).join('')}
             </div>` : ''}
         </div>`;
     }
@@ -1074,13 +1074,13 @@ const NotesPage = {
     filtered.forEach(q => {
       const giverNames = (q.questGiverIds || []).map(pid => data.persons.find(p => p.id === pid)).filter(Boolean).map(p => p.name).join(', ');
       const detail = [giverNames, q.reward].filter(Boolean).join(' · ');
-      html += `<tr class="notes-list-item quest-list-item" data-id="${q.id}"
-                  data-qstatus="${q.status || 'active'}"
+      html += `<tr class="notes-list-item quest-list-item" data-id="${this._esc(q.id)}"
+                  data-qstatus="${this._esc(q.status || 'active')}"
                   data-name="${this._esc((q.title||'').toLowerCase())}">
         <td class="nt-date-col"></td>
         <td>
           <span class="nli-title-inline">${this._esc(q.title || 'Ohne Titel')}</span>
-          <span class="quest-status-badge qst-${q.status||'active'}">${this._questStatusLabel(q.status)}</span>
+          <span class="quest-status-badge qst-${this._esc(q.status||'active')}">${this._questStatusLabel(q.status)}</span>
         </td>
         <td class="nt-detail-col">${this._esc(detail)}</td>
         <td class="nt-camp-col">${q.isCampaign ? '🏕' : ''}</td>
@@ -1090,10 +1090,10 @@ const NotesPage = {
     });
 
     this._extEntries('quests').forEach(q => {
-      html += `<tr class="camp-ext-row notes-list-item" data-id="${q.id}">
+      html += `<tr class="camp-ext-row notes-list-item" data-id="${this._esc(q.id)}">
         <td></td>
         <td><span class="nli-title-inline">${this._esc(q.title || 'Ohne Titel')}</span>
-          <span class="quest-status-badge qst-${q.status||'active'}">${this._questStatusLabel(q.status)}</span></td>
+          <span class="quest-status-badge qst-${this._esc(q.status||'active')}">${this._questStatusLabel(q.status)}</span></td>
         <td class="nt-detail-col"></td>
         <td class="nt-camp-col">🏕</td>
         <td></td><td></td>
@@ -1123,7 +1123,7 @@ const NotesPage = {
     let html = `<div class="notes-detail">
       <div class="notes-detail-header">
         <button class="btn-back" id="backBtn">← Zurück</button>
-        ${!isNew && App.editMode ? `<button class="btn-danger btn-icon" id="deleteItemBtn" data-id="${q.id}">🗑</button>` : ''}
+        ${!isNew && App.editMode ? `<button class="btn-danger btn-icon" id="deleteItemBtn" data-id="${this._esc(q.id)}">🗑</button>` : ''}
       </div>`;
 
     if (App.editMode) {
@@ -1161,7 +1161,7 @@ const NotesPage = {
           </div>
           <div class="form-group form-group-ts">
             <label>Erstellt am</label>
-            <input type="datetime-local" id="entryCreatedAt" value="${q.createdAt ? q.createdAt.slice(0,16) : new Date().toISOString().slice(0,16)}">
+            <input type="datetime-local" id="entryCreatedAt" value="${q.createdAt ? this._esc(q.createdAt.slice(0,16)) : new Date().toISOString().slice(0,16)}">
           </div>
           ${App.currentCharacter?.campaignId ? `
           <div class="form-group">
@@ -1180,17 +1180,17 @@ const NotesPage = {
         <div class="quest-view">
           <div class="quest-view-header">
             <h3>${this._esc(q.title || 'Ohne Titel')}</h3>
-            <span class="quest-status-badge qst-${q.status || 'active'}">${this._questStatusLabel(q.status)}</span>
+            <span class="quest-status-badge qst-${this._esc(q.status || 'active')}">${this._questStatusLabel(q.status)}</span>
           </div>
-          ${givers.length ? `<p class="quest-giver">Auftraggeber: ${givers.map(g => `<span class="link-chip person-link" data-tab="persons" data-id="${g.id}">${this._esc(g.name)}</span>`).join(' ')}</p>` : ''}
-          ${questLocs.length ? `<p class="quest-locations">Orte: ${questLocs.map(l => `<span class="link-chip location-link" data-tab="locations" data-id="${l.id}">${this._esc(l.name)}</span>`).join(' ')}</p>` : ''}
+          ${givers.length ? `<p class="quest-giver">Auftraggeber: ${givers.map(g => `<span class="link-chip person-link" data-tab="persons" data-id="${this._esc(g.id)}">${this._esc(g.name)}</span>`).join(' ')}</p>` : ''}
+          ${questLocs.length ? `<p class="quest-locations">Orte: ${questLocs.map(l => `<span class="link-chip location-link" data-tab="locations" data-id="${this._esc(l.id)}">${this._esc(l.name)}</span>`).join(' ')}</p>` : ''}
           ${q.objective ? `<div class="detail-section"><strong>Ziel</strong><div class="md-content">${Md.render(q.objective)}</div></div>` : ''}
           ${q.reward ? `<div class="detail-section"><strong>Belohnung:</strong> ${this._esc(q.reward)}</div>` : ''}
           ${q.description ? `<div class="detail-desc md-content">${Md.render(q.description)}</div>` : ''}
           ${linkedSessions.length ? `
             <h4>Erwähnt in Sessions</h4>
             <div class="linked-items">
-              ${linkedSessions.map(s => `<span class="link-chip session-link" data-tab="sessions" data-id="${s.id}">${s.sessionDate ? this._esc(s.sessionDate) + ' – ' : ''}${this._esc(s.title || 'Ohne Titel')}</span>`).join('')}
+              ${linkedSessions.map(s => `<span class="link-chip session-link" data-tab="sessions" data-id="${this._esc(s.id)}">${s.sessionDate ? this._esc(s.sessionDate) + ' – ' : ''}${this._esc(s.title || 'Ohne Titel')}</span>`).join('')}
             </div>` : ''}
         </div>`;
     }
@@ -1217,9 +1217,9 @@ const NotesPage = {
         <label>${label}</label>
         <div class="tag-chips" id="chips-${type}">
           ${selected.map(x => `
-            <span class="tag-chip tp-chip" data-type="${type}" data-id="${x.id}" data-context="${contextKey}">
+            <span class="tag-chip tp-chip" data-type="${type}" data-id="${this._esc(x.id)}" data-context="${contextKey}">
               ${this._esc(x[nameKey])}
-              <button class="chip-rm" data-type="${type}" data-id="${x.id}" data-context="${contextKey}">×</button>
+              <button class="chip-rm" data-type="${type}" data-id="${this._esc(x.id)}" data-context="${contextKey}">×</button>
             </span>`).join('')}
           <button class="chip-add-btn" data-type="${type}">+ ${label}</button>
         </div>
@@ -1233,7 +1233,7 @@ const NotesPage = {
           <div class="tp-options" id="tpo-${type}">
             ${available.map(x => `
               <label class="tp-option">
-                <input type="checkbox" data-type="${type}" data-id="${x.id}" data-context="${contextKey}">
+                <input type="checkbox" data-type="${type}" data-id="${this._esc(x.id)}" data-context="${contextKey}">
                 ${this._esc(x[nameKey])}
               </label>`).join('')}
             ${available.length === 0 ? '<p class="tp-empty">Keine weiteren Einträge</p>' : ''}
@@ -1636,7 +1636,7 @@ const NotesPage = {
             window._personCurrentImage       = null;
             window._personCurrentImageFileId = result.data.id;
             const preview = document.getElementById('personImgPreview');
-            if (preview) preview.innerHTML = `<img src="${FileSync.getUrl(result.data.id)}" class="person-img-edit">`;
+            if (preview) preview.innerHTML = `<img src="${this._esc(FileSync.getUrl(result.data.id))}" class="person-img-edit">`;
             const rmBtn = document.getElementById('personImgRemove');
             if (!rmBtn) {
               const uploadBtn = document.querySelector('.person-img-upload-btn');

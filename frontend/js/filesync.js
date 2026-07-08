@@ -35,12 +35,22 @@ const FileSync = {
     }
   },
 
+  // Datei-IDs kommen ausschliesslich vom Server (crypto.randomBytes(16) als
+  // Hex, siehe backend/routes/files.js) - alles andere ist manipulierter
+  // Datenbestand (JSON-Import, Kampagnen-Sync von Mitspielern) und wird hier
+  // zentral abgewiesen, bevor die ID in ein src/href-Attribut interpoliert wird.
+  _ID_RE: /^[a-f0-9]{16,64}$/i,
+
   getUrl(fileId) {
-    return fileId ? `${CloudSync.getWorkerUrl()}/files/${fileId}` : null;
+    if (!fileId || !this._ID_RE.test(String(fileId))) return null;
+    return `${CloudSync.getWorkerUrl()}/files/${fileId}`;
   },
 
   async remove(fileId) {
-    if (!fileId || !CloudSync.isConfigured()) return { ok: false };
+    // Gleiche ID-Validierung wie getUrl(): verhindert, dass eine manipulierte
+    // "Datei-ID" wie "../char/<id>" per Pfad-Traversal einen ganz anderen
+    // DELETE-Endpunkt trifft.
+    if (!fileId || !this._ID_RE.test(String(fileId)) || !CloudSync.isConfigured()) return { ok: false };
     try {
       const res = await fetch(`${CloudSync.getWorkerUrl()}/files/${fileId}`, {
         method:  'DELETE',

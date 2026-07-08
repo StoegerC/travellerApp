@@ -212,21 +212,21 @@ const AttributesPage = {
             <span class="training-skill-name">${e(t.skillName)}</span>
             <span class="training-levels">${t.fromLevel} → ${t.toLevel}</span>
             <span class="train-method-badge ${this._methodClass(t.method)}">${this._methodLabel(t.method)}</span>
-            ${App.editMode ? `<button class="training-del-btn btn-icon" data-id="${t.id}">🗑</button>` : ''}
+            ${App.editMode ? `<button class="training-del-btn btn-icon" data-id="${this._esc(t.id)}">🗑</button>` : ''}
           </div>
 
           <div class="training-card-counter">
-            <button class="training-pm-btn" data-id="${t.id}" data-delta="-1" aria-label="Weniger">−</button>
-            <span class="training-counter" data-id="${t.id}">${progress} / ${total} Wochen</span>
-            <button class="training-pm-btn" data-id="${t.id}" data-delta="1" aria-label="Mehr">+</button>
-            <button class="training-complete-btn${ready ? ' training-complete-ready' : ''}" data-id="${t.id}">
+            <button class="training-pm-btn" data-id="${this._esc(t.id)}" data-delta="-1" aria-label="Weniger">−</button>
+            <span class="training-counter" data-id="${this._esc(t.id)}">${progress} / ${total} Wochen</span>
+            <button class="training-pm-btn" data-id="${this._esc(t.id)}" data-delta="1" aria-label="Mehr">+</button>
+            <button class="training-complete-btn${ready ? ' training-complete-ready' : ''}" data-id="${this._esc(t.id)}">
               ✓ Abschließen
             </button>
           </div>
 
           <div class="training-progress-track">
             <div class="training-progress-fill${ready ? ' training-progress-fill--done' : ''}"
-                 data-id="${t.id}"
+                 data-id="${this._esc(t.id)}"
                  style="width:${pct}%"></div>
           </div>
 
@@ -255,7 +255,7 @@ const AttributesPage = {
                 <span class="training-levels">${t.fromLevel}→${t.toLevel}</span>
                 <span class="train-method-small">${this._methodLabel(t.method)}</span>
                 ${t.completedDate ? `<span class="training-done-date">${e(t.completedDate)}</span>` : ''}
-                ${App.editMode ? `<button class="training-del-btn btn-icon btn-xs" data-id="${t.id}">🗑</button>` : ''}
+                ${App.editMode ? `<button class="training-del-btn btn-icon btn-xs" data-id="${this._esc(t.id)}">🗑</button>` : ''}
               </div>`).join('')}
           </div>
         </details>`;

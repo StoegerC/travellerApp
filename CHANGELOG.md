@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.4.2] – 2026-07-08
+
+### Sicherheit
+- **Gespeichertes XSS über HTML-Attribute behoben** — der Fix aus 3.4.1 escapte Namen/Beschreibungen im Textinhalt, aber IDs, Enum-Felder (`status`, `relation`) und Datei-IDs wurden weiterhin ungeescaped in HTML-**Attribute** interpoliert (`data-id="${p.id}"`, `<img src="${...imageFileId}">`, `class="rel-${p.relation}"` u.a., allein ~40 Stellen in `notes.js`, dazu `ship.js`, `career.js`, `equipment.js`, `metadata.js`, `attributes.js`). Ein Eintrag mit `imageFileId: 'x" onerror="…'` brach aus dem `src`-Attribut aus und führte Code aus — nachgestellt und bestätigt: gegen den alten Stand feuern vier von vier Payloads, gegen den neuen keiner. Relevant, weil diese Felder nicht nur aus eigener Eingabe stammen, sondern über den Kampagnen-Pool von Mitspielern und über den JSON-Import ins Gerät kommen; der Session-Token liegt in `localStorage` und wäre damit auslesbar gewesen. Zusätzlich: `FileSync.getUrl()`/`.remove()` validieren die Datei-ID jetzt zentral gegen das Server-Format (Hex, 16–64 Zeichen) statt sie blind in eine URL zu setzen — eine manipulierte „ID" wie `../char/<id>` hätte sonst per Pfad-Traversal einen anderen Endpunkt getroffen. `KartePage._esc()` fehlte als einziger `_esc()`-Variante das `"`-Escaping und wurde angeglichen.
+
+---
+
 ## [3.4.1] – 2026-07-07
 
 ### Sicherheit

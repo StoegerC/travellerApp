@@ -2,6 +2,30 @@ Traveller Charsheet – Offene Aufgaben
 ======================================
 Abgeschlossene Features siehe CHANGELOG.md
 
+SICHERHEIT (aus Code-Review 2026-07-08)
+[ ] Erst-Login-Übernahmefenster schließen: Admin generiert Einmal-Setup-Token/
+    Startpasswort statt "erster Schreiber gewinnt" (betrifft Neuanlage UND
+    jeden Admin-Passwort-Reset, backend/routes/auth.js)
+[ ] Rate-Limit auf POST /auth/login (z.B. 5 Fehlversuche pro E-Mail, dann
+    Wartezeit) + Wechsel von crypto.scryptSync auf async crypto.scrypt
+    (scryptSync blockiert bei jedem Login-Versuch den ganzen Event-Loop)
+[ ] Session-Ablauf: last_seen_at wird gepflegt, aber nie geprüft — Ablauf nach
+    z.B. 90 Tagen Inaktivität in getSessionUser() + gelegentliches Aufräumen
+[ ] Kampagnen-Beitritt absichern: aktuell kann jeder authentifizierte Nutzer
+    jeder Kampagne beitreten und danach schreiben/Dateien hochladen —
+    Beitritts-Code pro Kampagne oder Owner-Bestätigung
+[ ] Admin-Lockout verhindern: Löschen des eigenen/letzten Admin-Kontos blocken
+[ ] /admin/backup-snapshots: commit/id-Format validieren (--flag-Injection an
+    git, Pfad-Traversal ins Backup-Repo — admin-only, daher niedrig)
+[ ] Speicher-Quota pro Nutzer (aktuell unbegrenzt: 100-MB-Uploads,
+    20-MB-Charakter-JSON beliebig oft)
+
+CODE-QUALITÄT
+[ ] Tests für backend/authz.js + frontend/js/sync-merge.js (pure Funktionen,
+    node --test ohne neue Abhängigkeit — dort lagen die letzten ernsten Bugs)
+[ ] notes.js aufteilen (2.274 Zeilen; Sub-Tabs als natürliche Schnittlinien),
+    ship.js (1.548) beobachten
+
 KAMPAGNE
 [ ] Entfernen propagiert via Sync (entferntes Gerät erkennt Ausschluss beim Poll)
 
@@ -27,6 +51,12 @@ CHARAKTERVERWALTUNG
 [ ] Regel-System-Switch (character.system wird gesetzt aber nie ausgewertet)
 
 UI / UX
+[ ] Passwort selbst ändern im Cloud-Dialog (aktuell nur Admin-Reset möglich,
+    der zudem das Erst-Login-Übernahmefenster wieder öffnet)
+[ ] Sync-Fehler deutlicher machen: Warnung "Änderungen noch nicht hochgeladen"
+    bzw. Zähler ausstehender Pushes statt nur dezentem Header-Badge
+[ ] Erwähnungen aktualisieren: "@[Name](typ:id)" friert den Namen ein —
+    Button "Erwähnungen aktualisieren" beim Umbenennen einer Person/eines Orts
 [ ] Würfelwurf-Widget: 2d6 + Modifikator direkt in der App
 [ ] Schnellsuche global im Header (Personen, Orte, Quests, Sessions)
 [ ] Timeline-Ansicht: Sessions chronologisch als Zeitstrahl

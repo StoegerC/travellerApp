@@ -152,7 +152,7 @@ const ShipPage = {
     const total   = images.length;
 
     const imgDisplay = current
-      ? `<img src="${current}" class="ship-portrait" alt="Schiff">`
+      ? `<img src="${this._esc(current)}" class="ship-portrait" alt="Schiff">`
       : `<div class="ship-portrait-placeholder">🚀</div>`;
 
     const navButtons = total > 1 ? `
@@ -185,9 +185,9 @@ const ShipPage = {
         <div id="shipAttachmentsList" class="attachment-list">
           ${attachments.length
             ? attachments.map(a => `
-                <span class="attachment-chip" data-id="${a.id}">
+                <span class="attachment-chip" data-id="${this._esc(a.id)}">
                   📄 ${this._esc(a.filename)}
-                  <button class="attachment-rm-btn" data-id="${a.id}" title="Anhang entfernen">×</button>
+                  <button class="attachment-rm-btn" data-id="${this._esc(a.id)}" title="Anhang entfernen">×</button>
                 </span>`).join('')
             : '<span class="attachments-empty-hint">Keine Dokumente</span>'}
         </div>
@@ -199,7 +199,7 @@ const ShipPage = {
     return `<h3 class="ship-section-title">Dokumente</h3>
       <div class="attachment-list">
         ${attachments.map(a => `
-          <a href="${FileSync.getUrl(a.id)}" target="_blank" rel="noopener" class="attachment-chip attachment-link">
+          <a href="${this._esc(FileSync.getUrl(a.id))}" target="_blank" rel="noopener" class="attachment-chip attachment-link">
             📄 ${this._esc(a.filename)}
           </a>`).join('')}
       </div>`;
@@ -497,8 +497,8 @@ const ShipPage = {
         <td><input class="sw-dmg"     value="${this._esc(w.damage   ||'')}" placeholder="1D6"></td>
         <td><input class="sw-range"   value="${this._esc(w.range    ||'')}" placeholder="Nah/Mittel"></td>
         <td><input class="sw-traits"  value="${this._esc(w.traits   ||'')}" placeholder="AP 5 …"></td>
-        <td><input class="sw-ammo"    value="${w.ammo    != null ? w.ammo    : ''}" type="number" min="0" placeholder="–"></td>
-        <td><input class="sw-ammomax" value="${w.ammoMax != null ? w.ammoMax : ''}" type="number" min="0" placeholder="–"></td>
+        <td><input class="sw-ammo"    value="${w.ammo    != null ? this._esc(String(w.ammo)) : ''}" type="number" min="0" placeholder="–"></td>
+        <td><input class="sw-ammomax" value="${w.ammoMax != null ? this._esc(String(w.ammoMax)) : ''}" type="number" min="0" placeholder="–"></td>
         <td class="ship-weapon-note-cell"><button class="btn-info sw-details${hasNote ? ' has-note' : ''}" data-idx="${i}">Merkmale${hasNote ? ' •' : ''}</button></td>
         <td><button class="btn-danger sw-rm" data-idx="${i}">✕</button></td>
       </tr>`;

@@ -680,7 +680,7 @@ const EquipmentPage = {
         ${App.editMode ? `<label class="traits-label">Bild</label>
           <input type="file" id="traitsImg" accept="image/*">` : ''}
         <div id="traitsImgPreview" class="traits-img-preview">
-          ${(traits.imageFileId || traits.image) ? `<img src="${traits.imageFileId ? FileSync.getUrl(traits.imageFileId) : traits.image}">` : ''}
+          ${(traits.imageFileId || traits.image) ? `<img src="${this._esc(traits.imageFileId ? FileSync.getUrl(traits.imageFileId) : traits.image)}">` : ''}
         </div>
         ${App.editMode
           ? `<label class="traits-label">Beschreibung / Merkmale</label>
@@ -713,7 +713,7 @@ const EquipmentPage = {
         // die Admin-Seite (Verlauf-Rueckwaerts-Kompatibilitaet).
         traits.image = null;
         traits.imageFileId = result.data.id;
-        document.getElementById('traitsImgPreview').innerHTML = `<img src="${FileSync.getUrl(traits.imageFileId)}">`;
+        document.getElementById('traitsImgPreview').innerHTML = `<img src="${this._esc(FileSync.getUrl(traits.imageFileId))}">`;
       });
 
       document.getElementById('traitsSaveBtn').addEventListener('click', () => {

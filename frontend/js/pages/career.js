@@ -74,7 +74,7 @@ const CareerPage = {
       const sel   = this._selectedTermId === t.id;
       dots += `<div class="cr-term-dot-wrap${sel?' selected':''}">
         <button class="cr-term-dot${last?' last':''}${sel?' sel':''}"
-          data-termid="${t.id}"
+          data-termid="${this._esc(t.id)}"
           style="background:${br.color};${sel?'box-shadow:0 0 0 4px '+br.color+'44;':''}">
           ${i + 1}
         </button>
@@ -113,8 +113,8 @@ const CareerPage = {
         ${t.rank ? `<span class="cr-detail-rank">${this._esc(t.rank)}</span>` : ''}
         ${t.musteredOut ? `<span class="cr-detail-muster">Ausgemustert${t.musterOutReason ? ': '+this._esc(t.musterOutReason) : ''}</span>` : ''}
         <div class="cr-detail-actions">
-          <button class="cr-detail-edit" data-termid="${t.id}">✎ Bearbeiten</button>
-          <button class="cr-detail-del"  data-termid="${t.id}">🗑</button>
+          <button class="cr-detail-edit" data-termid="${this._esc(t.id)}">✎ Bearbeiten</button>
+          <button class="cr-detail-del"  data-termid="${this._esc(t.id)}">🗑</button>
         </div>
       </div>
       ${t.events    ? `<div class="cr-detail-section"><strong>Ereignisse</strong><p>${this._esc(t.events)}</p></div>` : ''}
@@ -146,7 +146,7 @@ const CareerPage = {
       const linkedL  = (ev.linkedLocationIds|| []).map(id => locations.find(l => l.id===id)?.name).filter(Boolean);
 
       rows += `<div class="cr-event-row${expanded?' expanded':''}">
-        <div class="cr-event-header" data-eventid="${ev.id}">
+        <div class="cr-event-header" data-eventid="${this._esc(ev.id)}">
           <div class="cr-event-main">
             ${this._stars(ev.importance || 1, ev.id, true)}
             <span class="cr-event-title">${this._esc(ev.title)}</span>
@@ -251,7 +251,7 @@ const CareerPage = {
     } else {
       favs.forEach(p => {
         const r   = rel[p.relation] || rel.neutral;
-        rows += `<div class="cr-fav-row" data-personid="${p.id}">
+        rows += `<div class="cr-fav-row" data-personid="${this._esc(p.id)}">
           <span class="cr-fav-dot" style="background:${r.dot}"></span>
           <span class="cr-fav-name">${this._esc(p.name)}</span>
           <span class="cr-fav-role">${this._esc(p.role || '')}</span>
