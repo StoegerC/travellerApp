@@ -6,6 +6,12 @@
  * Zirkelbezug zu vermeiden und die Funktionen leicht testbar zu halten.
  */
 function ownsCharacter(db, userId, charId) {
+  // userId == null abfangen: ein besitzerloser Charakter (owner_id NULL, siehe
+  // db.deleteUser - Charaktere bleiben bewusst erhalten) wuerde sonst bei einem
+  // ebenfalls null/undefined userId ueber null === null faelschlich als
+  // "besessen" gelten. In der Praxis kommt userId immer aus der Session, aber
+  // eine Zugriffskontroll-Funktion soll sich nicht auf diese Annahme verlassen.
+  if (userId == null) return false;
   const char = db.getCharacter(charId);
   return !!char && char.ownerId === userId;
 }

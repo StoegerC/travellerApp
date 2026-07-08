@@ -9,6 +9,14 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.5.1] – 2026-07-08
+
+### Geändert (Code-Qualität)
+- **Erste Tests für die Merge-/Autorisierungs-Kernlogik** (`backend/test/authz.test.js`, `backend/test/sync-merge.test.js`, 23 neue Tests über `node --test`, weiterhin ohne neue Abhängigkeit). Genau dort lagen die letzten ernsten Bugs (Kampagnen-Autorisierungslücke, verlorene Mitspieler-Änderungen, Tombstone-Handling). Dabei einen latenten Fallstrick in `backend/authz.js` gefunden und behoben: `ownsCharacter()` gab bei einem besitzerlosen Charakter (`owner_id` NULL) und einem `null`-`userId` über `null === null` fälschlich `true` zurück — greift in der Praxis nicht (die `userId` kommt immer aus der Session), aber eine Zugriffskontroll-Funktion soll sich nicht darauf verlassen; jetzt mit expliziter Null-Prüfung.
+- **`notes.js` verkleinert** (2.274 → 1.994 Zeilen): der in sich geschlossene Travellermap-/Imperialkalender-Cluster (Datums-Formatierung, UWP-Dekodierung, Ortssuche) liegt jetzt in `frontend/js/pages/notes-travellermap.js` und wird per `Object.assign` auf dasselbe `NotesPage`-Objekt gemischt — reine Verlagerung ohne Verhaltensänderung (über einen Byte-Vergleich des gerenderten HTML aller vier Tabs inkl. Detailansichten gegen den vorherigen Stand abgesichert). Ein Per-Sub-Tab-Split wäre kein sauberer Schnitt, weil `save()`/`attachListeners()` alle vier Tabs in je einem monolithischen Methodenkörper verweben — als offener Punkt in `Todo.txt` festgehalten.
+
+---
+
 ## [3.5.0] – 2026-07-08
 
 ### Sicherheit

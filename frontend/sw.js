@@ -1,4 +1,4 @@
-const CACHE = 'traveller-v3.5.0';
+const CACHE = 'traveller-v3.5.1';
 
 const ASSETS = [
   './',
@@ -23,6 +23,7 @@ const ASSETS = [
   './js/pages/equipment.js',
   './js/pages/career.js',
   './js/pages/notes.js',
+  './js/pages/notes-travellermap.js',
   './js/pages/karte.js',
   './js/pages/combat.js',
   './js/pages/finances.js',
