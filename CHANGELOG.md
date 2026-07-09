@@ -9,6 +9,17 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.6.0] – 2026-07-09
+
+### Neu
+- **Schiff „Antriebe & Systeme" als editierbare Tabelle.** Die bisherigen Einzelfelder (M-Antrieb, J-Antrieb, Kraftwerk, Computer, Sensoren) sind jetzt eine frei erweiterbare Tabelle mit den Spalten **Kategorie · Details · Tons · Cost · Merkmale**. Zeilen lassen sich hinzufügen und entfernen; die Merkmale-Spalte öffnet — analog zu den Waffen — ein Markdown-Modal für ausführlichere Notizen pro Eintrag. Altbestand mit den bisherigen Einzelfeldern wird beim Laden automatisch in Tabellenzeilen übernommen (`ship.systems[]`, neues Modellfeld; die alten Felder bleiben additiv erhalten). Treibstoff und Betriebskosten bleiben als eigene Felder darunter.
+
+### Behoben
+- **Schiffsnotizen unterstützen jetzt Markdown** — bisher wurde der Notiztext im Schiff-Übersichtstab als reiner Text ausgegeben (`_esc`), obwohl das Eingabefeld Markdown nahelegt. Wird jetzt wie alle anderen Notizen über `Md.render()` gerendert (Überschriften, Listen, Tabellen, `@`-Erwähnungen).
+- **Schiffsnotizen im Dark Mode lesbar** — der Notiztext hatte keine Dark-Mode-Textfarbe und war auf dunklem Grund kaum sichtbar; erscheint jetzt hell (über die `md-content`-Dark-Mode-Regeln). Auch die neue Systeme-Tabelle hat einen Dark-Mode-Stil.
+
+---
+
 ## [3.5.1] – 2026-07-08
 
 ### Geändert (Code-Qualität)
