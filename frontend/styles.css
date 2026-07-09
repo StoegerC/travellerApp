@@ -7442,6 +7442,11 @@ body.dark-mode .update-reload-btn   { background: #dde0f5; color: #1a1d2e; }
   box-sizing: border-box;
 }
 .ssy-cat-cell { font-weight: 600; }
+.ship-systems-table th.ssy-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+.ship-systems-table th.ssy-sortable:hover { background: #ececec; }
+.ship-systems-table th.ssy-sort-active { color: #4a5aa8; }
+.ssy-sum-row td { font-weight: 700; border-top: 2px solid #ddd; background: #fafafa; }
+.ssy-sum-lbl { text-align: right; color: #666; font-weight: 600; }
 
 /* Status Tab */
 .ship-status-grid {
@@ -7796,6 +7801,10 @@ body.dark-mode .ship-weapon-table select { background: #1e2140; border-color: #3
 body.dark-mode .ship-systems-table th { background: #1e2140; border-color: #2c3050; color: #c8cce8; }
 body.dark-mode .ship-systems-table td { border-color: #2c3050; color: #c8cce8; }
 body.dark-mode .ship-systems-table input { background: #1e2140; border-color: #3a3f6b; color: #dde; }
+body.dark-mode .ship-systems-table th.ssy-sortable:hover { background: #262a4a; }
+body.dark-mode .ship-systems-table th.ssy-sort-active { color: #a78bfa; }
+body.dark-mode .ssy-sum-row td { background: #161929; border-top-color: #3a3f6b; color: #dde; }
+body.dark-mode .ssy-sum-lbl { color: #9095b8; }
 body.dark-mode .ship-ammo-btn         { background: #1e2140; border-color: #3a3f6b; color: #dde; }
 body.dark-mode .ship-empty-cell       { color: #6068a0; }
 body.dark-mode .ship-portrait-placeholder { background: #1e2140; border-color: #3a3f6b; }

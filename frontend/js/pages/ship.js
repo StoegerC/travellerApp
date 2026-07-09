@@ -3,6 +3,10 @@
  */
 const ShipPage = {
   _activeTab: 'info',
+  // Sortierung der "Antriebe & Systeme"-Tabelle (nur Leseansicht; die
+  // Bearbeitungsansicht bleibt in Eingabereihenfolge, damit Editieren stabil
+  // bleibt). col = category|detail|tons|cost, dir = asc|desc.
+  _sysSort: { col: null, dir: 'asc' },
 
   _CRIT_SYSTEMS: [
     { key: 'armour',      label: 'Panzerung'  },
@@ -209,18 +213,56 @@ const ShipPage = {
   // Merkmale). edit=true rendert Eingabefelder + Entfernen-Buttons, sonst eine
   // Leseansicht. Die Merkmale-Spalte oeffnet dasselbe Markdown-Modal wie die
   // Waffen-Merkmale (siehe _showSystemNote).
+  // Wandelt einen Tons-/Cost-Wert in eine Zahl (fürs Summieren/Sortieren).
+  // Akzeptiert Komma oder Punkt als Dezimaltrenner; nicht-numerisches → 0.
+  _sysNum(v) {
+    const n = parseFloat(String(v ?? '').replace(',', '.'));
+    return Number.isFinite(n) ? n : 0;
+  },
+
+  // Summe für die Anzeige formatieren (bis 3 Nachkommastellen, ohne Nullen).
+  _fmtSysSum(n) {
+    return (Math.round(n * 1000) / 1000).toLocaleString('de-DE', { maximumFractionDigits: 3 });
+  },
+
+  // Aktualisiert die Summenzeile in der Bearbeitungsansicht live aus den
+  // aktuellen Eingabefeldern (siehe attachListeners input-Handler).
+  _recalcSystemsSum() {
+    const body = document.getElementById('shipSystemsBody');
+    if (!body) return;
+    let t = 0, c = 0;
+    body.querySelectorAll('.ssy-tons').forEach(el => { t += this._sysNum(el.value); });
+    body.querySelectorAll('.ssy-cost').forEach(el => { c += this._sysNum(el.value); });
+    const tEl = document.getElementById('ssySumTons'); if (tEl) tEl.textContent = this._fmtSysSum(t);
+    const cEl = document.getElementById('ssySumCost'); if (cEl) cEl.textContent = this._fmtSysSum(c);
+  },
+
   _renderSystemsTable(ship, edit) {
     const systems = ship.systems || [];
+    const sumTons = systems.reduce((a, s) => a + this._sysNum(s.tons), 0);
+    const sumCost = systems.reduce((a, s) => a + this._sysNum(s.cost), 0);
+    const sumRow = (extraCols) => systems.length
+      ? `<tfoot><tr class="ssy-sum-row">
+          <td class="ssy-sum-lbl" colspan="2">Summe</td>
+          <td id="ssySumTons">${this._fmtSysSum(sumTons)}</td>
+          <td id="ssySumCost">${this._fmtSysSum(sumCost)}</td>
+          <td colspan="${extraCols}"></td>
+        </tr></tfoot>`
+      : '';
+
     if (edit) {
-      let rows = systems.map((s, i) => {
+      // Merkmale-Button ohne data-idx: der Zeilenindex wird beim Klick aus der
+      // DOM-Position berechnet, damit auch frisch hinzugefügte Zeilen (und
+      // Zeilen nach Entfernen) korrekt auf ship.systems[i] zeigen.
+      let rows = systems.map(s => {
         const hasNote = !!(s.notes && s.notes.trim());
         return `<tr>
         <td><input class="ssy-cat"    value="${this._esc(s.category || '')}" placeholder="M-Antrieb"></td>
         <td><input class="ssy-detail" value="${this._esc(s.detail   || '')}" placeholder="z.B. Thrust 6"></td>
         <td><input class="ssy-tons"   value="${this._esc(s.tons     || '')}" placeholder="–"></td>
         <td><input class="ssy-cost"   value="${this._esc(s.cost     || '')}" placeholder="–"></td>
-        <td class="ship-weapon-note-cell"><button class="btn-info ssy-details${hasNote ? ' has-note' : ''}" data-idx="${i}">Merkmale${hasNote ? ' •' : ''}</button></td>
-        <td><button class="btn-danger ssy-rm" data-idx="${i}">✕</button></td>
+        <td class="ship-weapon-note-cell"><button class="btn-info ssy-details${hasNote ? ' has-note' : ''}">Merkmale${hasNote ? ' •' : ''}</button></td>
+        <td><button class="btn-danger ssy-rm">✕</button></td>
       </tr>`;
       }).join('');
       if (!rows) rows = `<tr><td colspan="6" class="ship-empty-cell">Keine Einträge.</td></tr>`;
@@ -229,12 +271,27 @@ const ShipPage = {
           <table class="ship-systems-table">
             <thead><tr><th>Kategorie</th><th>Details</th><th>Tons</th><th>Cost</th><th>Merkmale</th><th></th></tr></thead>
             <tbody id="shipSystemsBody">${rows}</tbody>
+            ${sumRow(2)}
           </table>
         </div>`;
     }
 
-    // Leseansicht
-    let rows = systems.map((s, i) => {
+    // Leseansicht: sortierbar (per Klick auf die Kopfzelle), mit Summenzeile.
+    const sort = this._sysSort;
+    const view = systems.map((s, i) => ({ s, i }));
+    if (sort.col) {
+      const num = sort.col === 'tons' || sort.col === 'cost';
+      view.sort((a, b) => {
+        const cmp = num
+          ? this._sysNum(a.s[sort.col]) - this._sysNum(b.s[sort.col])
+          : String(a.s[sort.col] || '').localeCompare(String(b.s[sort.col] || ''), 'de', { sensitivity: 'base' });
+        return sort.dir === 'asc' ? cmp : -cmp;
+      });
+    }
+    const arrow = col => sort.col === col ? (sort.dir === 'asc' ? ' ▲' : ' ▼') : '';
+    const th = (col, label) => `<th class="ssy-sortable${sort.col === col ? ' ssy-sort-active' : ''}" data-sortcol="${col}">${label}${arrow(col)}</th>`;
+
+    let rows = view.map(({ s }) => {
       const hasNote = !!(s.notes && s.notes.trim());
       return `<tr>
         <td class="ssy-cat-cell">${this._esc(s.category || '–')}</td>
@@ -242,15 +299,16 @@ const ShipPage = {
         <td>${this._esc(s.tons || '–')}</td>
         <td>${this._esc(s.cost || '–')}</td>
         <td class="ship-weapon-note-cell">${hasNote
-          ? `<button class="btn-info ssy-details has-note" data-idx="${i}">Merkmale •</button>`
+          ? `<button class="btn-info ssy-details has-note" data-sysid="${this._esc(s.id)}">Merkmale •</button>`
           : '–'}</td>
       </tr>`;
     }).join('');
     if (!rows) rows = `<tr><td colspan="5" class="ship-empty-cell">Keine Einträge.</td></tr>`;
     return `<div class="ship-systems-scroll">
       <table class="ship-systems-table">
-        <thead><tr><th>Kategorie</th><th>Details</th><th>Tons</th><th>Cost</th><th>Merkmale</th></tr></thead>
+        <thead><tr>${th('category', 'Kategorie')}${th('detail', 'Details')}${th('tons', 'Tons')}${th('cost', 'Cost')}<th>Merkmale</th></tr></thead>
         <tbody>${rows}</tbody>
+        ${sumRow(1)}
       </table>
     </div>`;
   },
@@ -520,14 +578,17 @@ const ShipPage = {
   },
 
   // Merkmale-Modal für eine System-Zeile (analog zu den Waffen-Merkmalen).
-  _showSystemNote(idx) {
+  // Anker: in der Bearbeitungsansicht der DOM-Zeilenindex (nach dem Sichern),
+  // in der Leseansicht die stabile System-id (die Anzeige kann sortiert sein).
+  _showSystemNote({ index, id }) {
     const char = window.currentCharacter;
     const ship = this._ship(char);
     if (!ship) return;
     // Im Bearbeitungsmodus zuerst die aktuellen Tabelleneingaben sichern, damit
-    // der Zeilenindex zuverlässig auf ship.systems[idx] passt.
+    // der Zeilenindex zuverlässig auf ship.systems[index] passt.
     if (App.editMode) this.save(char);
-    const sys = (ship.systems || [])[idx];
+    const systems = ship.systems || [];
+    const sys = id != null ? systems.find(s => s.id === id) : systems[index];
     if (!sys) return;
 
     this._showNoteModal(`${sys.category || 'System'} – Merkmale`, 'Merkmale',
@@ -1332,7 +1393,9 @@ const ShipPage = {
       btn.addEventListener('click', () => this._showCritNote(btn.dataset.sys));
     });
 
-    // Antriebe & Systeme: Zeile hinzufügen (Bearbeitungsmodus)
+    // Antriebe & Systeme: Zeile hinzufügen (Bearbeitungsmodus). Neue Zeile hat
+    // sofort einen Merkmale-Button; Entfernen/Merkmale laufen über Delegation
+    // am tbody (siehe unten), damit auch dynamisch ergänzte Zeilen greifen.
     document.getElementById('shipAddSystemBtn')?.addEventListener('click', () => {
       const body = document.getElementById('shipSystemsBody');
       if (!body) return;
@@ -1343,20 +1406,48 @@ const ShipPage = {
         <td><input class="ssy-detail" placeholder="z.B. Thrust 6"></td>
         <td><input class="ssy-tons"   placeholder="–"></td>
         <td><input class="ssy-cost"   placeholder="–"></td>
-        <td class="ship-weapon-note-cell"></td>
+        <td class="ship-weapon-note-cell"><button class="btn-info ssy-details">Merkmale</button></td>
         <td><button class="btn-danger ssy-rm">✕</button></td>`;
       body.appendChild(tr);
-      tr.querySelector('.ssy-rm').addEventListener('click', () => tr.remove());
     });
 
-    // Antriebe & Systeme: Zeile entfernen (bestehende Zeilen)
-    document.querySelectorAll('.ssy-rm').forEach(btn => {
-      btn.addEventListener('click', () => btn.closest('tr')?.remove());
+    // Antriebe & Systeme (Bearbeitung): Entfernen + Merkmale via Delegation,
+    // Live-Summe bei Eingaben in Tons/Cost.
+    const sysBody = document.getElementById('shipSystemsBody');
+    if (sysBody) {
+      sysBody.addEventListener('click', e => {
+        const rm = e.target.closest('.ssy-rm');
+        if (rm) { rm.closest('tr')?.remove(); this._recalcSystemsSum(); return; }
+        const det = e.target.closest('.ssy-details');
+        if (det) {
+          const tr = det.closest('tr');
+          const idx = Array.from(tr.parentNode.children).indexOf(tr);
+          this._showSystemNote({ index: idx });
+        }
+      });
+      sysBody.addEventListener('input', e => {
+        if (e.target.classList.contains('ssy-tons') || e.target.classList.contains('ssy-cost')) {
+          this._recalcSystemsSum();
+        }
+      });
+    }
+
+    // Antriebe & Systeme (Leseansicht): Merkmale per stabiler id.
+    document.querySelectorAll('.ssy-details[data-sysid]').forEach(btn => {
+      btn.addEventListener('click', () => this._showSystemNote({ id: btn.dataset.sysid }));
     });
 
-    // Antriebe & Systeme: Merkmale-Modal
-    document.querySelectorAll('.ssy-details').forEach(btn => {
-      btn.addEventListener('click', () => this._showSystemNote(parseInt(btn.dataset.idx)));
+    // Antriebe & Systeme (Leseansicht): Spalten sortieren.
+    document.querySelectorAll('.ssy-sortable').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.sortcol;
+        if (this._sysSort.col === col) {
+          this._sysSort.dir = this._sysSort.dir === 'asc' ? 'desc' : 'asc';
+        } else {
+          this._sysSort = { col, dir: 'asc' };
+        }
+        App.renderCurrentPage();
+      });
     });
 
     // Bewaffnung: Waffe hinzufügen (Bearbeitungsmodus)
