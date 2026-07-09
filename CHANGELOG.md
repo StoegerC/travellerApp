@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.6.1] – 2026-07-09
+
+### Geändert
+- **Schiffsbild deutlich größer** — das Schiffsporträt im Übersichtstab war mit 120×90px sehr klein; es erscheint jetzt in vergleichbarer Größe zum Charakterporträt (bis 340px breit) im natürlichen Querformat (3:2), sodass der komplette Schiffs-Render sichtbar ist. Auf schmalen Bildschirmen bricht die Info-Spalte unter das Bild um.
+
+---
+
 ## [3.6.0] – 2026-07-09
 
 ### Neu
