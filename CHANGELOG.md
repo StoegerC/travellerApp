@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.7.0] – 2026-07-09
+
+### Neu
+- **Schiff-Systemtabelle: Sortierung, Summen, Merkmale für neue Zeilen.** Die „Antriebe & Systeme"-Tabelle lässt sich in der Leseansicht per Klick auf die Spaltenköpfe sortieren (auf-/absteigend; Tons/Cost numerisch, Kategorie/Details alphabetisch). Unter Tons und Cost steht jetzt eine Summenzeile mit der Summe der eingetragenen Werte — in der Bearbeitungsansicht aktualisiert sie sich live beim Tippen. Neu hinzugefügte Zeilen haben sofort einen funktionierenden Merkmale-Button (Zeilen-Anker wird beim Klick aus der DOM-Position bzw. in der Leseansicht aus der stabilen id ermittelt, damit Sortierung/Hinzufügen/Entfernen ihn nicht durcheinanderbringen).
+
+---
+
 ## [3.6.1] – 2026-07-09
 
 ### Geändert
