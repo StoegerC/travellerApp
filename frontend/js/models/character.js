@@ -180,6 +180,10 @@ class Character {
       powerPlant:       raw.powerPlant   || '',
       computer:         raw.computer     || '',
       sensors:          raw.sensors      || '',
+      // "Antriebe & Systeme" als frei erweiterbare Tabelle. Altbestand mit den
+      // Einzelfeldern (mDrive/jDrive/...) wird beim Laden einmalig in Zeilen
+      // uebernommen; die Altfelder bleiben unberuehrt erhalten (additiv).
+      systems:          Character._migrateShipSystems(raw),
       fuelMax:          parseInt(raw.fuelMax)           || 0,
       fuelCurrent:      raw.fuelCurrent  != null ? parseInt(raw.fuelCurrent)      : (parseInt(raw.fuelMax) || 0),
       weapons:          Character._withSyncFields(raw.weapons),
@@ -200,6 +204,32 @@ class Character {
         debts:          Character._withSyncFields(raw.finances?.debts),
       },
     };
+  }
+
+  // Baut das systems[]-Array eines Schiffs. Ist es schon vorhanden, werden nur
+  // die Felder normalisiert; sonst wird es aus den alten Einzelfeldern erzeugt
+  // (M-Antrieb/J-Antrieb/Kraftwerk/Computer/Sensoren), sofern gesetzt.
+  static _migrateShipSystems(raw = {}) {
+    const norm = s => ({
+      id:       s.id || ('sys-' + Date.now() + '-' + Math.floor(Math.random() * 100000)),
+      category: s.category || '',
+      detail:   s.detail   || '',
+      tons:     s.tons     || '',
+      cost:     s.cost     || '',
+      notes:    s.notes    || '',
+    });
+    if (Array.isArray(raw.systems)) return raw.systems.map(norm);
+
+    const legacy = [
+      ['M-Antrieb', raw.mDrive],
+      ['J-Antrieb', raw.jDrive],
+      ['Kraftwerk', raw.powerPlant],
+      ['Computer',  raw.computer],
+      ['Sensoren',  raw.sensors],
+    ];
+    return legacy
+      .filter(([, v]) => v && String(v).trim())
+      .map(([category, v], i) => norm({ id: 'sys-legacy-' + i, category, detail: String(v) }));
   }
 
   static _migrateCareer(raw) {

@@ -205,6 +205,56 @@ const ShipPage = {
       </div>`;
   },
 
+  // "Antriebe & Systeme" als Tabelle (Kategorie | Details | Tons | Cost |
+  // Merkmale). edit=true rendert Eingabefelder + Entfernen-Buttons, sonst eine
+  // Leseansicht. Die Merkmale-Spalte oeffnet dasselbe Markdown-Modal wie die
+  // Waffen-Merkmale (siehe _showSystemNote).
+  _renderSystemsTable(ship, edit) {
+    const systems = ship.systems || [];
+    if (edit) {
+      let rows = systems.map((s, i) => {
+        const hasNote = !!(s.notes && s.notes.trim());
+        return `<tr>
+        <td><input class="ssy-cat"    value="${this._esc(s.category || '')}" placeholder="M-Antrieb"></td>
+        <td><input class="ssy-detail" value="${this._esc(s.detail   || '')}" placeholder="z.B. Thrust 6"></td>
+        <td><input class="ssy-tons"   value="${this._esc(s.tons     || '')}" placeholder="–"></td>
+        <td><input class="ssy-cost"   value="${this._esc(s.cost     || '')}" placeholder="–"></td>
+        <td class="ship-weapon-note-cell"><button class="btn-info ssy-details${hasNote ? ' has-note' : ''}" data-idx="${i}">Merkmale${hasNote ? ' •' : ''}</button></td>
+        <td><button class="btn-danger ssy-rm" data-idx="${i}">✕</button></td>
+      </tr>`;
+      }).join('');
+      if (!rows) rows = `<tr><td colspan="6" class="ship-empty-cell">Keine Einträge.</td></tr>`;
+      return `<div class="ship-add-row"><button id="shipAddSystemBtn" class="btn-success">+ Zeile hinzufügen</button></div>
+        <div class="ship-systems-scroll">
+          <table class="ship-systems-table">
+            <thead><tr><th>Kategorie</th><th>Details</th><th>Tons</th><th>Cost</th><th>Merkmale</th><th></th></tr></thead>
+            <tbody id="shipSystemsBody">${rows}</tbody>
+          </table>
+        </div>`;
+    }
+
+    // Leseansicht
+    let rows = systems.map((s, i) => {
+      const hasNote = !!(s.notes && s.notes.trim());
+      return `<tr>
+        <td class="ssy-cat-cell">${this._esc(s.category || '–')}</td>
+        <td>${this._esc(s.detail || '–')}</td>
+        <td>${this._esc(s.tons || '–')}</td>
+        <td>${this._esc(s.cost || '–')}</td>
+        <td class="ship-weapon-note-cell">${hasNote
+          ? `<button class="btn-info ssy-details has-note" data-idx="${i}">Merkmale •</button>`
+          : '–'}</td>
+      </tr>`;
+    }).join('');
+    if (!rows) rows = `<tr><td colspan="5" class="ship-empty-cell">Keine Einträge.</td></tr>`;
+    return `<div class="ship-systems-scroll">
+      <table class="ship-systems-table">
+        <thead><tr><th>Kategorie</th><th>Details</th><th>Tons</th><th>Cost</th><th>Merkmale</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+  },
+
   _renderInfo(ship, character, ships) {
     const selector = this._renderSelector(character, ships, ship);
     const imgWidget = this._shipImgWidget(ship);
@@ -230,23 +280,17 @@ const ShipPage = {
         </div>
 
         <h3 class="ship-section-title">Antriebe &amp; Systeme</h3>
-        <div class="ship-drives-grid">
-          <label class="ship-field-lbl">M-Antrieb</label><input id="si-mdrive" class="ship-input" value="${this._esc(ship.mDrive || '')}" placeholder="z.B. 2G">
-          <label class="ship-field-lbl">J-Antrieb</label><input id="si-jdrive" class="ship-input" value="${this._esc(ship.jDrive || '')}" placeholder="z.B. J-2">
-          <label class="ship-field-lbl">Kraftwerk</label><input id="si-pp"     class="ship-input" value="${this._esc(ship.powerPlant || '')}" placeholder="z.B. A">
-          <label class="ship-field-lbl">Computer</label><input id="si-comp"    class="ship-input" value="${this._esc(ship.computer || '')}"    placeholder="z.B. Model/2">
-          <label class="ship-field-lbl">Sensoren</label><input id="si-sens"    class="ship-input" value="${this._esc(ship.sensors || '')}"     placeholder="z.B. Standard">
-          <label class="ship-field-lbl">Treibstoff max. (T)</label><input id="si-fuel" class="ship-input" value="${ship.fuelMax || 0}" type="number" min="0">
-        </div>
+        ${this._renderSystemsTable(ship, true)}
 
-        <h3 class="ship-section-title">Betriebskosten</h3>
+        <h3 class="ship-section-title">Treibstoff &amp; Kosten</h3>
         <div class="ship-drives-grid">
-          <label class="ship-field-lbl">Kosten / Monat (Cr)</label>
-          <input id="si-cost" class="ship-input" value="${ship.operatingCost || 0}" type="number" min="0">
+          <label class="ship-field-lbl">Treibstoff max. (T)</label><input id="si-fuel" class="ship-input" value="${ship.fuelMax || 0}" type="number" min="0">
+          <label class="ship-field-lbl">Kosten / Monat (Cr)</label><input id="si-cost" class="ship-input" value="${ship.operatingCost || 0}" type="number" min="0">
         </div>
 
         <h3 class="ship-section-title">Notizen</h3>
         <textarea id="si-notes" class="ship-notes">${this._esc(ship.notes || '')}</textarea>
+        <span class="md-hint">**fett** · *kursiv* · # Überschrift · | Tabelle | · - Liste</span>
 
         ${this._shipAttachmentsWidget(ship)}
       </div>`;
@@ -269,17 +313,14 @@ const ShipPage = {
       </div>
 
       <h3 class="ship-section-title">Antriebe &amp; Systeme</h3>
-      <div class="ship-info-2col">
-        ${row('M-Antrieb', ship.mDrive)}
-        ${row('J-Antrieb', ship.jDrive)}
-        ${row('Kraftwerk', ship.powerPlant)}
-        ${row('Computer',  ship.computer)}
-        ${row('Sensoren',  ship.sensors)}
+      ${this._renderSystemsTable(ship, false)}
+
+      ${(ship.fuelMax || ship.operatingCost) ? `<div class="ship-info-2col ship-info-fuelcost">
         ${row('Treibstoff max.', ship.fuelMax ? ship.fuelMax + ' T' : '')}
         ${row('Betriebskosten', ship.operatingCost ? 'Cr ' + Number(ship.operatingCost).toLocaleString('de-DE') + ' / Monat' : '')}
-      </div>
+      </div>` : ''}
 
-      ${ship.notes ? `<h3 class="ship-section-title">Notizen</h3><p class="ship-notes-view">${this._esc(ship.notes)}</p>` : ''}
+      ${ship.notes ? `<h3 class="ship-section-title">Notizen</h3><div class="ship-notes-view md-content">${Md.render(ship.notes)}</div>` : ''}
       ${this._shipAttachmentsWidget(ship)}
     </div>`;
   },
@@ -474,6 +515,25 @@ const ShipPage = {
       (value) => {
         weapon.details = value;
         weapon.updatedAt = new Date().toISOString();
+        this._saveAndSync(char);
+      });
+  },
+
+  // Merkmale-Modal für eine System-Zeile (analog zu den Waffen-Merkmalen).
+  _showSystemNote(idx) {
+    const char = window.currentCharacter;
+    const ship = this._ship(char);
+    if (!ship) return;
+    // Im Bearbeitungsmodus zuerst die aktuellen Tabelleneingaben sichern, damit
+    // der Zeilenindex zuverlässig auf ship.systems[idx] passt.
+    if (App.editMode) this.save(char);
+    const sys = (ship.systems || [])[idx];
+    if (!sys) return;
+
+    this._showNoteModal(`${sys.category || 'System'} – Merkmale`, 'Merkmale',
+      () => sys.notes,
+      (value) => {
+        sys.notes = value;
         this._saveAndSync(char);
       });
   },
@@ -891,11 +951,25 @@ const ShipPage = {
       ship.tl           = document.getElementById('si-tl')?.value             || '';
       ship.tonnage      = document.getElementById('si-ton')?.value            || '';
       ship.owner        = document.getElementById('si-owner')?.value?.trim()  || '';
-      ship.mDrive       = document.getElementById('si-mdrive')?.value?.trim() || '';
-      ship.jDrive       = document.getElementById('si-jdrive')?.value?.trim() || '';
-      ship.powerPlant   = document.getElementById('si-pp')?.value?.trim()     || '';
-      ship.computer     = document.getElementById('si-comp')?.value?.trim()   || '';
-      ship.sensors      = document.getElementById('si-sens')?.value?.trim()   || '';
+      // "Antriebe & Systeme"-Tabelle aus den Zeilen lesen. Bestehende notes
+      // (Merkmale) je Zeile ueber die id erhalten - die werden ueber das Modal
+      // gepflegt, nicht ueber ein Tabellenfeld.
+      const sysBody = document.getElementById('shipSystemsBody');
+      if (sysBody) {
+        const prev = ship.systems || [];
+        ship.systems = Array.from(sysBody.querySelectorAll('tr')).flatMap((tr, i) => {
+          const category = tr.querySelector('.ssy-cat')?.value?.trim()    || '';
+          const detail   = tr.querySelector('.ssy-detail')?.value?.trim() || '';
+          const tons     = tr.querySelector('.ssy-tons')?.value?.trim()   || '';
+          const cost     = tr.querySelector('.ssy-cost')?.value?.trim()   || '';
+          if (!category && !detail && !tons && !cost && !(prev[i]?.notes)) return [];
+          return [{
+            id:    prev[i]?.id || ('sys-' + Date.now() + '-' + i),
+            category, detail, tons, cost,
+            notes: prev[i]?.notes || '',
+          }];
+        });
+      }
       ship.fuelMax      = parseInt(document.getElementById('si-fuel')?.value)    || 0;
       ship.operatingCost= parseInt(document.getElementById('si-cost')?.value)    || 0;
       ship.notes        = document.getElementById('si-notes')?.value          || '';
@@ -1256,6 +1330,33 @@ const ShipPage = {
     // Kritische Treffer: Notiz je System (defekte Teile) – öffnet Markdown-Detail-Modal
     document.querySelectorAll('.ship-crit-note-btn').forEach(btn => {
       btn.addEventListener('click', () => this._showCritNote(btn.dataset.sys));
+    });
+
+    // Antriebe & Systeme: Zeile hinzufügen (Bearbeitungsmodus)
+    document.getElementById('shipAddSystemBtn')?.addEventListener('click', () => {
+      const body = document.getElementById('shipSystemsBody');
+      if (!body) return;
+      body.querySelector('.ship-empty-cell')?.closest('tr')?.remove();
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input class="ssy-cat"    placeholder="M-Antrieb"></td>
+        <td><input class="ssy-detail" placeholder="z.B. Thrust 6"></td>
+        <td><input class="ssy-tons"   placeholder="–"></td>
+        <td><input class="ssy-cost"   placeholder="–"></td>
+        <td class="ship-weapon-note-cell"></td>
+        <td><button class="btn-danger ssy-rm">✕</button></td>`;
+      body.appendChild(tr);
+      tr.querySelector('.ssy-rm').addEventListener('click', () => tr.remove());
+    });
+
+    // Antriebe & Systeme: Zeile entfernen (bestehende Zeilen)
+    document.querySelectorAll('.ssy-rm').forEach(btn => {
+      btn.addEventListener('click', () => btn.closest('tr')?.remove());
+    });
+
+    // Antriebe & Systeme: Merkmale-Modal
+    document.querySelectorAll('.ssy-details').forEach(btn => {
+      btn.addEventListener('click', () => this._showSystemNote(parseInt(btn.dataset.idx)));
     });
 
     // Bewaffnung: Waffe hinzufügen (Bearbeitungsmodus)
