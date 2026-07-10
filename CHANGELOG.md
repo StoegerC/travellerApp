@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.7.7] – 2026-07-10
+
+### Behoben
+- **App hängte sich bei einer Markdown-Zeile mit `|` ohne gültige Tabelle auf** — z.B. eine Tabelle ohne Trennzeile (`| --- | --- |`). Eine `|`-Zeile galt im Renderer als Block-Element, wurde aber von keinem Block-Handler verarbeitet und vom Absatz-Sammler übersprungen → der Zeilenzähler stand still → Endlosschleife, die den ganzen UI-Thread blockierte (in Notizen, Schiffs-/Ausrüstungs-Notizen, überall wo Markdown gerendert wird). Der Absatz-Zweig verbraucht jetzt immer mindestens die aktuelle Zeile; eine ungültige Tabelle wird als normaler Text dargestellt statt einzufrieren. Gültige Tabellen (mit Trennzeile) funktionieren unverändert.
+
+---
+
 ## [3.7.6] – 2026-07-10
 
 ### Behoben
