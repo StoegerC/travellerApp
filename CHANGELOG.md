@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.7.1] – 2026-07-10
+
+### Behoben
+- **Listen-Filter wurden nach ein paar Sekunden zurückgesetzt** — der Filter „Personen nach Ort" (und ebenso die Such-/Status-/Beziehungs-Filter bei Personen, Orten und Journal-Sessions) arbeitete rein über die DOM-Sichtbarkeit, ohne den gewählten Filter zu merken. Beim nächsten Re-Render (Kampagnen-/Cloud-Poll alle 15 s, Autosave) wurde die Liste neu aufgebaut und der Filter fiel auf „alle" zurück — sichtbar als „kurz richtig, dann weg". Die aktiven Filter werden jetzt als Zustand gehalten (`_personFilter`/`_locationFilter`/`_sessionFilter`/`_questSearch`), nach jedem Render wiederhergestellt und sofort erneut angewandt. Analog zum bereits persistenten Quest-Status-Filter.
+
+---
+
 ## [3.7.0] – 2026-07-09
 
 ### Neu
