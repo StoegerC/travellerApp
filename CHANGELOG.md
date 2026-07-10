@@ -9,6 +9,11 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.7.3] – 2026-07-10
+
+### Behoben
+- **Werdegang „Zitate & Phrasen" (und andere immer editierbare Felder): Text verschwand beim Tippen** — die Werdegang-Hintergrundfelder sind auch außerhalb des Bearbeitungsmodus beschreibbar. Der Cloud-Sync-Poll (alle 15 s bei Cloud-Charakteren) rendert die Seite aber neu, sobald `editMode` aus ist — und wischte dabei die gerade laufende Eingabe weg. Poll-getriebene Re-Renders (`_syncCloud`, `_pushToCloud`-Konflikt-Retry, Kampagnen-Sync) werden jetzt übersprungen, solange der Cursor in einem Eingabefeld steht (neuer Helfer `App._isEditingField()`); der nächste Poll holt den Serverstand nach, sobald das Feld verlassen wird.
+
 ## [3.7.2] – 2026-07-10
 
 ### Zurückgenommen

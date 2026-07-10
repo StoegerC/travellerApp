@@ -576,16 +576,26 @@ const App = {
       this.currentCharacter = Character.fromJSON(mergedJson);
       this.currentCharacter._syncMeta.updatedAt = r.serverUpdatedAt;
       window.currentCharacter = this.currentCharacter;
-      if (!this.editMode) this.renderCurrentPage();
+      if (!this.editMode && !this._isEditingField()) this.renderCurrentPage();
       return this._pushToCloud(retriesLeft - 1);
     }
 
     this._setSyncState('error', r.conflict ? 'Sync-Konflikt, bitte erneut versuchen' : (r.error || 'Push-Fehler'));
   },
 
+  // True, wenn der Nutzer gerade in einem Eingabefeld tippt. Poll-getriebene
+  // Re-Renders (Cloud-/Kampagnen-Sync) werden dann übersprungen, damit laufende
+  // Eingaben nicht weggerendert werden. Betrifft besonders die immer
+  // editierbaren Werdegang-Hintergrundfelder ("Zitate & Phrasen" usw.), die auch
+  // außerhalb des Bearbeitungsmodus (editMode=false) beschreibbar sind.
+  _isEditingField() {
+    const el = document.activeElement;
+    return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable === true);
+  },
+
   async _syncCloud() {
     if (!this.currentCharacter || this.currentCharacter.syncMode !== 'cloud') return;
-    if (this.editMode) return;
+    if (this.editMode || this._isEditingField()) return;
     if (Storage._pushTimer) {
       clearTimeout(Storage._pushTimer);
       Storage._pushTimer = null;
@@ -595,8 +605,10 @@ const App = {
     this._setSyncState('syncing');
     const r = await CloudSync.pullCharacter(this.currentCharacter.id);
     if (r.ok) {
-      if (this.editMode) {
-        // editMode wurde während des Pulls gesetzt – Charakter nicht ersetzen
+      if (this.editMode || this._isEditingField()) {
+        // editMode gesetzt oder Nutzer tippt gerade (kann sich während des
+        // Pulls geändert haben) – Charakter nicht ersetzen/neu rendern, sonst
+        // ginge die laufende Eingabe verloren. Nächster Poll holt es nach.
         this._setSyncState('ok');
         return;
       }
@@ -1004,14 +1016,14 @@ const App = {
     const local = await Storage.loadCampaign(campaignId);
     if (local) {
       this._campaignData = local;
-      if (!this.editMode) this.renderCurrentPage();
+      if (!this.editMode && !this._isEditingField()) this.renderCurrentPage();
     }
     if (this.currentCharacter?.syncMode === 'cloud' && CloudSync.isConfigured()) {
       const r = await CampaignSync.getCampaign(campaignId);
       if (r.ok) {
         this._campaignData = r.data;
         Storage.saveCampaign(r.data);
-        if (!this.editMode) this.renderCurrentPage();
+        if (!this.editMode && !this._isEditingField()) this.renderCurrentPage();
         this._startCampaignPoll(campaignId);
       }
     }
@@ -1033,7 +1045,7 @@ const App = {
       // Reload wieder da. saveCharacter() hat einen eingebauten Dirty-Check,
       // ist also ein guenstiges No-Op, wenn sich nichts geaendert hat.
       if (this.currentCharacter) Storage.saveCharacter(this.currentCharacter);
-      if (!this.editMode && (this.currentPage === 'notes' || this.currentPage === 'metadata' || this.currentPage === 'ship')) {
+      if (!this.editMode && !this._isEditingField() && (this.currentPage === 'notes' || this.currentPage === 'metadata' || this.currentPage === 'ship')) {
         this.renderCurrentPage();
       }
     }
