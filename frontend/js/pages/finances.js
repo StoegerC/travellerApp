@@ -4,6 +4,7 @@
 const FinancesPage = {
   _filter:  'all',
   _txSign:  1,
+  _editingTxId: null, // id der gerade bearbeiteten Transaktion (null = neue)
 
   _esc(s) {
     return String(s || '')
@@ -122,6 +123,7 @@ const FinancesPage = {
           <span class="fin-tx-desc">${this._esc(t.description || '')}</span>
           <span class="fin-badge ${meta.cls}">${meta.label}</span>
           <span class="fin-tx-amt ${amtCls}">${this._fmtSigned(t.amount)}</span>
+          ${App.editMode ? `<button class="fin-tx-edit" data-idx="${realIdx}" title="Transaktion bearbeiten">✎</button>` : ''}
           <button class="fin-tx-del" data-idx="${realIdx}">✕</button>
         </div>`;
       });
@@ -305,15 +307,33 @@ const FinancesPage = {
     MentionAutocomplete.attach('debtNotes',  'debtNotesSuggestions', char);
 
     // ── Block 1 ──────────────────────────────────────────────────────────
-    document.getElementById('finIncomeBtn')?.addEventListener('click', () => {
-      this._txSign = 1;
-      document.getElementById('txModalTitle').textContent = 'Einnahme';
+    const openNewTxModal = (sign, title) => {
+      this._editingTxId = null;
+      this._txSign = sign;
+      document.getElementById('txModalTitle').textContent = title;
+      document.getElementById('txAmount').value = '';
+      document.getElementById('txDate').value   = '';
+      document.getElementById('txDesc').value   = '';
+      const cat = document.getElementById('txCat'); if (cat) cat.selectedIndex = 0;
       showModal('txModal');
-    });
-    document.getElementById('finExpenseBtn')?.addEventListener('click', () => {
-      this._txSign = -1;
-      document.getElementById('txModalTitle').textContent = 'Ausgabe';
-      showModal('txModal');
+    };
+    document.getElementById('finIncomeBtn')?.addEventListener('click', () => openNewTxModal(1, 'Einnahme'));
+    document.getElementById('finExpenseBtn')?.addEventListener('click', () => openNewTxModal(-1, 'Ausgabe'));
+
+    // Bestehende Transaktion bearbeiten (nur im Bearbeitungsmodus sichtbar).
+    document.querySelectorAll('.fin-tx-edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tx = f.transactions[parseInt(btn.dataset.idx)];
+        if (!tx) return;
+        this._editingTxId = tx.id;
+        this._txSign = tx.amount >= 0 ? 1 : -1;
+        document.getElementById('txModalTitle').textContent = 'Transaktion bearbeiten';
+        document.getElementById('txAmount').value = Math.abs(tx.amount);
+        document.getElementById('txDate').value   = tx.ingameDate || '';
+        document.getElementById('txDesc').value   = tx.description || '';
+        const cat = document.getElementById('txCat'); if (cat) cat.value = tx.category || cat.value;
+        showModal('txModal');
+      });
     });
     document.querySelector('.fin-pension-edit')?.addEventListener('click', () => {
       const val = window.prompt('Pension pro Monat (Cr):', f.pension || 0);
@@ -323,22 +343,43 @@ const FinancesPage = {
     });
 
     // ── Transaktion Modal ─────────────────────────────────────────────────
-    document.getElementById('txCancelBtn')?.addEventListener('click', () => hideModal('txModal'));
-    document.getElementById('txModal')?.addEventListener('click', e => { if (e.target.id === 'txModal') hideModal('txModal'); });
+    const closeTxModal = () => { this._editingTxId = null; hideModal('txModal'); };
+    document.getElementById('txCancelBtn')?.addEventListener('click', closeTxModal);
+    document.getElementById('txModal')?.addEventListener('click', e => { if (e.target.id === 'txModal') closeTxModal(); });
     document.getElementById('txSaveBtn')?.addEventListener('click', () => {
       const amount = parseFloat(document.getElementById('txAmount').value);
       if (!amount || amount <= 0) return;
-      const tx = {
-        id:          'tx-' + Date.now(),
-        ingameDate:  document.getElementById('txDate').value.trim(),
-        description: document.getElementById('txDesc').value.trim(),
-        amount:      this._txSign * amount,
-        category:    document.getElementById('txCat').value,
-        createdAt:   Date.now(),
-        updatedAt:   new Date().toISOString(),
-      };
-      f.transactions.push(tx);
-      f.cashCredits += tx.amount;
+      const newAmount = this._txSign * amount;
+      const date = document.getElementById('txDate').value.trim();
+      const desc = document.getElementById('txDesc').value.trim();
+      const cat  = document.getElementById('txCat').value;
+
+      if (this._editingTxId) {
+        // Bestehende Transaktion aktualisieren: Kassenstand um die Differenz
+        // korrigieren (nicht doppelt verbuchen).
+        const tx = f.transactions.find(t => t.id === this._editingTxId);
+        if (tx) {
+          f.cashCredits += (newAmount - tx.amount);
+          tx.amount      = newAmount;
+          tx.ingameDate  = date;
+          tx.description = desc;
+          tx.category    = cat;
+          tx.updatedAt   = new Date().toISOString();
+        }
+        this._editingTxId = null;
+      } else {
+        const tx = {
+          id:          'tx-' + Date.now(),
+          ingameDate:  date,
+          description: desc,
+          amount:      newAmount,
+          category:    cat,
+          createdAt:   Date.now(),
+          updatedAt:   new Date().toISOString(),
+        };
+        f.transactions.push(tx);
+        f.cashCredits += tx.amount;
+      }
       Storage.saveCharacter(char);
       hideModal('txModal');
       rerender();
