@@ -6843,6 +6843,17 @@ body.dark-mode .training-pm-btn {
   color: #dde0f5;
 }
 body.dark-mode .training-pm-btn:active { background: #252840; border-color: #667eea; }
+body.dark-mode .training-skill-name { color: #dde0f5; }
+body.dark-mode .training-counter    { color: #c8cce8; }
+body.dark-mode .training-levels     { background: #252840; color: #c8cce8; }
+body.dark-mode .training-complete-btn { background: #252840; color: #9095b8; }
+body.dark-mode .training-complete-btn.training-complete-ready { background: #10b981; color: #fff; }
+body.dark-mode .training-del-btn    { background: #2d1515; color: #fc8181; }
+body.dark-mode .training-done-details { border-top-color: #2c3050; }
+body.dark-mode .training-done-item  { border-bottom-color: #232640; }
+body.dark-mode .training-done-date  { color: #4a5070; }
+body.dark-mode .training-modal      { background: #161929; color: #dde0f5; }
+body.dark-mode .training-modal h3   { color: #dde0f5; }
 
 /* ── Werdegang ── */
 body.dark-mode .cr-block            { background: #161929; border-color: #2c3050; }
