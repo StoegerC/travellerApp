@@ -97,15 +97,18 @@ const Md = {
         continue;
       }
 
-      // Paragraph – sammle aufeinanderfolgende Nicht-Block-Zeilen
-      const paraLines = [];
+      // Paragraph – die aktuelle Zeile IMMER konsumieren (garantiert
+      // Fortschritt, sonst Endlosschleife), dann folgende Nicht-Block-Zeilen
+      // sammeln. Die aktuelle Zeile landet hier auch dann, wenn _isBlock() für
+      // sie true liefert, aber kein Block-Handler sie aufnimmt – z.B. eine
+      // "|"-Zeile ohne gültige Tabellen-Trennzeile (fehlende |---|---|-Zeile).
+      const paraLines = [this._inline(lines[i])];
+      i++;
       while (i < lines.length && !this._isBlock(lines[i])) {
         paraLines.push(this._inline(lines[i]));
         i++;
       }
-      if (paraLines.length) {
-        html += `<p class="md-p">${paraLines.join('<br>')}</p>`;
-      }
+      html += `<p class="md-p">${paraLines.join('<br>')}</p>`;
     }
 
     return html;
