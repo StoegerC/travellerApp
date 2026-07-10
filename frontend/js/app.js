@@ -579,7 +579,7 @@ const App = {
       this.currentCharacter = Character.fromJSON(mergedJson);
       this.currentCharacter._syncMeta.updatedAt = r.serverUpdatedAt;
       window.currentCharacter = this.currentCharacter;
-      if (!this.editMode && !this._isEditingField()) this.renderCurrentPage();
+      if (!this.editMode && !this._isBusyEditing()) this.renderCurrentPage();
       return this._pushToCloud(retriesLeft - 1);
     }
 
@@ -596,9 +596,19 @@ const App = {
     return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable === true);
   },
 
+  // Poll-getriebene Re-Renders pausieren, solange der Nutzer aktiv etwas
+  // bearbeitet: tippt gerade in einem Feld ODER es ist ein Dialog/Modal offen.
+  // Sonst würde der Re-Render das offene Modal wegwerfen — das war der Grund,
+  // warum sich der Ausgabe-Dialog (Schiff- und Charakter-Finanzen) "von selbst"
+  // nach ~15 s schloss (Sync-Poll rendert die Seite neu).
+  _isBusyEditing() {
+    if (this._isEditingField()) return true;
+    return !!document.querySelector('.fin-modal-overlay.open, .vh-modal.visible, .traits-modal-overlay');
+  },
+
   async _syncCloud() {
     if (!this.currentCharacter || this.currentCharacter.syncMode !== 'cloud') return;
-    if (this.editMode || this._isEditingField()) return;
+    if (this.editMode || this._isBusyEditing()) return;
     if (Storage._pushTimer) {
       clearTimeout(Storage._pushTimer);
       Storage._pushTimer = null;
@@ -608,7 +618,7 @@ const App = {
     this._setSyncState('syncing');
     const r = await CloudSync.pullCharacter(this.currentCharacter.id);
     if (r.ok) {
-      if (this.editMode || this._isEditingField()) {
+      if (this.editMode || this._isBusyEditing()) {
         // editMode gesetzt oder Nutzer tippt gerade (kann sich während des
         // Pulls geändert haben) – Charakter nicht ersetzen/neu rendern, sonst
         // ginge die laufende Eingabe verloren. Nächster Poll holt es nach.
@@ -1055,14 +1065,14 @@ const App = {
     const local = await Storage.loadCampaign(campaignId);
     if (local) {
       this._campaignData = local;
-      if (!this.editMode && !this._isEditingField()) this.renderCurrentPage();
+      if (!this.editMode && !this._isBusyEditing()) this.renderCurrentPage();
     }
     if (this.currentCharacter?.syncMode === 'cloud' && CloudSync.isConfigured()) {
       const r = await CampaignSync.getCampaign(campaignId);
       if (r.ok) {
         this._campaignData = r.data;
         Storage.saveCampaign(r.data);
-        if (!this.editMode && !this._isEditingField()) this.renderCurrentPage();
+        if (!this.editMode && !this._isBusyEditing()) this.renderCurrentPage();
         this._startCampaignPoll(campaignId);
       }
     }
@@ -1084,7 +1094,7 @@ const App = {
       // Reload wieder da. saveCharacter() hat einen eingebauten Dirty-Check,
       // ist also ein guenstiges No-Op, wenn sich nichts geaendert hat.
       if (this.currentCharacter) Storage.saveCharacter(this.currentCharacter);
-      if (!this.editMode && !this._isEditingField() && (this.currentPage === 'notes' || this.currentPage === 'metadata' || this.currentPage === 'ship')) {
+      if (!this.editMode && !this._isBusyEditing() && (this.currentPage === 'notes' || this.currentPage === 'metadata' || this.currentPage === 'ship')) {
         this.renderCurrentPage();
       }
     }

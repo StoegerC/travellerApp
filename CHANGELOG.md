@@ -9,6 +9,16 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.7.6] – 2026-07-10
+
+### Behoben
+- **Transaktions-Dialog schloss sich von selbst** — beim Anlegen einer Einnahme/Ausgabe (Schiff-Finanzen **und** Charakter-Ausrüstung/Finanzen) konnte sich der offene Dialog nach ein paar Sekunden von allein schließen. Ursache: Der Cloud-Sync-Poll rendert die Seite neu und baut dabei das inline im Seiten-HTML liegende Modal ohne die `.open`-Klasse wieder auf. Poll-getriebene Re-Renders werden jetzt nicht nur bei aktivem Texteingabefeld, sondern auch bei einem **offenen Modal** übersprungen (neuer Helfer `App._isBusyEditing()`, erweitert die bisherige `App._isEditingField()`-Prüfung um eine Modal-Erkennung). Der nächste Poll holt den Serverstand nach, sobald der Dialog geschlossen ist.
+
+### Neu
+- **Getätigte Transaktionen bearbeiten** — im Bearbeitungsmodus hat jede Transaktionszeile jetzt einen **✎-Button** (Schiff-Finanzen und Charakter-Ausrüstung/Finanzen). Ein Klick öffnet den Transaktions-Dialog mit den vorhandenen Werten (Betrag, In-Game-Datum, Beschreibung, bei Charakter-Finanzen auch Kategorie); beim Speichern wird die bestehende Transaktion aktualisiert und der Kassenstand um die **Differenz** korrigiert (keine Doppelbuchung).
+
+---
+
 ## [3.7.5] – 2026-07-10
 
 ### Neu

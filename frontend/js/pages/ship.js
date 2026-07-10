@@ -3,6 +3,7 @@
  */
 const ShipPage = {
   _activeTab: 'info',
+  _editingTxId: null,
 
   _CRIT_SYSTEMS: [
     { key: 'armour',      label: 'Panzerung'  },
@@ -638,6 +639,7 @@ const ShipPage = {
           <span class="fin-tx-date">${this._esc(t.ingameDate || '–')}</span>
           <span class="fin-tx-desc">${this._esc(t.description || '')}</span>
           <span class="fin-tx-amt ${amtCls}">${this._finFmtSigned(t.amount)}</span>
+          ${App.editMode ? `<button class="ship-fin-tx-edit" data-idx="${realIdx}" title="Transaktion bearbeiten">✎</button>` : ''}
           <button class="ship-fin-tx-del" data-idx="${realIdx}">✕</button>
         </div>`;
       });
@@ -1361,35 +1363,74 @@ const ShipPage = {
     const hideModal = id => document.getElementById(id)?.classList.remove('open');
     let shipTxSign = 1;
 
-    document.getElementById('shipFinIncomeBtn')?.addEventListener('click', () => {
-      shipTxSign = 1;
-      document.getElementById('shipTxModalTitle').textContent = 'Einnahme';
+    // Modal für eine NEUE Transaktion öffnen (Felder leeren, Bearbeiten-Zustand
+    // zurücksetzen, damit nicht versehentlich eine bestehende überschrieben wird).
+    const openNewTxModal = (sign, title) => {
+      this._editingTxId = null;
+      shipTxSign = sign;
+      document.getElementById('shipTxModalTitle').textContent = title;
+      document.getElementById('shipTxAmount').value = '';
+      document.getElementById('shipTxDate').value   = '';
+      document.getElementById('shipTxDesc').value   = '';
       showModal('shipTxModal');
+    };
+    document.getElementById('shipFinIncomeBtn')?.addEventListener('click', () => openNewTxModal(1, 'Einnahme'));
+    document.getElementById('shipFinExpenseBtn')?.addEventListener('click', () => openNewTxModal(-1, 'Ausgabe'));
+
+    // Bestehende Transaktion bearbeiten (nur im Bearbeitungsmodus sichtbar).
+    document.querySelectorAll('.ship-fin-tx-edit').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ship = this._ship(char);
+        const tx   = ship?.finances?.transactions[parseInt(btn.dataset.idx)];
+        if (!tx) return;
+        this._editingTxId = tx.id;
+        shipTxSign = tx.amount >= 0 ? 1 : -1;
+        document.getElementById('shipTxModalTitle').textContent = 'Transaktion bearbeiten';
+        document.getElementById('shipTxAmount').value = Math.abs(tx.amount);
+        document.getElementById('shipTxDate').value   = tx.ingameDate || '';
+        document.getElementById('shipTxDesc').value   = tx.description || '';
+        showModal('shipTxModal');
+      });
     });
-    document.getElementById('shipFinExpenseBtn')?.addEventListener('click', () => {
-      shipTxSign = -1;
-      document.getElementById('shipTxModalTitle').textContent = 'Ausgabe';
-      showModal('shipTxModal');
-    });
-    document.getElementById('shipTxCancelBtn')?.addEventListener('click', () => hideModal('shipTxModal'));
+
+    const closeTxModal = () => { this._editingTxId = null; hideModal('shipTxModal'); };
+    document.getElementById('shipTxCancelBtn')?.addEventListener('click', closeTxModal);
     document.getElementById('shipTxModal')?.addEventListener('click', e => {
-      if (e.target.id === 'shipTxModal') hideModal('shipTxModal');
+      if (e.target.id === 'shipTxModal') closeTxModal();
     });
     document.getElementById('shipTxSaveBtn')?.addEventListener('click', () => {
       const ship = this._ship(char);
       if (!ship) return;
       const amount = parseFloat(document.getElementById('shipTxAmount').value);
       if (!amount || amount <= 0) return;
-      const tx = {
-        id:          'stx-' + Date.now(),
-        ingameDate:  document.getElementById('shipTxDate').value.trim(),
-        description: document.getElementById('shipTxDesc').value.trim(),
-        amount:      shipTxSign * amount,
-        createdAt:   Date.now(),
-        updatedAt:   new Date().toISOString(),
-      };
-      ship.finances.transactions.push(tx);
-      ship.finances.cashCredits += tx.amount;
+      const newAmount = shipTxSign * amount;
+      const date = document.getElementById('shipTxDate').value.trim();
+      const desc = document.getElementById('shipTxDesc').value.trim();
+
+      if (this._editingTxId) {
+        // Bestehende Transaktion aktualisieren: Kassenstand um die Differenz
+        // korrigieren (nicht doppelt verbuchen).
+        const tx = ship.finances.transactions.find(t => t.id === this._editingTxId);
+        if (tx) {
+          ship.finances.cashCredits += (newAmount - tx.amount);
+          tx.amount      = newAmount;
+          tx.ingameDate  = date;
+          tx.description = desc;
+          tx.updatedAt   = new Date().toISOString();
+        }
+        this._editingTxId = null;
+      } else {
+        const tx = {
+          id:          'stx-' + Date.now(),
+          ingameDate:  date,
+          description: desc,
+          amount:      newAmount,
+          createdAt:   Date.now(),
+          updatedAt:   new Date().toISOString(),
+        };
+        ship.finances.transactions.push(tx);
+        ship.finances.cashCredits += tx.amount;
+      }
       this._saveAndSync(char);
       hideModal('shipTxModal');
       App.renderCurrentPage();
