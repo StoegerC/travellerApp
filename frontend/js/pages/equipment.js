@@ -169,6 +169,7 @@ const EquipmentPage = {
               <button class="ammo-btn ammo-p" data-idx="${i}">+</button>
             </div>
           </td>
+          <td><input class="r-reservemags" value="${parseInt(it.reserveMags) || 0}" type="number" min="0" title="Reservemagazine"></td>
           <td><input class="r-acost"  value="${this._esc(it.ammoCost)}"   placeholder="Cr"></td>
           <td><input class="r-tl"     value="${this._esc(it.tl)}"         type="number" min="0" max="20"></td>
           <td><input class="r-weight" value="${this._esc(it.weight)}"     type="number" step="0.1"></td>
@@ -192,6 +193,7 @@ const EquipmentPage = {
               <button class="ammo-btn ammo-p" data-idx="${i}">+</button>
             </div>
           </td>
+          <td>${parseInt(it.reserveMags) || 0}</td>
           <td>${this._esc(it.ammoCost || '–')}</td>
           <td>${this._esc(it.tl || '–')}</td>
           <td>${it.weight ? it.weight + ' kg' : '–'}</td>
@@ -201,13 +203,13 @@ const EquipmentPage = {
       }
     });
     if (!items.length) {
-      rows = `<tr><td colspan="${App.editMode ? 14 : 13}" class="eq-empty">Keine Fernkampfwaffen eingetragen.</td></tr>`;
+      rows = `<tr><td colspan="${App.editMode ? 15 : 14}" class="eq-empty">Keine Fernkampfwaffen eingetragen.</td></tr>`;
     }
     return this._wrap(`<table class="equip-table">
       <thead><tr>
         <th class="eq-chk">Aktiv</th><th>Name</th><th>${App.editMode ? 'Attribut / Skill' : 'Mod'}</th>
         <th>Schaden</th><th>Art</th>
-        <th>Reichweite</th><th>Mag</th><th>Munition</th>
+        <th>Reichweite</th><th>Mag</th><th>Munition</th><th title="Reservemagazine">Reserve</th>
         <th>Preis/Mag</th><th>TL</th><th>Kg</th><th>Traits</th><th>Merkmale</th>
         ${App.editMode ? '<th></th>' : ''}
       </tr></thead>
@@ -399,6 +401,7 @@ const EquipmentPage = {
         range:      tr.querySelector('.r-range')?.value  || '',
         magazine:   tr.querySelector('.r-mag')?.value    || '',
         ammo:       parseInt(tr.querySelector('.r-ammo, .ammo-inp')?.value) || 0,
+        reserveMags: parseInt(tr.querySelector('.r-reservemags')?.value) || 0,
         ammoCost:   tr.querySelector('.r-acost')?.value  || '',
         tl:         tr.querySelector('.r-tl')?.value     || '',
         weight:     tr.querySelector('.r-weight')?.value || '',

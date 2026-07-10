@@ -155,6 +155,7 @@ const CombatPage = {
       const autoVal = this._parseAuto(ranged.traits);
       const ammo    = parseInt(ranged.ammo)     || 0;
       const mag     = parseInt(ranged.magazine) || 0;
+      const reserve = parseInt(ranged.reserveMags) || 0;
 
       inner += `<div class="combat-equip-item">
         <div class="combat-equip-header">
@@ -177,7 +178,8 @@ const CombatPage = {
           <div class="combat-ammo-btns">
             <button class="combat-ammo-btn" data-eqidx="${eqIdx}" data-action="minus1">−1</button>
             ${autoVal ? `<button class="combat-ammo-btn" data-eqidx="${eqIdx}" data-action="auto" data-auto="${autoVal}">−Auto ${autoVal}</button>` : ''}
-            <button class="combat-ammo-btn combat-ammo-reload" data-eqidx="${eqIdx}" data-mag="${mag}" data-action="reload">↺ Nachladen</button>
+            <span class="combat-reserve" title="Reservemagazine">Reserve: <span class="combat-reserve-cur" data-eqidx="${eqIdx}">${reserve}</span></span>
+            <button class="combat-ammo-btn combat-ammo-reload" data-eqidx="${eqIdx}" data-mag="${mag}" data-action="reload"${reserve <= 0 ? ' disabled title="Keine Reservemagazine"' : ''}>↺ Nachladen</button>
           </div>
         </div>
       </div>`;
@@ -614,7 +616,16 @@ const CombatPage = {
         } else if (action === 'auto') {
           ammo = Math.max(0, ammo - (parseInt(btn.dataset.auto) || 1));
         } else if (action === 'reload') {
-          ammo = parseInt(btn.dataset.mag) || 0;
+          // Nachladen: Munition auffüllen und ein Reservemagazin verbrauchen
+          // (nicht unter 0). Ohne Reservemagazine bleibt die Munition, wie sie
+          // ist – man kann nicht aus dem Nichts nachladen.
+          const reserve = parseInt(item.reserveMags) || 0;
+          if (reserve <= 0) return;
+          ammo = parseInt(item.magazine) || parseInt(btn.dataset.mag) || 0;
+          item.reserveMags = reserve - 1;
+          const resDisp = document.querySelector(`.combat-reserve-cur[data-eqidx="${idx}"]`);
+          if (resDisp) resDisp.textContent = item.reserveMags;
+          if (item.reserveMags <= 0) { btn.disabled = true; btn.title = 'Keine Reservemagazine'; }
         }
 
         item.ammo = ammo;

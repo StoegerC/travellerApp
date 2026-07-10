@@ -3308,6 +3308,20 @@ label.attachment-upload-btn {
   background: #d4edda;
   color: #155724;
 }
+.combat-ammo-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+/* Reservemagazine-Anzeige neben dem Nachladen-Button */
+.combat-reserve {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  padding: 0 4px;
+}
+.combat-reserve-cur { font-weight: 800; margin-left: 3px; }
 
 /* Schutz-Block (in Physische Attribute) */
 
@@ -6648,6 +6662,7 @@ body.dark-mode .combat-ammo-mag    { color: #6068a0; }
 body.dark-mode .combat-ammo-btn    { background: #1d2035; border-color: #2c3050; color: #dde0f5; }
 body.dark-mode .combat-ammo-btn:active { background: #252840; }
 body.dark-mode .combat-ammo-reload { background: #0d2218; border-color: #28a745; color: #4ade80; }
+body.dark-mode .combat-reserve     { color: #9095b8; }
 
 /* Schutz / Rüstungsblock */
 body.dark-mode .combat-prot        { background: #12162e; border-color: #2c3050; }
