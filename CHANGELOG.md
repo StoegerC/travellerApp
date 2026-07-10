@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.7.2] – 2026-07-10
+
+### Zurückgenommen
+- **Alle heutigen Frontend-Änderungen (3.6.0–3.7.1) zurückgesetzt** — Schiff-Systemtabelle, Markdown-Notizen, größeres Schiffsbild, Sortierung/Summen und der Listen-Filter-Fix. Grund: Auf der Schiff-Seite trat beim Wechsel dorthin ein Hänger auf (im DOM-/Sync-Zusammenspiel, nicht im reinen Rendern nachstellbar). Frontend-Code auf den Stand von 3.5.1 zurückgesetzt; Version für sauberes Cache-Busting auf 3.7.2 angehoben. Die Features werden nach Ursachenanalyse gezielt neu aufgesetzt. Der Filter-Fix wird zeitnah separat wieder eingespielt.
+
+---
+
 ## [3.7.1] – 2026-07-10
 
 ### Behoben

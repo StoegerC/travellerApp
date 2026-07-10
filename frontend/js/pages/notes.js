@@ -15,14 +15,6 @@ const NotesPage = {
   _notesSort:       { sessions: 'createdAt', persons: 'name', locations: 'name', quests: 'createdAt' },
   _notesDir:        { sessions: 'desc', persons: 'asc', locations: 'asc', quests: 'desc' },
   _questFilterVal:  'active',
-  // Aktive Listen-Filter. Bewusst als Zustand gehalten (nicht nur im DOM),
-  // sonst setzt der naechste Re-Render (Kampagnen-/Cloud-Poll, Autosave) sie
-  // zurueck - genau der "kurz richtig, dann weg"-Effekt. Werden in den
-  // _attach*Filter-Methoden nach jedem Render wiederhergestellt und angewandt.
-  _personFilter:    { search: '', location: '', relation: '' },
-  _locationFilter:  { search: '', status: '' },
-  _sessionFilter:   { search: '', person: '', location: '', event: '' },
-  _questSearch:     '',
 
   // Wie in Metadata._portraitSrc: bevorzugt die hochgeladene Datei, faellt auf
   // ein altes eingebettetes Base64-Bild zurueck (Altbestand bleibt sichtbar).
@@ -1885,23 +1877,14 @@ const NotesPage = {
     const relationSel = document.getElementById('filterPersonRelation');
     if (!search) return;
 
-    const f = this._personFilter;
-    // Nach einem Re-Render die Steuerelemente aus dem gespeicherten Zustand
-    // wiederherstellen (der Wert bleibt nur erhalten, wenn die Option/das Feld
-    // noch existiert - sonst faellt es auf "alle" zurueck, was gewollt ist).
-    search.value = f.search;
-    if (locationSel) locationSel.value = f.location;
-    if (relationSel) relationSel.value = f.relation;
-
     const applyFilter = () => {
-      f.search   = search?.value || '';
-      f.location = locationSel?.value || '';
-      f.relation = relationSel?.value || '';
-      const term = f.search.toLowerCase();
+      const term     = (search?.value || '').toLowerCase();
+      const location = locationSel?.value || '';
+      const relation = relationSel?.value || '';
       document.querySelectorAll('.person-list-item').forEach(item => {
         const nameMatch     = (item.dataset.name || '').includes(term);
-        const relationMatch = !f.relation || item.dataset.relation   === f.relation;
-        const locationMatch = !f.location || (item.dataset.locationids || '').split(' ').includes(f.location);
+        const relationMatch = !relation || item.dataset.relation   === relation;
+        const locationMatch = !location || (item.dataset.locationids || '').split(' ').includes(location);
         item.style.display = (nameMatch && relationMatch && locationMatch) ? '' : 'none';
       });
     };
@@ -1909,7 +1892,6 @@ const NotesPage = {
     search?.addEventListener('input', applyFilter);
     locationSel?.addEventListener('change', applyFilter);
     relationSel?.addEventListener('change', applyFilter);
-    applyFilter(); // sofort anwenden, auch direkt nach einem Re-Render
 
     document.querySelectorAll('.person-fav-btn').forEach(btn => {
       btn.addEventListener('click', e => {
@@ -1940,26 +1922,19 @@ const NotesPage = {
 
     const search    = document.getElementById('locationSearch');
     const statusSel = document.getElementById('filterLocStatus');
-    if (!search) return; // Detailansicht: keine Filterleiste
-
-    const f = this._locationFilter;
-    search.value = f.search;
-    if (statusSel) statusSel.value = f.status;
 
     const applyFilter = () => {
-      f.search = search?.value || '';
-      f.status = statusSel?.value || '';
-      const term = f.search.toLowerCase();
+      const term   = (search?.value || '').toLowerCase();
+      const status = statusSel?.value || '';
       document.querySelectorAll('.location-list-item').forEach(item => {
         const match = (item.dataset.name || '').includes(term) &&
-                      (!f.status || item.dataset.locstatus === f.status);
+                      (!status || item.dataset.locstatus === status);
         item.style.display = match ? '' : 'none';
       });
     };
 
     search?.addEventListener('input', applyFilter);
     statusSel?.addEventListener('change', applyFilter);
-    applyFilter();
   },
 
   _attachSessionFilter() {
@@ -1969,19 +1944,11 @@ const NotesPage = {
     const eventSel   = document.getElementById('filterSessionEvent');
     if (!search) return;
 
-    const f = this._sessionFilter;
-    search.value = f.search;
-    if (personSel)   personSel.value   = f.person;
-    if (locationSel) locationSel.value = f.location;
-    if (eventSel)    eventSel.value    = f.event;
-
     const applyFilter = () => {
-      f.search   = search.value || '';
-      f.person   = personSel?.value   || '';
-      f.location = locationSel?.value || '';
-      f.event    = eventSel?.value    || '';
-      const term  = f.search.toLowerCase();
-      const event = f.event.toLowerCase();
+      const term       = search.value.toLowerCase();
+      const personId   = personSel?.value   || '';
+      const locationId = locationSel?.value || '';
+      const event      = (eventSel?.value || '').toLowerCase();
       const sessions   = App.currentCharacter?.notes?.sessions || [];
       document.querySelectorAll('#sessionList .notes-list-item').forEach(item => {
         const s = sessions.find(x => x.id === item.dataset.id);
@@ -1989,8 +1956,8 @@ const NotesPage = {
         const textMatch     = !term ||
           (s.title   || '').toLowerCase().includes(term) ||
           (s.content || '').toLowerCase().includes(term);
-        const personMatch   = !f.person   || (s.tags?.persons   || []).includes(f.person);
-        const locationMatch = !f.location || (s.tags?.locations || []).includes(f.location);
+        const personMatch   = !personId   || (s.tags?.persons   || []).includes(personId);
+        const locationMatch = !locationId || (s.tags?.locations || []).includes(locationId);
         const eventMatch    = !event      || (s.tags?.events || []).some(e => e.toLowerCase() === event);
         item.style.display = (textMatch && personMatch && locationMatch && eventMatch) ? '' : 'none';
       });
@@ -2000,17 +1967,14 @@ const NotesPage = {
     personSel?.addEventListener('change', applyFilter);
     eventSel?.addEventListener('change', applyFilter);
     locationSel?.addEventListener('change', applyFilter);
-    applyFilter();
   },
 
   _attachQuestFilter() {
     const search    = document.getElementById('questSearch');
     const statusSel = document.getElementById('filterQuestStatus');
-    if (search) search.value = this._questSearch;
 
     const applyFilter = () => {
-      this._questSearch = search?.value || '';
-      const term   = this._questSearch.toLowerCase();
+      const term   = (search?.value || '').toLowerCase();
       const status = statusSel?.value || '';
       document.querySelectorAll('.quest-list-item').forEach(item => {
         const nameMatch   = (item.dataset.name || '').includes(term);
@@ -2020,9 +1984,6 @@ const NotesPage = {
     };
 
     search?.addEventListener('input', applyFilter);
-    // Der Status-Filter rendert neu (das Dropdown-Vorwahl lebt in _questFilterVal),
-    // deshalb hier nur den Suchbegriff sofort wieder anwenden.
-    if (search) applyFilter();
     statusSel?.addEventListener('change', e => {
       this._questFilterVal = e.target.value;
       App.renderCurrentPage();

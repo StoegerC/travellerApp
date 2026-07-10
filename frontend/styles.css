@@ -7258,35 +7258,33 @@ body.dark-mode .update-reload-btn   { background: #dde0f5; color: #1a1d2e; }
   display: flex;
   gap: 16px;
   align-items: flex-start;
-  flex-wrap: wrap;
 }
 .ship-portrait-col {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  width: 100%;
-  max-width: 340px;
+  flex-shrink: 0;
 }
 .ship-portrait {
-  width: 100%;
+  width: 120px;
+  height: 90px;
   object-fit: cover;
   border-radius: 10px;
   border: 1px solid #ddd;
 }
 .ship-portrait-placeholder {
-  width: 100%;
+  width: 120px;
+  height: 90px;
   background: #f0f0f0;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 48px;
+  font-size: 36px;
   border: 1px dashed #ccc;
 }
-/* Schiffsbild in vergleichbarer Größe zum Charakterporträt, aber im
-   natürlichen Querformat (Schiffs-Renders sind quer, nicht hoch). */
-.ship-portrait-frame { position: relative; width: 100%; aspect-ratio: 3 / 2; }
+.ship-portrait-frame { position: relative; width: 120px; height: 90px; }
 .ship-portrait-frame .ship-portrait,
 .ship-portrait-frame .ship-portrait-placeholder { width: 100%; height: 100%; }
 .ship-img-nav {
@@ -7349,7 +7347,7 @@ body.dark-mode .update-reload-btn   { background: #dde0f5; color: #1a1d2e; }
   border-radius: 6px;
   cursor: pointer;
 }
-.ship-info-fields { flex: 1; min-width: 240px; }
+.ship-info-fields { flex: 1; min-width: 0; }
 .ship-field-group {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -7403,50 +7401,12 @@ body.dark-mode .update-reload-btn   { background: #dde0f5; color: #1a1d2e; }
   box-sizing: border-box;
   font-family: inherit;
 }
-/* Schiffsnotizen werden jetzt als Markdown gerendert (md-content liefert Farbe
-   + Zeilenhöhe, im Dark Mode über die body.dark-mode .md-* Regeln hell). */
 .ship-notes-view {
   font-size: 14px;
+  color: #444;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
-
-/* Schiff: Antriebe & Systeme als Tabelle (Kategorie | Details | Tons | Cost | Merkmale) */
-.ship-systems-scroll {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-.ship-systems-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-.ship-systems-table th {
-  padding: 8px;
-  background: #f5f5f5;
-  border-bottom: 2px solid #ddd;
-  text-align: left;
-  font-size: 12px;
-  font-weight: 700;
-}
-.ship-systems-table td {
-  padding: 7px 8px;
-  border-bottom: 1px solid #f0f0f0;
-  vertical-align: middle;
-}
-.ship-systems-table input {
-  font-size: 13px;
-  padding: 4px 6px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  width: 100%;
-  min-width: 70px;
-  box-sizing: border-box;
-}
-.ssy-cat-cell { font-weight: 600; }
-.ship-systems-table th.ssy-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
-.ship-systems-table th.ssy-sortable:hover { background: #ececec; }
-.ship-systems-table th.ssy-sort-active { color: #4a5aa8; }
-.ssy-sum-row td { font-weight: 700; border-top: 2px solid #ddd; background: #fafafa; }
-.ssy-sum-lbl { text-align: right; color: #666; font-weight: 600; }
 
 /* Status Tab */
 .ship-status-grid {
@@ -7798,13 +7758,6 @@ body.dark-mode .ship-weapon-table th  { background: #1e2140; border-color: #2c30
 body.dark-mode .ship-weapon-table td  { border-color: #2c3050; }
 body.dark-mode .ship-weapon-table input,
 body.dark-mode .ship-weapon-table select { background: #1e2140; border-color: #3a3f6b; color: #dde; }
-body.dark-mode .ship-systems-table th { background: #1e2140; border-color: #2c3050; color: #c8cce8; }
-body.dark-mode .ship-systems-table td { border-color: #2c3050; color: #c8cce8; }
-body.dark-mode .ship-systems-table input { background: #1e2140; border-color: #3a3f6b; color: #dde; }
-body.dark-mode .ship-systems-table th.ssy-sortable:hover { background: #262a4a; }
-body.dark-mode .ship-systems-table th.ssy-sort-active { color: #a78bfa; }
-body.dark-mode .ssy-sum-row td { background: #161929; border-top-color: #3a3f6b; color: #dde; }
-body.dark-mode .ssy-sum-lbl { color: #9095b8; }
 body.dark-mode .ship-ammo-btn         { background: #1e2140; border-color: #3a3f6b; color: #dde; }
 body.dark-mode .ship-empty-cell       { color: #6068a0; }
 body.dark-mode .ship-portrait-placeholder { background: #1e2140; border-color: #3a3f6b; }
