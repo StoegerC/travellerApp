@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.7.5] – 2026-07-10
+
+### Neu
+- **Reservemagazine bei Fernkampfwaffen.** Neues Zahlenfeld „Reserve" pro Fernkampfwaffe (im Ausrüstung-Tab bearbeitbar, `reserveMags`) — wie viele Reservemagazine der Charakter dafür dabei hat. Die Anzahl ist auch im **Kampf-Tab** neben „Nachladen" sichtbar. Ein Klick auf **Nachladen** füllt die Munition auf das Magazin auf **und** verbraucht ein Reservemagazin (Reserve −1). Bei 0 Reservemagazinen ist „Nachladen" deaktiviert (man kann nicht aus dem Nichts nachladen).
+
+---
+
 ## [3.7.4] – 2026-07-10
 
 ### Neu
