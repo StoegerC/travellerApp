@@ -117,6 +117,10 @@ const Storage = {
       if (changed && !this._suppressPush && character.syncMode === 'cloud' && typeof App !== 'undefined') {
         clearTimeout(this._pushTimer);
         this._pushTimer = setTimeout(() => App._pushToCloud(), 500);
+        // Ab jetzt gibt es eine noch nicht bestätigte Änderung -> Header-Anzeige
+        // sofort auf "ungesichert" stellen (wird nach erfolgreichem Push grün).
+        App._pendingPush = true;
+        App._updateSyncIndicator?.();
       }
       return true;
     } catch (e) {

@@ -9,6 +9,11 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.7.4] – 2026-07-10
+
+### Neu
+- **Dauerhafte Sync-Anzeige im Header** — statt nur im Charakter-Tab zeigt eine Pille oben im Header jetzt auf jeder Seite den Cloud-Sync-Zustand, mit dem **Zeitpunkt der letzten erfolgreichen Sicherung** (`☁ ✓ HH:MM:SS`, grün). Man sieht damit auf einen Blick, dass alle Änderungen auf dem Server sind. Vier Zustände: **✓ gesichert** (grün, mit Uhrzeit), **● Ungesichert** (gelb – lokale Änderung liegt an, wird gleich hochgeladen), **Synchronisiere …** (Übertragung läuft), **⚠ Nicht gesichert** (rot – Sync-Fehler, Änderungen noch nicht auf dem Server). Bei rein lokalen Charakteren ausgeblendet. Neuer Zustand `App._pendingPush` unterscheidet „ausstehend" von „bestätigt"; die Anzeige wird sofort bei einer Änderung (`Storage.saveCharacter`), bei jedem Sync-Statuswechsel und nach jedem Render aktualisiert.
+
 ## [3.7.3] – 2026-07-10
 
 ### Behoben
