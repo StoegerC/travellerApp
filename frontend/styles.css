@@ -7043,6 +7043,24 @@ body.dark-mode .ptr-spinner             { border-color: #2c3050; border-top-colo
 .sync-badge--ok      { background: #e8f5e9; color: #1b5e20; border-color: #a5d6a7; }
 .sync-badge--error   { background: #fdecea; color: #b71c1c; border-color: #ef9a9a; }
 
+/* Dauerhafte Sync-Anzeige im (immer dunklen) Header. Helle Pillen, damit sie
+   auf dem dunklen Header in Light- UND Dark-Mode gut lesbar sind. */
+.header-sync-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.header-sync-status--idle    { background: #eef0ff; color: #3a3fa0; border-color: #c5c8f0; }
+.header-sync-status--syncing { background: #fff8e1; color: #7a6000; border-color: #ffe082; }
+.header-sync-status--pending { background: #fff3e0; color: #b45309; border-color: #ffb74d; }
+.header-sync-status--ok      { background: #e6f6ea; color: #1b6e2a; border-color: #a5d6a7; }
+.header-sync-status--error   { background: #fdecea; color: #c0261c; border-color: #ef9a9a; }
+
 /* Neuer-Charakter-Modal */
 .nc-panel { max-width: 420px; }
 

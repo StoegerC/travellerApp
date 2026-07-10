@@ -10,6 +10,7 @@ const App = {
   _MAX_UNDO: 50,
   _lastVersionSave: 0,
   _syncState: { status: 'idle', lastSync: null, error: null },
+  _pendingPush: false, // lokale Änderung geplant, aber noch nicht auf dem Server bestätigt
   _syncTimer: null,
   _POLL_INTERVAL: 15000,
   _campaignData: null,
@@ -157,6 +158,7 @@ const App = {
     this._updateUndoBtn();
     this._updateHeaderName();
     this._syncState = { status: 'idle', lastSync: null, error: null };
+    this._pendingPush = false;
     this._campaignData = null;
 
     if (this.currentCharacter.syncMode === 'cloud') {
@@ -474,6 +476,7 @@ const App = {
 
     this.updateEditButton();
     this._updateUndoBtn();
+    this._updateSyncIndicator();
   },
 
   // ── Edit-Modus ──────────────────────────────────────────────────────────
@@ -639,21 +642,57 @@ const App = {
       lastSync: status === 'ok' ? new Date() : this._syncState.lastSync,
       error,
     };
-    this._updateSyncBadge();
+    // Ein erfolgreicher Push/Pull heißt: nichts mehr ausstehend. Fehler lässt
+    // die ausstehende Markierung stehen (Änderungen sind noch nicht gesichert).
+    if (status === 'ok') this._pendingPush = false;
+    this._updateSyncIndicator();
   },
 
-  _updateSyncBadge() {
-    const el = document.getElementById('syncBadge');
-    if (!el) return;
+  // Zeigt den Sync-Zustand DAUERHAFT im Header (und, falls sichtbar, im
+  // Charakter-Tab-Badge). Unterscheidet ausdrücklich vier Fälle, damit man
+  // sieht, ob wirklich alles auf dem Server ist:
+  //   ✓ HH:MM:SS  – alle Änderungen erfolgreich gesichert (grün)
+  //   ⭯ …         – Änderungen liegen an, werden gleich hochgeladen (gelb)
+  //   Synchronisiere … – Übertragung läuft gerade
+  //   ⚠ Nicht gesichert – Sync-Fehler, Änderungen noch NICHT auf dem Server (rot)
+  _updateSyncIndicator() {
+    const isCloud = this.currentCharacter?.syncMode === 'cloud';
     const { status, lastSync, error } = this._syncState;
+    const pending = !!this._pendingPush;
     const t = lastSync
-      ? lastSync.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+      ? lastSync.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       : '–';
-    el.className   = `sync-badge sync-badge--${status}`;
-    el.textContent = status === 'syncing' ? '☁ Synchronisiere …'
-                   : status === 'error'   ? `☁ Sync-Fehler: ${error}`
-                   : status === 'ok'      ? `☁ Zuletzt: ${t}`
-                   : '☁ Cloud';
+
+    let cls, text, title;
+    if (status === 'syncing') {
+      cls = 'syncing'; text = '☁ Synchronisiere …'; title = 'Überträgt Änderungen zum Server …';
+    } else if (status === 'error') {
+      cls = 'error';   text = '☁ ⚠ Nicht gesichert';
+      title = `Sync-Fehler: ${error || 'unbekannt'}${lastSync ? ` — zuletzt gesichert ${t}` : ''}`;
+    } else if (pending) {
+      cls = 'pending'; text = '☁ ● Ungesichert';    title = 'Änderungen werden gleich hochgeladen …';
+    } else if (status === 'ok' && lastSync) {
+      cls = 'ok';      text = `☁ ✓ ${t}`;           title = `Alle Änderungen gesichert um ${t}`;
+    } else {
+      cls = 'idle';    text = '☁ Cloud';            title = 'Cloud-Synchronisierung';
+    }
+
+    const header = document.getElementById('headerSyncStatus');
+    if (header) {
+      header.style.display = isCloud ? '' : 'none';
+      if (isCloud) {
+        header.className   = `header-sync-status header-sync-status--${cls}`;
+        header.textContent = text;
+        header.title       = title;
+      }
+    }
+
+    // Der Badge im Charakter-Tab (nur dort im DOM) wird mitgeführt, falls sichtbar.
+    const badge = document.getElementById('syncBadge');
+    if (badge) {
+      badge.className   = `sync-badge sync-badge--${cls === 'pending' ? 'syncing' : cls}`;
+      badge.textContent = text;
+    }
   },
 
   _startCloudPoll() {
