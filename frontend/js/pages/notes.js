@@ -746,7 +746,8 @@ const NotesPage = {
     this._prefillLocation = null;
     const l = isNew
       ? { id: 'new', name: prefill?.name || '', sector: prefill?.sector || '', uwp: prefill?.uwp || '',
-          description: '', notes: '', status: 'visited', visitedDate: '',
+          description: '', notes: '', status: 'visited',
+          visitedDate: App.currentCharacter?.activeJournalDate() || '',
           mapX: prefill?.mapX ?? null, mapY: prefill?.mapY ?? null,
           mapSector: prefill?.mapSector || null, mapHex: prefill?.mapHex || null }
       : this._findEntry('locations', id, data);
@@ -825,12 +826,6 @@ const NotesPage = {
                 </div>
                 <input type="hidden" id="locVisitedDate" value="${this._esc(l.visitedDate || '')}">
                 <div class="trav-date-preview" id="travDatePreview"${l.visitedDate ? '' : ' style="display:none"'}>${l.visitedDate || ''}</div>
-                ${(() => {
-                  const a = this._activeSession(data);
-                  return a?.inGameDate
-                    ? `<button type="button" id="locDateFromSession" class="loc-date-from-session" data-date="${this._esc(a.inGameDate)}">📖 Vom aktiven Journal übernehmen (${this._esc(a.inGameDate)})</button>`
-                    : '';
-                })()}
               </div>
             </div>
           </div>
@@ -1914,30 +1909,31 @@ const NotesPage = {
   },
 
   _attachLocationFilter() {
-    // Datum-Feld ein-/ausblenden je nach Status-Auswahl
+    // Datum-Feld ein-/ausblenden je nach Status-Auswahl. Beim Umstellen auf
+    // "Besucht" wird ein noch leeres Datum mit dem In-Game-Datum des aktiven
+    // Journal-Eintrags vorbelegt (nie ein vorhandenes Datum überschreiben).
     const locStatusSel = document.getElementById('locStatus');
     if (locStatusSel) {
       locStatusSel.addEventListener('change', () => {
         const dateGroup = document.getElementById('visitedDateGroup');
         if (dateGroup) dateGroup.style.display = locStatusSel.value === 'visited' ? '' : 'none';
+
+        const yearInp = document.getElementById('travDateYear');
+        const dayInp  = document.getElementById('travDateDay');
+        if (locStatusSel.value !== 'visited' || !yearInp || !dayInp) return;
+        if (yearInp.value || dayInp.value) return;
+        const [year, day] = (App.currentCharacter?.activeJournalDate() || '').split('-');
+        if (!year || !day) return;
+        yearInp.value = year;
+        dayInp.value  = String(parseInt(day));
+        // input-Event stößt den Picker-Sync (hidden Feld + Vorschau) und den
+        // Autosave an (bubbles, siehe App-Listener auf dem Content-Bereich)
+        yearInp.dispatchEvent(new Event('input', { bubbles: true }));
       });
     }
 
     this._attachTravDatePicker();
     this._attachLocTravSearch();
-
-    // Besuchsdatum vom aktiven Journal-Eintrag übernehmen
-    document.getElementById('locDateFromSession')?.addEventListener('click', (e) => {
-      const [year, day] = (e.currentTarget.dataset.date || '').split('-');
-      const yearInp = document.getElementById('travDateYear');
-      const dayInp  = document.getElementById('travDateDay');
-      if (!yearInp || !dayInp || !year || !day) return;
-      yearInp.value = year;
-      dayInp.value  = String(parseInt(day));
-      // input-Event stößt den Picker-Sync (hidden Feld + Vorschau) und den
-      // Autosave an (bubbles, siehe App-Listener auf dem Content-Bereich)
-      yearInp.dispatchEvent(new Event('input', { bubbles: true }));
-    });
 
     const search    = document.getElementById('locationSearch');
     const statusSel = document.getElementById('filterLocStatus');
