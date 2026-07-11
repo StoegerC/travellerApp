@@ -12,6 +12,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.8.0] – 2026-07-11
+
+### Neu
+- **Helden XP** — neues Zahlenfeld für den Charakter. Auf der Charakter-Seite unter „Heimatplanet" frei editierbar (Bearbeitungsmodus) bzw. sichtbar (Lesemodus). Zusätzlich im Kampf-Tab unterhalb von „Erste Hilfe" als eigene Zeile mit **+/−-Buttons** direkt veränderbar (min. 0, wird sofort gespeichert und synchronisiert).
+
+---
+
 ## [3.7.7] – 2026-07-10
 
 ### Behoben
