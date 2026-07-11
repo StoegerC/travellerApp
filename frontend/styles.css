@@ -2063,6 +2063,21 @@ label.attachment-upload-btn {
   padding: 2px 0;
 }
 
+.loc-date-from-session {
+  margin-top: 8px;
+  min-height: 44px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1.5px solid #c7d0f0;
+  border-radius: 8px;
+  background: #f4f6ff;
+  color: #4c5fd7;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.loc-date-from-session:active { background: #e4e9ff; }
+
 /* ── UWP breakdown block (location view mode) ── */
 .loc-uwp-block {
   background: #f8f7ff;
@@ -6312,6 +6327,12 @@ body.dark-mode .trav-date-num-inp {
 }
 body.dark-mode .trav-date-num-inp:focus { border-color: #667eea; }
 body.dark-mode .trav-date-preview { color: #a78bfa; }
+body.dark-mode .loc-date-from-session {
+  background: #1d2035;
+  border-color: #2c3050;
+  color: #8b9bf4;
+}
+body.dark-mode .loc-date-from-session:active { background: #252840; }
 
 /* ── Tag Picker ── */
 body.dark-mode .tag-picker-dropdown {
