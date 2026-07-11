@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.10.0] – 2026-07-11
+
 ### Geändert
 - **In-Game-Datumsfelder werden zentral vom aktiven Journal vorbelegt** — neuer Helfer `Character.activeJournalDate()` liefert das In-Game-Datum des aktiven Journal-Eintrags (leer wenn kein Eintrag aktiv oder ohne Datum → dann keine Vorbelegung). Eingesetzt bei: **Ort** (neuer Ort mit Status „Besucht" sowie Umstellen auf „Besucht", nur wenn das Datum noch leer ist), **Charakter-Finanzen** (neue Einnahme/Ausgabe, Abrechnung), **Schiffs-Finanzen** (neue Transaktion, Abrechnung), **Weiterbildung** (Start-Datum, „Wochen eintragen"-Von-Datum, „Abschließen"-Datum als Fallback ohne Startdatum) und **Erste Hilfe** (Prompt-Vorgabe). Beim Bearbeiten bestehender Einträge wird nie ein vorhandenes Datum überschrieben.
 - Der Button „📖 Vom aktiven Journal übernehmen" im Orts-Formular (3.9.0) entfällt — die automatische Vorbelegung ersetzt ihn.
