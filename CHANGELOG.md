@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.8.1] – 2026-07-11
+
 ### Behoben
 - **Weiterbildung im Dark Mode schlecht lesbar** — Skill-Name (dunkelgrau auf dunkler Karte) und Wochen-Zähler waren kaum zu erkennen. Fehlende Dark-Mode-Overrides ergänzt, dabei auch die übrigen Lücken der Weiterbildungs-Sektion geschlossen: Level-Chip, Abschließen-/Löschen-Button, Erledigt-Liste (Trennlinien, Datum) und das „Training hinzufügen"-Modal (war komplett weiß).
 
