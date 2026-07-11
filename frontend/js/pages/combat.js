@@ -520,9 +520,9 @@ const CombatPage = {
 
     // ── Erste Hilfe ───────────────────────────────────────────────────────
     document.getElementById('firstAidBtn')?.addEventListener('click', () => {
-      const inGameTime = window.prompt('Ingame-Datum / Uhrzeit:', '');
-      if (inGameTime === null) return; // Abgebrochen
       const char = window.currentCharacter;
+      const inGameTime = window.prompt('Ingame-Datum / Uhrzeit:', char.activeJournalDate());
+      if (inGameTime === null) return; // Abgebrochen
       if (!Array.isArray(char.firstAidLog)) char.firstAidLog = [];
       char.firstAidLog.push({ ts: Date.now(), inGameTime: inGameTime.trim() });
       Storage.saveCharacter(char);

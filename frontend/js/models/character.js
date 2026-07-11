@@ -297,6 +297,17 @@ class Character {
   }
 
   /**
+   * In-Game-Datum des aktiven Journal-Eintrags — zentrale Quelle für die
+   * Vorbelegung aller In-Game-Datumsfelder (Ort besucht, Finanzen, Training,
+   * Erste Hilfe, …). Liefert '' wenn kein Eintrag aktiv ist oder der aktive
+   * Eintrag kein Datum gesetzt hat; Aufrufer belegen dann nicht vor.
+   */
+  activeJournalDate() {
+    const active = (this.notes?.sessions || []).find(s => s.isActive && !s._deleted);
+    return (active?.inGameDate || '').trim();
+  }
+
+  /**
    * Zu JSON konvertieren (für Storage)
    */
   toJSON() {

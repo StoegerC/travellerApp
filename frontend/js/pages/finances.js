@@ -312,7 +312,7 @@ const FinancesPage = {
       this._txSign = sign;
       document.getElementById('txModalTitle').textContent = title;
       document.getElementById('txAmount').value = '';
-      document.getElementById('txDate').value   = '';
+      document.getElementById('txDate').value   = char.activeJournalDate();
       document.getElementById('txDesc').value   = '';
       const cat = document.getElementById('txCat'); if (cat) cat.selectedIndex = 0;
       showModal('txModal');
@@ -545,7 +545,7 @@ const FinancesPage = {
     overlay.innerHTML = `
       <div class="fin-settle">
         <h3>Abrechnung</h3>
-        <input id="settleDate" type="text" placeholder="Ingame-Datum (z.B. 1105-034)" class="fin-modal-field">
+        <input id="settleDate" type="text" placeholder="Ingame-Datum (z.B. 1105-034)" class="fin-modal-field" value="${this._esc(App.currentCharacter?.activeJournalDate() || '')}">
         <div class="fin-settle-list">${rows}</div>
         <div class="fin-settle-total" id="settleTotal"></div>
         <div class="fin-modal-actions">

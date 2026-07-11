@@ -284,7 +284,7 @@ const AttributesPage = {
           <div class="training-modal-row">
             <div class="form-group">
               <label>Von (In-Game)</label>
-              <input type="text" id="awFrom" placeholder="z.B. 1105-03">
+              <input type="text" id="awFrom" value="${e(App.currentCharacter?.activeJournalDate() || '')}" placeholder="z.B. 1105-03">
             </div>
             <div class="form-group">
               <label>Bis (In-Game)</label>
@@ -341,7 +341,7 @@ const AttributesPage = {
             <input type="number" id="tmDuration" value="8" min="1" max="520">
           </div>
           <div class="form-group"><label>Start (In-Game)</label>
-            <input type="text" id="tmStart" placeholder="z.B. 1105-03">
+            <input type="text" id="tmStart" value="${this._esc(char.activeJournalDate())}" placeholder="z.B. 1105-03">
           </div>
         </div>
         <div class="form-group"><label>Notizen</label>
@@ -405,7 +405,8 @@ const AttributesPage = {
 
   _showCompleteTrainingModal(t, char) {
     const weeks         = t.durationWeeks ?? ((t.durationMonths || 1) * 4);
-    const suggestedDate = this._addTrainingWeeks(t.startDate, weeks);
+    // Vorschlag: Startdatum + Dauer; ohne Startdatum das Datum des aktiven Journals
+    const suggestedDate = this._addTrainingWeeks(t.startDate, weeks) || char.activeJournalDate();
     const overlay = document.createElement('div');
     overlay.className = 'fin-settle-overlay';
     overlay.innerHTML = `
