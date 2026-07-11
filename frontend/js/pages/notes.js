@@ -825,6 +825,12 @@ const NotesPage = {
                 </div>
                 <input type="hidden" id="locVisitedDate" value="${this._esc(l.visitedDate || '')}">
                 <div class="trav-date-preview" id="travDatePreview"${l.visitedDate ? '' : ' style="display:none"'}>${l.visitedDate || ''}</div>
+                ${(() => {
+                  const a = this._activeSession(data);
+                  return a?.inGameDate
+                    ? `<button type="button" id="locDateFromSession" class="loc-date-from-session" data-date="${this._esc(a.inGameDate)}">📖 Vom aktiven Journal übernehmen (${this._esc(a.inGameDate)})</button>`
+                    : '';
+                })()}
               </div>
             </div>
           </div>
@@ -1919,6 +1925,19 @@ const NotesPage = {
 
     this._attachTravDatePicker();
     this._attachLocTravSearch();
+
+    // Besuchsdatum vom aktiven Journal-Eintrag übernehmen
+    document.getElementById('locDateFromSession')?.addEventListener('click', (e) => {
+      const [year, day] = (e.currentTarget.dataset.date || '').split('-');
+      const yearInp = document.getElementById('travDateYear');
+      const dayInp  = document.getElementById('travDateDay');
+      if (!yearInp || !dayInp || !year || !day) return;
+      yearInp.value = year;
+      dayInp.value  = String(parseInt(day));
+      // input-Event stößt den Picker-Sync (hidden Feld + Vorschau) und den
+      // Autosave an (bubbles, siehe App-Listener auf dem Content-Bereich)
+      yearInp.dispatchEvent(new Event('input', { bubbles: true }));
+    });
 
     const search    = document.getElementById('locationSearch');
     const statusSel = document.getElementById('filterLocStatus');

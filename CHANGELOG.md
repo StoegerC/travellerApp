@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.9.0] – 2026-07-11
+
+### Neu
+- **Besuchsdatum vom aktiven Journal übernehmen** — im Orts-Formular (Status „Besucht") gibt es unter dem Datumspicker jetzt einen Button „📖 Vom aktiven Journal übernehmen", der das In-Game-Datum des aktiven Journal-Eintrags in das Besuchsdatum kopiert. Erscheint nur, wenn ein aktiver Journal-Eintrag mit gesetztem In-Game-Datum existiert.
+
+---
+
 ## [3.8.1] – 2026-07-11
 
 ### Behoben
