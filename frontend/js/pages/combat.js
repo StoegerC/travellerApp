@@ -117,6 +117,20 @@ const CombatPage = {
     </div>`;
   },
 
+  // ── Helden XP (in Block 1, unter Erste Hilfe) ────────────────────────────
+
+  _renderHeroXp(character) {
+    const xp = typeof character.metadata?.heroXp === 'number' ? character.metadata.heroXp : 0;
+    return `<div class="combat-heroxp">
+      <span class="combat-heroxp-label">⭐ Helden XP</span>
+      <div class="combat-heroxp-controls">
+        <button id="heroXpMinus" class="combat-heroxp-btn" ${xp <= 0 ? 'disabled' : ''}>−</button>
+        <span class="combat-heroxp-value">${xp}</span>
+        <button id="heroXpPlus" class="combat-heroxp-btn">+</button>
+      </div>
+    </div>`;
+  },
+
   // ── Block 3 ──────────────────────────────────────────────────────────────
 
   _renderProtection(character) {
@@ -295,6 +309,7 @@ const CombatPage = {
             ${status.icon} ${status.text}
           </div>
           ${this._renderFirstAid(character)}
+          ${this._renderHeroXp(character)}
         </div>
 
         <!-- Zeile 2 rechts: Aktive Rüstung -->
@@ -526,6 +541,18 @@ const CombatPage = {
         this.attachListeners();
       });
     });
+
+    // ── Helden XP ─────────────────────────────────────────────────────────
+    const changeHeroXp = (delta) => {
+      const char = window.currentCharacter;
+      const cur  = typeof char.metadata.heroXp === 'number' ? char.metadata.heroXp : 0;
+      char.metadata.heroXp = Math.max(0, cur + delta);
+      Storage.saveCharacter(char);
+      document.getElementById('combat-page').innerHTML = this.render(char);
+      this.attachListeners();
+    };
+    document.getElementById('heroXpMinus')?.addEventListener('click', () => changeHeroXp(-1));
+    document.getElementById('heroXpPlus')?.addEventListener('click', () => changeHeroXp(1));
 
     // ── Block 4: Strahlung ───────────────────────────────────────────────
     document.getElementById('radAddBtn')?.addEventListener('click', () => {

@@ -13,6 +13,7 @@ class Character {
       homeworld: data.metadata?.homeworld || '',
       age:       data.metadata?.age       || 18,
       birthdate: data.metadata?.birthdate || '',
+      heroXp:    typeof data.metadata?.heroXp === 'number' ? data.metadata.heroXp : 0,
       // Mehrere Porträts; Rückwärtskompatibilität: altes portraitImage → portraits[0]
       portraits:      data.metadata?.portraits      || (data.metadata?.portraitImage ? [data.metadata.portraitImage] : []),
       portraitIndex:  data.metadata?.portraitIndex  || 0

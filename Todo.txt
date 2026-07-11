@@ -25,6 +25,24 @@ DATENHALTUNG
 CHARAKTERVERWALTUNG
 [ ] Regel-System-Switch (character.system wird gesetzt aber nie ausgewertet)
 
+SERVER / BETRIEB (nautilus)
+[ ] Persistentes Journal aktivieren — Ursache des Ausfalls vom 10.07.2026
+    (~19:40 Uhr offline, Power-Cycle 20:55 Uhr) war nicht mehr feststellbar,
+    weil das Journal nur im RAM lag (kein /var/log/journal).
+    Fix: sudo mkdir -p /var/log/journal && sudo journalctl --flush
+    Optional Größe begrenzen: /etc/systemd/journald.conf.d/size.conf
+    mit [Journal] SystemMaxUse=200M, dann systemd-journald neu starten.
+[ ] Prüfen ob klassische Logs vom Ausfall existieren:
+    ls /var/log/syslog* /var/log/kern.log* — falls ja, Zeitfenster
+    "Jul 10 19:00–20:55" greppen.
+[ ] Merkzettel für den nächsten Ausfall: NICHT sofort Strom ziehen —
+    erst lokal prüfen ob die Maschine lebt (Ping aus dem LAN auf 192.168.0.x,
+    Monitor/Tastatur). Lebt sie: nur Tailscale/Netz betroffen
+    (journalctl -u tailscaled). Danach ggf. journalctl -b -1 auswerten
+    (geht erst mit persistentem Journal).
+[ ] wtmpdb zeichnet keine Boot-/Shutdown-Einträge auf ("last -x" ohne
+    reboot-Zeilen) — wtmpdb-Boot-Logging aktivieren oder als bekannt abhaken.
+
 UI / UX
 [ ] Sync-Fehler deutlicher machen: Warnung "Änderungen noch nicht hochgeladen"
     bzw. Zähler ausstehender Pushes statt nur dezentem Header-Badge
@@ -34,4 +52,3 @@ UI / UX
 [ ] Schnellsuche global im Header (Personen, Orte, Quests, Sessions)
 [ ] Timeline-Ansicht: Sessions chronologisch als Zeitstrahl
 [ ] Druckansicht / PDF-Export des Charakterbogens
-[ ] Journal in Listenansicht
