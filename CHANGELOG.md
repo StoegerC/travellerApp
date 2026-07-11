@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Behoben
+- **Grüne „✓ gesichert"-Anzeige trotz nicht hochgeladener Änderungen** — nach einem fehlgeschlagenen Push (z.B. offline gespielt) holte der nächste Sync-Poll den Serverstand, mergte die lokalen Änderungen korrekt hinein, meldete aber „ok", ohne das Merge-Ergebnis zurückzupushen. Der Server bekam die Änderungen erst beim nächsten zufälligen Edit; bis dahin sahen andere Geräte sie nicht, obwohl der Header „gesichert" zeigte. Jetzt wird nach dem Pull-Merge geprüft, ob das Ergebnis vom Serverstand abweicht (ohne `_syncMeta`-Zeitstempel) — wenn ja, folgt sofort ein Push, und erst dessen Erfolg macht die Anzeige grün.
+
 ---
 
 ## [3.13.1] – 2026-07-17
