@@ -3472,6 +3472,60 @@ label.attachment-upload-btn {
 
 .combat-fa-del:hover { color: #dc3545; }
 
+/* ── Helden XP (in Block 1) ── */
+
+.combat-heroxp {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: #fff8e1;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+}
+
+.combat-heroxp-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #856404;
+}
+
+.combat-heroxp-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.combat-heroxp-value {
+  min-width: 44px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #333;
+}
+
+.combat-heroxp-btn {
+  width: 48px;
+  height: 48px;
+  font-size: 22px;
+  font-weight: 700;
+  border: 2px solid #ffc107;
+  border-radius: 8px;
+  background: #fff3cd;
+  color: #856404;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.combat-heroxp-btn:active { background: #ffe8a1; }
+
+.combat-heroxp-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 /* ── Block 4: Strahlungsdosis ── */
 
 .combat-rad {
@@ -7925,3 +7979,10 @@ body.dark-mode .campaign-joincode code {
   color: #dde;
 }
 body.dark-mode .cfg-pw-change { border-top-color: #3a3f6b; }
+
+/* ===== DARK MODE: HELDEN XP ===== */
+body.dark-mode .combat-heroxp       { background: #1e1a08; border-color: #ffc107; }
+body.dark-mode .combat-heroxp-label { color: #fbbf24; }
+body.dark-mode .combat-heroxp-value { color: #e8eaf6; }
+body.dark-mode .combat-heroxp-btn   { background: #2a2410; border-color: #ffc107; color: #fbbf24; }
+body.dark-mode .combat-heroxp-btn:active { background: #3a3218; }

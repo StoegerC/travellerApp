@@ -105,6 +105,10 @@ const MetadataPage = {
               <label for="charHomeworld">Heimatplanet:</label>
               <input type="text" id="charHomeworld" value="${this._esc(meta.homeworld)}" placeholder="Planet oder Station">
             </div>
+            <div class="form-group">
+              <label for="charHeroXp">Helden XP:</label>
+              <input type="number" id="charHeroXp" value="${typeof meta.heroXp === 'number' ? meta.heroXp : 0}" min="0" step="1">
+            </div>
           </div>
         </div>
       `;
@@ -122,6 +126,7 @@ const MetadataPage = {
               <div><strong>Titel / Rang:</strong> ${this._esc(meta.title) || '–'}</div>
               <div><strong>Alter:</strong> ${meta.age || 18} Jahre${meta.birthdate ? ` <span class="meta-birthdate">(geb. ${this._esc(meta.birthdate)})</span>` : ''}</div>
               <div><strong>Heimatplanet:</strong> ${this._esc(meta.homeworld) || '–'}</div>
+              <div><strong>Helden XP:</strong> ${typeof meta.heroXp === 'number' ? meta.heroXp : 0}</div>
             </div>
           </div>
         </div>
@@ -174,6 +179,7 @@ const MetadataPage = {
       age:       parseInt(document.getElementById('charAge')?.value) || 18,
       birthdate: document.getElementById('charBirthdate')?.value   || '',
       homeworld: document.getElementById('charHomeworld')?.value   || '',
+      heroXp:    Math.max(0, parseInt(document.getElementById('charHeroXp')?.value) || 0),
     };
   },
 
