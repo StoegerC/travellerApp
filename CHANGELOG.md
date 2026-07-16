@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.12.1] – 2026-07-16
+
 ### Geändert
 - **„Synchronisiere …" nur noch bei echtem Datenaustausch** — der 15-s-Poll schaltete die Sync-Anzeige schon vor der Anfrage auf „Synchronisiere …", also auch wenn der Server nur mit 304 „unverändert" antwortet (seit 3.12.0 der Normalfall). Jetzt wird der Zustand erst gesetzt, wenn die Antwort tatsächlich einen Body liefert (neuer `onTransfer`-Callback in `CloudSync.pullCharacter()`, feuert bei HTTP 200 unmittelbar vor dem Download). Beim reinen Zeitstempel-Vergleich bleibt die Anzeige völlig ruhig — nur die Uhrzeit hinter dem grünen ✓ springt weiter. Uploads (`_pushToCloud`) zeigen „Synchronisiere …" unverändert, dort fließen immer Daten.
 
