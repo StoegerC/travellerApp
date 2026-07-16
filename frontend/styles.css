@@ -5003,6 +5003,21 @@ label.attachment-upload-btn {
 }
 .training-del-btn.btn-xs { padding: 2px 7px; font-size: 12px; }
 
+/* Bearbeiten-Button (✎) — steht direkt vor dem Löschen-Button und übernimmt
+   dessen Rechtsbündigkeit in der Flex-Zeile */
+.training-edit-btn {
+  margin-left: auto;
+  padding: 5px 9px;
+  background: #e0e7ff;
+  color: #4338ca;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.training-edit-btn.btn-xs { padding: 2px 7px; font-size: 12px; }
+.training-edit-btn + .training-del-btn { margin-left: 0; }
+
 /* Fortschrittsbalken */
 .training-progress-track {
   height: 6px;
@@ -6916,6 +6931,7 @@ body.dark-mode .training-levels     { background: #252840; color: #c8cce8; }
 body.dark-mode .training-complete-btn { background: #252840; color: #9095b8; }
 body.dark-mode .training-complete-btn.training-complete-ready { background: #10b981; color: #fff; }
 body.dark-mode .training-del-btn    { background: #2d1515; color: #fc8181; }
+body.dark-mode .training-edit-btn   { background: #1e2140; color: #818cf8; }
 body.dark-mode .training-done-details { border-top-color: #2c3050; }
 body.dark-mode .training-done-item  { border-bottom-color: #232640; }
 body.dark-mode .training-done-date  { color: #4a5070; }
