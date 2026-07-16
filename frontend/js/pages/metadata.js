@@ -109,6 +109,7 @@ const MetadataPage = {
               <label for="charHeroXp">Helden XP:</label>
               <input type="number" id="charHeroXp" value="${typeof meta.heroXp === 'number' ? meta.heroXp : 0}" min="0" step="1">
             </div>
+            <div class="char-id-row"><strong>Charakter-ID:</strong> <span class="char-id-value">${this._esc(character.id)}</span></div>
           </div>
         </div>
       `;
@@ -127,6 +128,7 @@ const MetadataPage = {
               <div><strong>Alter:</strong> ${meta.age || 18} Jahre${meta.birthdate ? ` <span class="meta-birthdate">(geb. ${this._esc(meta.birthdate)})</span>` : ''}</div>
               <div><strong>Heimatplanet:</strong> ${this._esc(meta.homeworld) || '–'}</div>
               <div><strong>Helden XP:</strong> ${typeof meta.heroXp === 'number' ? meta.heroXp : 0}</div>
+              <div><strong>Charakter-ID:</strong> <span class="char-id-value">${this._esc(character.id)}</span></div>
             </div>
           </div>
         </div>
@@ -307,7 +309,8 @@ const MetadataPage = {
           <ul class="campaign-member-list">
             ${camp.members.map(m => `
               <li class="campaign-member-item">
-                <span class="campaign-member-id">${this._esc(m.charId)}</span>
+                ${m.name ? `<span class="campaign-member-name">${this._esc(m.name)}</span> <span class="campaign-member-id">(${this._esc(m.charId)})</span>`
+                         : `<span class="campaign-member-id">${this._esc(m.charId)}</span>`}
                 ${isOwner && m.charId !== character.id
                   ? `<button class="campaign-kick-btn btn-danger-sm" data-char-id="${this._esc(m.charId)}">✕</button>`
                   : ''}

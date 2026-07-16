@@ -127,6 +127,7 @@ function transaction(fn) {
 // ── Charaktere ────────────────────────────────────────────────────────────
 
 const stmtGetChar    = db.prepare('SELECT data, updated_at, owner_id FROM characters WHERE id = ?');
+const stmtGetCharName = db.prepare('SELECT name FROM characters WHERE id = ?');
 const stmtListChars  = db.prepare('SELECT id, name, owner_id FROM characters ORDER BY name');
 const stmtUpsertChar = db.prepare(`
   INSERT INTO characters (id, name, data, updated_at, owner_id) VALUES (@id, @name, @data, @updatedAt, @ownerId)
@@ -141,6 +142,12 @@ const stmtDeleteCharFiles = db.prepare("DELETE FROM files WHERE owner_type = 'ch
 function getCharacter(id) {
   const row = stmtGetChar.get(id);
   return row ? { data: row.data, updatedAt: row.updated_at, ownerId: row.owner_id } : null;
+}
+
+// Leichtgewichtiger Name-Lookup (nur die name-Spalte, nicht der data-Blob) –
+// fuer die Anreicherung der Kampagnen-Mitgliederliste in routes/campaigns.js.
+function getCharacterName(id) {
+  return stmtGetCharName.get(id)?.name || '';
 }
 
 // Phase 3: ownerId wird von der Route mitgegeben (aus req.user.roles-Pruefung
@@ -609,7 +616,7 @@ function getUserUsageBytes(userId, { excludeCharId = null } = {}) {
 module.exports = {
   db,
   UPLOAD_DIR,
-  getCharacter, listCharacters, putCharacter, deleteCharacter, claimUnownedCharacter,
+  getCharacter, getCharacterName, listCharacters, putCharacter, deleteCharacter, claimUnownedCharacter,
   getCampaign, listCampaigns, campaignExists, insertCampaign, updateCampaign, deleteCampaign,
   updateCampaignNotes, updateCampaignShips,
   upsertCampaign,

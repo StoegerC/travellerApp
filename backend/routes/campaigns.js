@@ -45,6 +45,18 @@ function joinCodeMatches(expected, provided) {
   return crypto.timingSafeEqual(a, b);
 }
 
+// Mitglieder tragen im Kampagnen-Blob nur ihre charId. Fuer die Anzeige im
+// Frontend ("Name (charId)") wird der Charaktername zur Lesezeit aus der
+// characters-Tabelle aufgeloest - bewusst nicht im Blob gespeichert, sonst
+// wuerde er beim Umbenennen des Charakters veralten. Liefert eine Kopie,
+// das gespeicherte Kampagnen-Objekt bleibt unveraendert.
+function withMemberNames(campaign) {
+  return {
+    ...campaign,
+    members: (campaign.members || []).map(m => ({ ...m, name: db.getCharacterName(m.charId) })),
+  };
+}
+
 // GET /campaigns – Liste bleibt bewusst offen (nur id/name/memberCount, keine
 // Inhalte) - noetig damit man einer Kampagne per ID/Name beitreten kann.
 router.get('/campaigns', (req, res) => {
@@ -57,7 +69,7 @@ router.get('/campaign/:id', (req, res) => {
   const campaign = db.getCampaign(req.params.id);
   if (!campaign) return res.status(404).send('Not Found');
   if (!isCampaignMember(db, campaign, req.user.id) && !isGm(req.user)) return res.status(403).send('Forbidden');
-  res.json(campaign);
+  res.json(withMemberNames(campaign));
 });
 
 // POST /campaign/:id – erstellen (409 wenn bereits vorhanden). ownerId kommt
@@ -84,7 +96,7 @@ router.post('/campaign/:id', (req, res) => {
     ships: [],
   };
   db.insertCampaign(campaign);
-  res.json(campaign);
+  res.json(withMemberNames(campaign));
 });
 
 // GET /campaign/:id/ships – dieselbe Mitgliedschaftspruefung wie GET /campaign/:id
