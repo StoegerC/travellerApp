@@ -16,12 +16,18 @@ KAMPAGNE
 [ ] Entfernen propagiert via Sync (entferntes Gerät erkennt Ausschluss beim Poll)
 
 DATENHALTUNG
-[ ] Sync-Poll spart Volltransfers: Client schickt beim GET /char/:id und
-    GET /campaign/:id den zuletzt gesehenen Stand mit (If-None-Match bzw.
-    X-Updated-At-Vergleich), Server antwortet 304 ohne Body wenn unverändert.
-    Aktuell wird alle 15 s das komplette Dokument übertragen, auch wenn sich
-    nichts geändert hat — bei wachsenden Kampagnen-Dokumenten der größte
-    vermeidbare Traffic-Posten. updated_at existiert serverseitig bereits.
+[ ] Sync-Poll spart Volltransfers: ETag + If-None-Match, Server antwortet 304
+    ohne Body wenn unverändert. Aktuell wird alle 15 s das komplette Dokument
+    übertragen, auch wenn sich nichts geändert hat — bei wachsenden
+    Kampagnen-Dokumenten der größte vermeidbare Traffic-Posten.
+    Token-Quelle je Endpunkt verschieden:
+    - GET /char/:id: vorhandenes updated_at als ETag (opaker Versionsstring
+      reicht, kein Hash nötig — jede Änderung läuft durch putCharacter).
+    - GET /campaign/:id: Hash über den FERTIGEN Antwort-Body (sha1), NICHT
+      updated_at/Blob-Hash — die Antwort wird seit 3.11.0 zur Lesezeit mit
+      Mitgliedernamen angereichert; eine Charakter-Umbenennung ändert die
+      Antwort, ohne dass sich der Kampagnen-Blob ändert, und würde sonst
+      vom 304 verschluckt.
 [ ] Rollback (Admin-Seite, Snapshot wiederherstellen) sauberer gegen gleichzeitige
     Geräte-Pushes absichern — aktuell kann ein Gerät mit noch nicht synchronisierten
     lokalen Änderungen einen Rollback beim nächsten eigenen Speichern teilweise wieder
