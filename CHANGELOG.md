@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.13.0] – 2026-07-16
+
 ### Neu
 - **Weiterbildungen bearbeiten** — im Bearbeitungsmodus hat jede Trainings-Karte (aktiv **und** abgeschlossen) jetzt einen **✎-Button** neben dem Löschen-Button. Er öffnet den bekannten Trainings-Dialog mit den vorhandenen Werten (Skill, Von-/Zu-Level, Methode, Dauer, Start-Datum, Notizen; bei abgeschlossenen zusätzlich das Abschluss-Datum). Beim Speichern wird der bestehende Eintrag aktualisiert — Fortschritt und Wochen-Historie bleiben unangetastet. Ein Skillname, der nicht in der Skill-Liste steht, wird als „Anderer Skill" mit Freitextfeld vorbelegt.
 
