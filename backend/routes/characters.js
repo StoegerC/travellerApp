@@ -24,12 +24,20 @@ router.get('/chars', (req, res) => {
   res.json(visible.map(({ id, name, ownerId }) => ({ id, name, mine: ownerId === req.user.id })));
 });
 
-// GET /char/:id – eigene oder gm-Flag (read-only fuer gm, siehe PUT unten)
+// GET /char/:id – eigene oder gm-Flag (read-only fuer gm, siehe PUT unten).
+// ETag = updated_at (opaker Versionsstring, kein Hash noetig): der Sync-Poll
+// des Frontends schickt den zuletzt gesehenen Stand als If-None-Match mit und
+// bekommt 304 ohne Body, solange sich nichts geaendert hat — sonst ginge alle
+// 15 s das komplette Charakter-JSON ueber die Leitung.
 router.get('/char/:id', (req, res) => {
   const char = db.getCharacter(req.params.id);
   if (!char) return res.status(404).send('Not Found');
   if (char.ownerId !== req.user.id && !isGm(req.user)) return res.status(403).send('Forbidden');
-  res.set('X-Updated-At', char.updatedAt).type('application/json').send(char.data);
+  const etag = `"${char.updatedAt}"`;
+  if (req.headers['if-none-match'] === etag) {
+    return res.set({ 'ETag': etag, 'X-Updated-At': char.updatedAt }).status(304).end();
+  }
+  res.set({ 'ETag': etag, 'X-Updated-At': char.updatedAt }).type('application/json').send(char.data);
 });
 
 // PUT /char/:id – Neuanlage: owner_id wird serverseitig auf req.user.id

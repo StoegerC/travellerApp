@@ -25,19 +25,28 @@ const CampaignSync = {
     }
   },
 
-  async getCampaign(id) {
+  // etag: der bei der letzten Antwort gelieferte Poll-Token (liegt als _etag
+  // auf dem Kampagnen-Objekt, wandert also auch durch den Storage-Cache).
+  // Unveraendert → 304 ohne Body → { ok: true, notModified: true }.
+  async getCampaign(id, etag = null) {
     try {
+      const headers = this._headers();
+      if (etag) headers['If-None-Match'] = etag;
       const res = await fetch(this._url(`/campaign/${id}`), {
-        headers: this._headers(),
+        headers,
         // Kampagnen-Dokumente buendeln Notizen/Schiffe mehrerer Spieler (inkl.
         // eingebetteter Bilder) und koennen mehrere MB gross werden - 5s ist
         // hier zu knapp bemessen, siehe cloudsync.js pullCharacter() fuer den
         // Bug, den ein zu kurzes/fehlendes Timeout bei grossen Payloads macht.
         signal: AbortSignal.timeout(30000),
       });
+      if (res.status === 304) return { ok: true, notModified: true };
       if (res.status === 404) return { ok: false, notFound: true };
       if (!res.ok) return { ok: false, status: res.status };
-      return { ok: true, data: await res.json() };
+      const data = await res.json();
+      const newTag = res.headers.get('ETag');
+      if (newTag) data._etag = newTag;
+      return { ok: true, data };
     } catch (e) {
       return { ok: false, error: e.message };
     }

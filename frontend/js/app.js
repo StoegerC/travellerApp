@@ -616,7 +616,17 @@ const App = {
       if (this.editMode) return; // editMode kann sich während Push geändert haben
     }
     this._setSyncState('syncing');
-    const r = await CloudSync.pullCharacter(this.currentCharacter.id);
+    const r = await CloudSync.pullCharacter(this.currentCharacter.id, this.currentCharacter._syncMeta?.updatedAt);
+    if (r.ok && r.notModified) {
+      // Server unveraendert seit dem letzten gesehenen Stand (304, kein Body).
+      // Liegen noch nicht hochgeladene lokale Aenderungen an (z.B. weil der
+      // Flush oben fehlgeschlagen ist), jetzt pushen statt faelschlich "ok"
+      // zu melden — sonst zeigte der Header gruen, obwohl der Server die
+      // Aenderungen nie bekommen hat.
+      if (this._pendingPush) await this._pushToCloud();
+      else this._setSyncState('ok');
+      return;
+    }
     if (r.ok) {
       if (this.editMode || this._isBusyEditing()) {
         // editMode gesetzt oder Nutzer tippt gerade (kann sich während des
@@ -1068,19 +1078,26 @@ const App = {
       if (!this.editMode && !this._isBusyEditing()) this.renderCurrentPage();
     }
     if (this.currentCharacter?.syncMode === 'cloud' && CloudSync.isConfigured()) {
-      const r = await CampaignSync.getCampaign(campaignId);
-      if (r.ok) {
+      // _etag stammt aus der letzten Server-Antwort und liegt mit im
+      // Storage-Cache — bei unveraendertem Server kommt 304 und der lokale
+      // Stand bleibt einfach stehen.
+      const r = await CampaignSync.getCampaign(campaignId, local?._etag);
+      if (r.ok && !r.notModified) {
         this._campaignData = r.data;
         Storage.saveCampaign(r.data);
         if (!this.editMode && !this._isBusyEditing()) this.renderCurrentPage();
-        this._startCampaignPoll(campaignId);
       }
+      if (r.ok) this._startCampaignPoll(campaignId);
     }
   },
 
   async _syncCampaign() {
     if (!this.currentCharacter?.campaignId || !CloudSync.isConfigured()) return;
-    const r = await CampaignSync.getCampaign(this.currentCharacter.campaignId);
+    const r = await CampaignSync.getCampaign(this.currentCharacter.campaignId, this._campaignData?._etag);
+    // 304: Server unveraendert seit dem letzten Poll — Merge-Backs und
+    // Re-Render entfallen komplett (haetten mit identischen Daten ohnehin
+    // nichts getan). Eigene Aenderungen pushen ihre eigenen Flows.
+    if (r.ok && r.notModified) return;
     if (r.ok) {
       this._campaignData = r.data;
       Storage.saveCampaign(r.data);

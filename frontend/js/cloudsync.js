@@ -77,13 +77,20 @@ const CloudSync = {
     }
   },
 
-  async pullCharacter(charId) {
+  // lastUpdatedAt: zuletzt gesehener Server-Stand (Character._syncMeta.updatedAt).
+  // Wird er mitgegeben, antwortet der Server mit 304 ohne Body, solange sich
+  // nichts geaendert hat (→ { ok: true, notModified: true }) — der 15-s-Poll
+  // uebertraegt dann nicht jedes Mal das komplette Charakter-JSON.
+  async pullCharacter(charId, lastUpdatedAt = null) {
     if (!this.isConfigured()) return { ok: false, error: 'Nicht konfiguriert' };
     try {
+      const headers = this._headers();
+      if (lastUpdatedAt) headers['If-None-Match'] = `"${lastUpdatedAt}"`;
       const res = await fetch(`${this.getWorkerUrl()}/char/${charId}`, {
-        headers: this._headers(),
+        headers,
         signal:  AbortSignal.timeout(30000), // siehe pushCharacter() fuer Begruendung
       });
+      if (res.status === 304) return { ok: true, notModified: true };
       if (res.status === 404) return { ok: false, notFound: true };
       if (!res.ok)            return { ok: false, status: res.status };
       const data = await res.json();

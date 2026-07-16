@@ -101,3 +101,55 @@ test('checkQuota: greift ab dem Limit, aktueller Charakterstand zaehlt nicht dop
   if (prev === undefined) delete process.env.USER_QUOTA_BYTES; else process.env.USER_QUOTA_BYTES = prev;
   db.deleteCharacter('q-char'); db.deleteUser('q-user');
 });
+
+// ── 304-Poll-Token (ETag) ────────────────────────────────────────────────────
+
+test('withMemberNames: loest Namen aus der characters-Tabelle auf, Blob bleibt unberuehrt', () => {
+  db.putCharacter('etag-c1', JSON.stringify({ metadata: { name: 'Solan Hellgard' } }), null, 'etag-u1');
+  const campaign = {
+    id: 'etag-camp', name: 'T', ownerId: 'etag-u1',
+    members: [{ charId: 'etag-c1' }, { charId: 'etag-unbekannt' }],
+  };
+  const enriched = campaigns.withMemberNames(campaign);
+  assert.strictEqual(enriched.members[0].name, 'Solan Hellgard');
+  assert.strictEqual(enriched.members[1].name, '', 'nicht aufloesbar -> leer');
+  assert.strictEqual(campaign.members[0].name, undefined, 'Original nicht mutiert');
+  db.deleteCharacter('etag-c1');
+});
+
+test('campaignPollToken: stabil bei gleichem Stand, kippt bei updated_at UND bei Umbenennung', () => {
+  db.putCharacter('etag-c2', JSON.stringify({ metadata: { name: 'Alt' } }), null, 'etag-u2');
+  const campaign = { id: 'x', members: [{ charId: 'etag-c2' }] };
+
+  const t1 = campaigns.campaignPollToken('2026-01-01T00:00:00.000Z', campaigns.withMemberNames(campaign));
+  const t2 = campaigns.campaignPollToken('2026-01-01T00:00:00.000Z', campaigns.withMemberNames(campaign));
+  assert.strictEqual(t1, t2, 'unveraenderter Stand -> identischer Token');
+  assert.match(t1, /^"[A-Za-z0-9_-]+"$/, 'header-tauglich (quoted base64url)');
+
+  // Kampagnen-Blob geaendert -> updated_at kippt den Token.
+  const t3 = campaigns.campaignPollToken('2026-01-02T00:00:00.000Z', campaigns.withMemberNames(campaign));
+  assert.notStrictEqual(t1, t3);
+
+  // Charakter umbenannt: Blob/updated_at unveraendert, Token MUSS trotzdem
+  // kippen (die Antwort enthaelt den zur Lesezeit aufgeloesten Namen).
+  db.putCharacter('etag-c2', JSON.stringify({ metadata: { name: 'Neu' } }), null, 'etag-u2');
+  const t4 = campaigns.campaignPollToken('2026-01-01T00:00:00.000Z', campaigns.withMemberNames(campaign));
+  assert.notStrictEqual(t1, t4);
+  db.deleteCharacter('etag-c2');
+});
+
+test('getCampaignUpdatedAt: liefert den Spaltenwert und bumpt bei updateCampaign', () => {
+  db.insertCampaign({
+    id: 'etag-camp2', name: 'T', ownerId: 'u', joinCode: 'x',
+    createdAt: new Date().toISOString(),
+    members: [], notes: { sessions: [], persons: [], locations: [], quests: [] }, ships: [],
+  });
+  const before = db.getCampaignUpdatedAt('etag-camp2');
+  assert.ok(before, 'updated_at vorhanden');
+  // updated_at hat Millisekunden-Aufloesung — 5 ms warten reicht fuer einen Bump.
+  const wait = Date.now() + 5; while (Date.now() < wait) { /* busy */ }
+  db.updateCampaign('etag-camp2', c => { c.name = 'T2'; });
+  assert.notStrictEqual(db.getCampaignUpdatedAt('etag-camp2'), before, 'Mutation bumpt updated_at');
+  assert.strictEqual(db.getCampaignUpdatedAt('etag-nix'), null, 'unbekannte ID -> null');
+  db.deleteCampaign('etag-camp2');
+});
