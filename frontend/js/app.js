@@ -615,8 +615,15 @@ const App = {
       await this._pushToCloud();
       if (this.editMode) return; // editMode kann sich während Push geändert haben
     }
-    this._setSyncState('syncing');
-    const r = await CloudSync.pullCharacter(this.currentCharacter.id, this.currentCharacter._syncMeta?.updatedAt);
+    // Kein "Synchronisiere …" vorab: ob ueberhaupt Daten fliessen, weiss erst
+    // die Antwort. Der onTransfer-Callback schaltet die Anzeige genau dann um,
+    // wenn wirklich ein Body kommt (200) — der reine 304-Vergleich laesst die
+    // Anzeige voellig in Ruhe. Pushes zeigen ihren Zustand selbst (_pushToCloud).
+    const r = await CloudSync.pullCharacter(
+      this.currentCharacter.id,
+      this.currentCharacter._syncMeta?.updatedAt,
+      () => this._setSyncState('syncing'),
+    );
     if (r.ok && r.notModified) {
       // Server unveraendert seit dem letzten gesehenen Stand (304, kein Body).
       // Liegen noch nicht hochgeladene lokale Aenderungen an (z.B. weil der

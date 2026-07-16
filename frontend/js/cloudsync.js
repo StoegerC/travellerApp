@@ -81,7 +81,11 @@ const CloudSync = {
   // Wird er mitgegeben, antwortet der Server mit 304 ohne Body, solange sich
   // nichts geaendert hat (→ { ok: true, notModified: true }) — der 15-s-Poll
   // uebertraegt dann nicht jedes Mal das komplette Charakter-JSON.
-  async pullCharacter(charId, lastUpdatedAt = null) {
+  // onTransfer: wird genau dann aufgerufen, wenn wirklich ein Body kommt
+  // (Status 200, unmittelbar vor dem Download) — damit die Sync-Anzeige
+  // "Synchronisiere …" nur bei echtem Datenaustausch erscheint, nicht beim
+  // reinen 304-Vergleich.
+  async pullCharacter(charId, lastUpdatedAt = null, onTransfer = null) {
     if (!this.isConfigured()) return { ok: false, error: 'Nicht konfiguriert' };
     try {
       const headers = this._headers();
@@ -93,6 +97,7 @@ const CloudSync = {
       if (res.status === 304) return { ok: true, notModified: true };
       if (res.status === 404) return { ok: false, notFound: true };
       if (!res.ok)            return { ok: false, status: res.status };
+      if (typeof onTransfer === 'function') onTransfer();
       const data = await res.json();
       return { ok: true, data, updatedAt: res.headers.get('X-Updated-At') };
     } catch (e) {
