@@ -9,6 +9,14 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.11.0] – 2026-07-16
+
+### Neu
+- **Charakter-ID auf der Charakter-Seite sichtbar** — im Block „Charakterdaten" wird die ID des geladenen Charakters angezeigt (Lese- und Bearbeitungsmodus, monospace, nicht editierbar). Praktisch um die eigene ID mit der Kampagnen-Mitgliederliste abzugleichen.
+- **Kampagnen-Mitglieder mit Namen** — die Mitgliederliste zeigt statt der nackten Charakter-ID jetzt `Name (Charakter-ID)`. Der Name wird serverseitig beim Lesen der Kampagne aus der `characters`-Tabelle aufgelöst (neuer Helfer `db.getCharacterName()`), bleibt also beim Umbenennen eines Charakters automatisch aktuell; er wird bewusst nicht im Kampagnen-Blob gespeichert. Fallback ohne auflösbaren Namen: weiterhin nur die ID.
+
+---
+
 ## [3.10.0] – 2026-07-11
 
 ### Geändert
