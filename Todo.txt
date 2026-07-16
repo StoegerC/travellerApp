@@ -16,6 +16,12 @@ KAMPAGNE
 [ ] Entfernen propagiert via Sync (entferntes Gerät erkennt Ausschluss beim Poll)
 
 DATENHALTUNG
+[ ] Sync-Poll spart Volltransfers: Client schickt beim GET /char/:id und
+    GET /campaign/:id den zuletzt gesehenen Stand mit (If-None-Match bzw.
+    X-Updated-At-Vergleich), Server antwortet 304 ohne Body wenn unverändert.
+    Aktuell wird alle 15 s das komplette Dokument übertragen, auch wenn sich
+    nichts geändert hat — bei wachsenden Kampagnen-Dokumenten der größte
+    vermeidbare Traffic-Posten. updated_at existiert serverseitig bereits.
 [ ] Rollback (Admin-Seite, Snapshot wiederherstellen) sauberer gegen gleichzeitige
     Geräte-Pushes absichern — aktuell kann ein Gerät mit noch nicht synchronisierten
     lokalen Änderungen einen Rollback beim nächsten eigenen Speichern teilweise wieder
