@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Geändert
+- **Sync-Poll überträgt nur noch bei Änderungen (ETag/304)** — bisher holte der 15-s-Poll bei Cloud-Charakteren jedes Mal das komplette Charakter-JSON und (bei Kampagnen-Mitgliedern) das komplette Kampagnen-Dokument, auch wenn sich nichts geändert hatte. Jetzt schickt der Client den zuletzt gesehenen Stand als `If-None-Match` mit und der Server antwortet mit **304 ohne Body**, solange nichts Neues vorliegt. Token-Quelle je Endpunkt verschieden: `GET /char/:id` nutzt das vorhandene `updated_at` als ETag (opaker Versionsstring, kein Hash); `GET /campaign/:id` einen zusammengesetzten Token aus `updated_at` **plus den zur Lesezeit aufgelösten Mitgliedernamen** (base64url, exakt statt Hash) — sonst würde eine Charakter-Umbenennung, die den Kampagnen-Blob nicht berührt, vom 304 verschluckt. Der Kampagnen-Token wandert als `_etag` mit dem gecachten Kampagnen-Objekt durch den Storage. Im 304-Fall von `_syncCloud` gilt weiterhin die „Ungesichert"-Absicherung: liegen noch nicht hochgeladene lokale Änderungen an, wird gepusht statt fälschlich grün zu melden. CORS um `If-None-Match` (Request) und `ETag` (Response) erweitert.
+
 ---
 
 ## [3.11.0] – 2026-07-16

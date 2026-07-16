@@ -18,14 +18,15 @@ const HOST = process.env.HOST || '127.0.0.1';
 
 // CORS – entspricht den bisherigen Worker-Headern (Access-Control-Allow-*)
 // If-Unmodified-Since-Version: optimistische Sperre beim Charakter-Push (Client
-// schickt den zuletzt bekannten Versions-Stand mit). X-Updated-At: Server
-// antwortet mit dem aktuellen Stand, muss dem Browser explizit freigegeben
-// werden (sonst per CORS unsichtbar für fetch()).
+// schickt den zuletzt bekannten Versions-Stand mit). If-None-Match: 304-Poll
+// beim Pull (Client schickt den zuletzt gesehenen ETag, Server spart sich den
+// Body wenn unveraendert). X-Updated-At/ETag: Antwort-Header, muessen dem
+// Browser explizit freigegeben werden (sonst per CORS unsichtbar für fetch()).
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Authorization', 'Content-Type', 'If-Unmodified-Since-Version'],
-  exposedHeaders: ['X-Updated-At'],
+  allowedHeaders: ['Authorization', 'Content-Type', 'If-Unmodified-Since-Version', 'If-None-Match'],
+  exposedHeaders: ['X-Updated-At', 'ETag'],
 }));
 
 // Base64-Bilder machen Charakter-JSON während der Übergangszeit groß

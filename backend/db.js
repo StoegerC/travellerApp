@@ -227,6 +227,13 @@ function getCampaign(id) {
   return row ? JSON.parse(row.data) : null;
 }
 
+// Fuer den 304-Poll-Token in routes/campaigns.js: nur die updated_at-Spalte,
+// ohne den (potenziell grossen) data-Blob zu parsen.
+const stmtGetCampaignUpdatedAt = db.prepare('SELECT updated_at FROM campaigns WHERE id = ?');
+function getCampaignUpdatedAt(id) {
+  return stmtGetCampaignUpdatedAt.get(id)?.updated_at || null;
+}
+
 function listCampaigns() {
   return stmtListCampaigns.all();
 }
@@ -617,7 +624,7 @@ module.exports = {
   db,
   UPLOAD_DIR,
   getCharacter, getCharacterName, listCharacters, putCharacter, deleteCharacter, claimUnownedCharacter,
-  getCampaign, listCampaigns, campaignExists, insertCampaign, updateCampaign, deleteCampaign,
+  getCampaign, getCampaignUpdatedAt, listCampaigns, campaignExists, insertCampaign, updateCampaign, deleteCampaign,
   updateCampaignNotes, updateCampaignShips,
   upsertCampaign,
   insertFile, getFile, deleteFile, listFilesByOwner, listAllFiles, getFileStats, getAdminOverview,

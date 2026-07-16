@@ -63,13 +63,31 @@ router.get('/campaigns', (req, res) => {
   res.json(db.listCampaigns());
 });
 
-// GET /campaign/:id – nur Mitglieder (oder gm-Flag)
+// Poll-Token (ETag) fuer GET /campaign/:id. updated_at allein reicht NICHT:
+// die Antwort wird oben zur Lesezeit mit Mitgliedernamen angereichert — eine
+// Charakter-Umbenennung aendert die Antwort, ohne dass sich der Kampagnen-Blob
+// (und damit updated_at) aendert, und wuerde sonst vom 304 verschluckt. Deshalb
+// gehen die aufgeloesten Namen mit in den Token. Base64url statt Hash: exakt,
+// reversibel, und bei einer Handvoll Mitgliedern kurz genug fuer einen Header.
+function campaignPollToken(updatedAt, enrichedCampaign) {
+  const names = (enrichedCampaign.members || []).map(m => m.name || '');
+  return '"' + Buffer.from([updatedAt || '', ...names].join('\x1f'), 'utf8').toString('base64url') + '"';
+}
+
+// GET /campaign/:id – nur Mitglieder (oder gm-Flag). If-None-Match/304 wie bei
+// GET /char/:id, damit der 15-s-Kampagnen-Poll nicht jedes Mal das komplette
+// Dokument (Notizen + Schiffe aller Mitspieler) uebertraegt.
 router.get('/campaign/:id', (req, res) => {
   if (!isValidCampaignId(req.params.id)) return res.status(400).send('Invalid campaign ID');
   const campaign = db.getCampaign(req.params.id);
   if (!campaign) return res.status(404).send('Not Found');
   if (!isCampaignMember(db, campaign, req.user.id) && !isGm(req.user)) return res.status(403).send('Forbidden');
-  res.json(withMemberNames(campaign));
+  const enriched = withMemberNames(campaign);
+  const etag = campaignPollToken(db.getCampaignUpdatedAt(req.params.id), enriched);
+  if (req.headers['if-none-match'] === etag) {
+    return res.set('ETag', etag).status(304).end();
+  }
+  res.set('ETag', etag).json(enriched);
 });
 
 // POST /campaign/:id – erstellen (409 wenn bereits vorhanden). ownerId kommt
@@ -199,3 +217,5 @@ module.exports = router;
 // Fuer Tests (backend/test/): reine Helfer ohne Express-Kontext.
 module.exports.joinCodeMatches = joinCodeMatches;
 module.exports.generateJoinCode = generateJoinCode;
+module.exports.withMemberNames = withMemberNames;
+module.exports.campaignPollToken = campaignPollToken;
