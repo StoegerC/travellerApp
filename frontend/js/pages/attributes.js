@@ -212,7 +212,7 @@ const AttributesPage = {
             <span class="training-skill-name">${e(t.skillName)}</span>
             <span class="training-levels">${t.fromLevel} → ${t.toLevel}</span>
             <span class="train-method-badge ${this._methodClass(t.method)}">${this._methodLabel(t.method)}</span>
-            ${App.editMode ? `<button class="training-del-btn btn-icon" data-id="${this._esc(t.id)}">🗑</button>` : ''}
+            ${App.editMode ? `<button class="training-edit-btn btn-icon" data-id="${this._esc(t.id)}" aria-label="Bearbeiten">✎</button><button class="training-del-btn btn-icon" data-id="${this._esc(t.id)}">🗑</button>` : ''}
           </div>
 
           <div class="training-card-counter">
@@ -255,7 +255,7 @@ const AttributesPage = {
                 <span class="training-levels">${t.fromLevel}→${t.toLevel}</span>
                 <span class="train-method-small">${this._methodLabel(t.method)}</span>
                 ${t.completedDate ? `<span class="training-done-date">${e(t.completedDate)}</span>` : ''}
-                ${App.editMode ? `<button class="training-del-btn btn-icon btn-xs" data-id="${this._esc(t.id)}">🗑</button>` : ''}
+                ${App.editMode ? `<button class="training-edit-btn btn-icon btn-xs" data-id="${this._esc(t.id)}" aria-label="Bearbeiten">✎</button><button class="training-del-btn btn-icon btn-xs" data-id="${this._esc(t.id)}">🗑</button>` : ''}
               </div>`).join('')}
           </div>
         </details>`;
@@ -301,54 +301,64 @@ const AttributesPage = {
 
   // ─────────────────────── TRAINING MODALS ────────────────────────────────
 
-  _showAddTrainingModal(char) {
+  // existing = vorhandener Trainings-Eintrag → Bearbeiten-Modus (Felder
+  // vorbefüllt, Speichern aktualisiert den Eintrag statt einen neuen anzulegen;
+  // Fortschritt/Wochen-Historie bleiben unangetastet). Ohne existing: Hinzufügen.
+  _showAddTrainingModal(char, existing = null) {
+    const isKnownSkill = existing && (char.skills || []).some(s => s.name === existing.skillName);
+    const isCustom     = existing && !isKnownSkill;
     const skillOpts = (char.skills || []).map(s =>
-      `<option value="${this._esc(s.name)}" data-level="${s.level}">${this._esc(s.name)} (${s.level >= 0 ? s.level : 'ungelernt'})</option>`
+      `<option value="${this._esc(s.name)}" data-level="${s.level}"${existing?.skillName === s.name ? ' selected' : ''}>${this._esc(s.name)} (${s.level >= 0 ? s.level : 'ungelernt'})</option>`
     ).join('');
 
     const overlay = document.createElement('div');
     overlay.className = 'fin-settle-overlay';
     overlay.innerHTML = `
       <div class="training-modal">
-        <h3>Training hinzufügen</h3>
+        <h3>${existing ? 'Training bearbeiten' : 'Training hinzufügen'}</h3>
         <div class="form-group">
           <label>Skill</label>
           <select id="tmSkill">
             <option value="">– Skill wählen –</option>
             ${skillOpts}
-            <option value="__custom">Anderer Skill …</option>
+            <option value="__custom"${isCustom ? ' selected' : ''}>Anderer Skill …</option>
           </select>
-          <input type="text" id="tmSkillCustom" class="training-custom-input" placeholder="Skill-Name" style="display:none;">
+          <input type="text" id="tmSkillCustom" class="training-custom-input" placeholder="Skill-Name"
+                 value="${isCustom ? this._esc(existing.skillName) : ''}" style="display:${isCustom ? '' : 'none'};">
         </div>
         <div class="training-modal-row">
           <div class="form-group"><label>Von Level</label>
-            <input type="number" id="tmFrom" value="0" min="-3" max="8">
+            <input type="number" id="tmFrom" value="${existing ? existing.fromLevel : 0}" min="-3" max="8">
           </div>
           <div class="form-group"><label>Zu Level</label>
-            <input type="number" id="tmTo" value="1" min="0" max="9">
+            <input type="number" id="tmTo" value="${existing ? existing.toLevel : 1}" min="0" max="9">
           </div>
         </div>
         <div class="form-group">
           <label>Methode</label>
           <select id="tmMethod">
-            <option value="self">Selbststudium (8 Wochen)</option>
-            <option value="teacher">Mit Lehrer (8 Wochen)</option>
-            <option value="course">Kurs / Schule</option>
+            <option value="self"${existing?.method === 'self' ? ' selected' : ''}>Selbststudium (8 Wochen)</option>
+            <option value="teacher"${existing?.method === 'teacher' ? ' selected' : ''}>Mit Lehrer (8 Wochen)</option>
+            <option value="course"${existing?.method === 'course' ? ' selected' : ''}>Kurs / Schule</option>
           </select>
         </div>
         <div class="training-modal-row">
           <div class="form-group"><label>Dauer (Wochen)</label>
-            <input type="number" id="tmDuration" value="8" min="1" max="520">
+            <input type="number" id="tmDuration" value="${existing ? (existing.durationWeeks ?? ((existing.durationMonths || 1) * 4)) : 8}" min="1" max="520">
           </div>
           <div class="form-group"><label>Start (In-Game)</label>
-            <input type="text" id="tmStart" value="${this._esc(char.activeJournalDate())}" placeholder="z.B. 1105-03">
+            <input type="text" id="tmStart" value="${this._esc(existing ? (existing.startDate || '') : char.activeJournalDate())}" placeholder="z.B. 1105-03">
           </div>
         </div>
+        ${existing?.completed ? `
+        <div class="form-group"><label>Abgeschlossen am (In-Game)</label>
+          <input type="text" id="tmCompletedDate" value="${this._esc(existing.completedDate || '')}" placeholder="z.B. 1105-07">
+        </div>` : ''}
         <div class="form-group"><label>Notizen</label>
-          <input type="text" id="tmNotes" placeholder="Optional">
+          <input type="text" id="tmNotes" placeholder="Optional" value="${existing ? this._esc(existing.notes || '') : ''}">
         </div>
         <div class="training-modal-actions">
-          <button id="tmConfirm" class="btn-success">Hinzufügen</button>
+          <button id="tmConfirm" class="btn-success">${existing ? 'Speichern' : 'Hinzufügen'}</button>
           <button id="tmCancel"  class="btn-secondary">Abbrechen</button>
         </div>
       </div>`;
@@ -382,22 +392,39 @@ const AttributesPage = {
         : skillSel.value;
       if (!skillName) { alert('Bitte einen Skill wählen.'); return; }
 
-      if (!Array.isArray(char.training)) char.training = [];
-      char.training.push({
-        id:            'tr_' + Date.now(),
+      const values = {
         skillName,
         fromLevel:     parseInt(fromInput.value)  ?? 0,
         toLevel:       parseInt(toInput.value)    ?? 1,
         method:        methodSel.value,
         durationWeeks: parseInt(durInput.value)   || 8,
-        progressWeeks: 0,
         startDate:     document.getElementById('tmStart').value.trim(),
         notes:         document.getElementById('tmNotes').value.trim(),
-        completed:     false,
-        completedDate: '',
         updatedAt:     new Date().toISOString(),
-      });
-      Storage.saveCharacter(char);
+      };
+
+      if (existing) {
+        // Zur Speicherzeit frisch nachschlagen: der Sync-Poll kann das
+        // Charakter-Objekt zwischenzeitlich ersetzt haben (Merge-Klon).
+        const cur = App.currentCharacter;
+        const entry = (cur.training || []).find(x => x.id === existing.id);
+        if (entry) {
+          Object.assign(entry, values);
+          const cd = document.getElementById('tmCompletedDate');
+          if (cd) entry.completedDate = cd.value.trim();
+        }
+        Storage.saveCharacter(cur);
+      } else {
+        if (!Array.isArray(char.training)) char.training = [];
+        char.training.push({
+          id: 'tr_' + Date.now(),
+          ...values,
+          progressWeeks: 0,
+          completed:     false,
+          completedDate: '',
+        });
+        Storage.saveCharacter(char);
+      }
       App.renderCurrentPage();
       overlay.remove();
     };
@@ -613,6 +640,13 @@ const AttributesPage = {
       btn.addEventListener('click', () => {
         const t = (App.currentCharacter.training || []).find(x => x.id === btn.dataset.id);
         if (t) this._showCompleteTrainingModal(t, App.currentCharacter);
+      });
+    });
+
+    document.querySelectorAll('.training-edit-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = (App.currentCharacter.training || []).find(x => x.id === btn.dataset.id);
+        if (t) this._showAddTrainingModal(App.currentCharacter, t);
       });
     });
 
