@@ -665,9 +665,21 @@ const App = {
       Storage._suppressPush = true;
       Storage.saveCharacter(cloudChar);
       Storage._suppressPush = false;
-      this._setSyncState('ok');
       this._updateHeaderName();
       this.renderCurrentPage();
+      // Hat der Merge lokale, noch nicht gepushte Änderungen eingebracht,
+      // weicht das Ergebnis vom Serverstand ab → direkt nachpushen statt
+      // "ok" zu melden. Sonst zeigt der Header "✓ gesichert", obwohl der
+      // Server die Änderungen nicht hat (z.B. nach Offline-Spiel oder
+      // fehlgeschlagenem Push), bis zufällig der nächste Edit passiert.
+      // _syncMeta wird für den Vergleich ausgeblendet: lokal und Server
+      // tragen dort naturgemäß verschiedene Zeitstempel.
+      const stripMeta = j => JSON.stringify({ ...j, _syncMeta: undefined });
+      if (stripMeta(mergedJson) !== stripMeta(r.data)) {
+        await this._pushToCloud();
+        return;
+      }
+      this._setSyncState('ok');
     } else if (r.notFound) {
       await this._pushToCloud();
     } else {
