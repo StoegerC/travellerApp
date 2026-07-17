@@ -8112,3 +8112,59 @@ body.dark-mode .mention-popover textarea {
   color: #dde0f5;
 }
 body.dark-mode .mp-arrow { background: #161929; border-color: #3a3f6b; }
+
+/* ===== MENTION AUTOCOMPLETE: FILTER & ANLEGEN (K1) ===== */
+.mention-filter-row {
+  display: flex;
+  gap: 4px;
+  padding: 6px 8px;
+  border-bottom: 1px solid #e5e7f0;
+  background: #f7f8fc;
+  border-radius: 8px 8px 0 0;
+}
+.mention-filter-chip {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #6b7280;
+  border-radius: 10px;
+  padding: 3px 9px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.mention-filter-chip.active {
+  background: #eef0ff;
+  color: #4338ca;
+  border-color: #c7cdf8;
+  font-weight: 600;
+}
+.mention-linked-flag {
+  font-style: normal;
+  font-size: 11px;
+  color: #4338ca;
+  background: #eef0ff;
+  border-radius: 8px;
+  padding: 1px 6px;
+  margin-right: 4px;
+}
+.mention-create-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-top: 1px solid #e5e7f0;
+}
+.mention-create-item:hover { background: #f0f4ff; }
+.mention-create--person   { color: #4338ca; }
+.mention-create--location { color: #047857; }
+.mention-create--quest    { color: #a16207; }
+
+/* ===== DARK MODE: MENTION AUTOCOMPLETE ===== */
+body.dark-mode .mention-filter-row  { background: #101322; border-bottom-color: #262a44; }
+body.dark-mode .mention-filter-chip { color: #9095b8; }
+body.dark-mode .mention-filter-chip.active { background: #1e2140; color: #a5adf9; border-color: #3a3f6b; }
+body.dark-mode .mention-linked-flag { background: #1e2140; color: #a5adf9; }
+body.dark-mode .mention-create-item { border-top-color: #262a44; }
+body.dark-mode .mention-create-item:hover { background: #1e2a3a; }
+body.dark-mode .mention-create--person   { color: #a5adf9; }
+body.dark-mode .mention-create--location { color: #4ade80; }
+body.dark-mode .mention-create--quest    { color: #fbbf24; }
