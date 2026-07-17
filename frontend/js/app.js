@@ -115,22 +115,34 @@ const App = {
       document.getElementById('importCharFile').click();
     });
 
-    // Laden aus Cloud
-    document.getElementById('lcCloudBtn').addEventListener('click', () => {
+    // Laden aus Cloud. Falls noch nicht konfiguriert (Erststart): erst das
+    // Konfigurations-/Login-Modal durchlaufen und DANACH die Charakterliste
+    // zeigen — vorher endete der Ablauf nach dem Login im Nichts und die
+    // ladbaren Cloud-Charaktere erschienen nie.
+    document.getElementById('lcCloudBtn').addEventListener('click', async () => {
       document.getElementById('loadCharModal').classList.remove('visible');
-      if (CloudSync.isConfigured()) {
-        this.showCloudCharList();
-      } else {
-        this.showCloudConfig();
+      if (!CloudSync.isConfigured()) {
+        await this._awaitCloudConfig();
+        if (!CloudSync.isConfigured()) {
+          // Abgebrochen ohne Login: beim Erststart (noch kein Charakter)
+          // zurück zum Willkommen-Dialog statt in einer leeren App zu enden.
+          if (Storage.listCharacters().length === 0) this.showLoadCharDialog(true);
+          return;
+        }
       }
+      this.showCloudCharList();
     });
 
     // JSON-Datei eingelesen
     document.getElementById('importCharFile').addEventListener('change', (e) => this._importJSON(e));
 
-    // Cloud-Charakter-Modal schließen
+    // Cloud-Charakter-Modal schließen. Beim Erststart (noch kein Charakter
+    // geladen) zurück zum Willkommen-Dialog statt in einer leeren App zu enden.
     document.getElementById('cloudCharClose').addEventListener('click', () => {
       document.getElementById('cloudCharModal').classList.remove('visible');
+      if (!this.currentCharacter && Storage.listCharacters().length === 0) {
+        this.showLoadCharDialog(true);
+      }
     });
 
     // Cloud-Einstellungen-Modal schließen
