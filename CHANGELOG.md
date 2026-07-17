@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.13.1] – 2026-07-17
+
 ### Behoben
 - **Erststart: Nach Server-Konfiguration + Login erschien die Cloud-Charakterliste nicht** — wählte man im Willkommen-Dialog „Aus Cloud laden", ohne dass die Cloud schon konfiguriert war, öffnete sich zwar das Konfigurations-/Anmelde-Modal, aber nach erfolgreichem Login endete der Ablauf im Nichts: Die Liste der ladbaren Charaktere wurde nie angezeigt. Jetzt wartet der Button auf den Abschluss der Konfiguration (`_awaitCloudConfig`, wie beim Aktivieren des Cloud-Syncs) und öffnet danach automatisch die Charakterliste. Zusätzlich zwei Sackgassen im Erststart entschärft: Wer die Konfiguration oder die Charakterliste schließt, ohne etwas zu laden, landet wieder im Willkommen-Dialog statt in einer leeren App.
 
