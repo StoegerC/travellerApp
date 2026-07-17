@@ -1461,11 +1461,19 @@ const NotesPage = {
       });
     });
 
-    // Verlinkungen (Link-Chips) → zu dem betreffenden Tab + Eintrag springen
+    // Verlinkungen (Link-Chips) → zu dem betreffenden Tab + Eintrag springen.
+    // Ausnahme: @-Erwähnungen im Fließtext (.mention-chip) öffnen für
+    // Personen/Orte/Quests das editierbare Popover an Ort und Stelle, statt
+    // die Leseposition zu verlassen (K2). Session-Erwähnungen und die
+    // freistehenden Chip-Listen (Rückverlinkungen) springen weiterhin.
     document.querySelectorAll('.link-chip[data-tab]').forEach(chip => {
       chip.addEventListener('click', () => {
         const tab = chip.dataset.tab;
         const id  = chip.dataset.id;
+        if (chip.classList.contains('mention-chip') && ['persons', 'locations', 'quests'].includes(tab)) {
+          MentionPopover.open({ type: tab, id, anchorEl: chip });
+          return;
+        }
         if (tab && id) {
           if (App.currentCharacter) {
             this.save(App.currentCharacter);
@@ -1650,11 +1658,22 @@ const NotesPage = {
     App.renderCurrentPage();
   },
 
+  // Tipp auf den Chip-Körper öffnet das editierbare Popover (K2) — das ×
+  // (chip-rm) entfernt weiterhin nur die Verknüpfung und stoppt die
+  // Propagation, die beiden Trefferflächen kommen sich nicht in die Quere.
+  _attachChipPopover(chip) {
+    chip.addEventListener('click', () => {
+      MentionPopover.open({ type: chip.dataset.type, id: chip.dataset.id, anchorEl: chip });
+    });
+  },
+
   _attachTagPicker() {
     // Nicht mehr auf this._editTags pruefen - Tag-Picker koennen jetzt auch
     // von this._editPersonLinks/_editQuestLinks getrieben sein. Ob ueberhaupt
     // einer im aktuell gerenderten Formular vorkommt, zeigt sich direkt am DOM.
     if (!document.querySelector('.tag-picker')) return;
+
+    document.querySelectorAll('.tp-chip').forEach(chip => this._attachChipPopover(chip));
 
     // Öffnen/Schließen der Dropdowns
     document.querySelectorAll('.chip-add-btn').forEach(btn => {
@@ -1711,6 +1730,7 @@ const NotesPage = {
           e.stopPropagation();
           this._removeTag(type, id, chip, ctx);
         });
+        this._attachChipPopover(chip);
         if (addBtn) chipsEl.insertBefore(chip, addBtn);
         // Option aus Dropdown entfernen
         cb.closest('.tp-option').remove();
@@ -1764,6 +1784,7 @@ const NotesPage = {
         e.stopPropagation();
         this._removeTag(type, newItem.id, chip, ctx);
       });
+      this._attachChipPopover(chip);
       if (addBtn) chipsEl.insertBefore(chip, addBtn);
 
       // Dropdown schließen, Formular zurücksetzen
@@ -1772,6 +1793,11 @@ const NotesPage = {
       if (input) input.value = '';
 
       this._saveAndSync(char);
+
+      // K2: frisch angelegter Eintrag → Popover direkt zum Befüllen öffnen
+      // (Name vorbefüllt, Fokus im ersten leeren Feld). Abbrechen verwirft
+      // nur die Feldeingaben, der Eintrag samt Tag bleibt bestehen.
+      MentionPopover.open({ type, id: newItem.id, anchorEl: chip, isNew: true });
     };
 
     document.querySelectorAll('.tp-create-save').forEach(btn => {

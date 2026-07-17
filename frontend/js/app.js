@@ -615,7 +615,7 @@ const App = {
   // nach ~15 s schloss (Sync-Poll rendert die Seite neu).
   _isBusyEditing() {
     if (this._isEditingField()) return true;
-    return !!document.querySelector('.fin-modal-overlay.open, .vh-modal.visible, .traits-modal-overlay');
+    return !!document.querySelector('.fin-modal-overlay.open, .vh-modal.visible, .traits-modal-overlay, .mention-popover-backdrop');
   },
 
   async _syncCloud() {

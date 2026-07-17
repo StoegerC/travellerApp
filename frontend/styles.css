@@ -8029,3 +8029,86 @@ body.dark-mode .combat-heroxp-btn:active { background: #3a3218; }
 
 /* ===== DARK MODE: CHARAKTER-ID ===== */
 body.dark-mode .char-id-value { color: #9095b8; }
+
+/* ===== MENTION POPOVER (K2) ===== */
+.mention-popover-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 35, 0.28);
+  z-index: 1100; /* über den fin-settle-Overlays (1000) */
+}
+.mention-popover {
+  position: fixed;
+  background: #fff;
+  border: 1px solid #d5d8e8;
+  border-radius: 12px;
+  padding: 14px 16px;
+  width: min(360px, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  box-shadow: 0 12px 32px rgba(10, 12, 35, 0.25);
+}
+.mention-popover .form-group { margin-bottom: 10px; }
+.mention-popover label { display: block; font-size: 0.8em; color: #666; margin-bottom: 3px; }
+.mention-popover input[type="text"],
+.mention-popover select,
+.mention-popover textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95em;
+  font-family: inherit;
+  background: #fff;
+  color: #1a1a2e;
+}
+.mp-row { display: flex; gap: 10px; }
+.mp-row .form-group { flex: 1; min-width: 0; }
+.mp-actions { display: flex; gap: 8px; margin-top: 4px; }
+.mp-actions button { flex: 1; min-height: 44px; }
+
+/* Pfeilspitze zeigt auf den Anker (Erwähnung bzw. Chip) */
+.mp-arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border: 1px solid #d5d8e8;
+  transform: rotate(45deg);
+  display: none;
+}
+.mention-popover.mp-below .mp-arrow { display: block; top: -7px;    border-right: none; border-bottom: none; }
+.mention-popover.mp-above .mp-arrow { display: block; bottom: -7px; border-left: none;  border-top: none; }
+
+/* Schmale Screens: Bottom-Sheet statt Popover */
+.mention-popover.mp-sheet {
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 0;
+  width: 100%;
+  border-radius: 16px 16px 0 0;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.mention-popover.mp-sheet .mp-arrow { display: none; }
+
+/* ===== DARK MODE: MENTION POPOVER ===== */
+body.dark-mode .mention-popover {
+  background: #161929;
+  border-color: #3a3f6b;
+  color: #dde0f5;
+}
+body.dark-mode .mention-popover label { color: #9095b8; }
+body.dark-mode .mention-popover input[type="text"],
+body.dark-mode .mention-popover select,
+body.dark-mode .mention-popover textarea {
+  background: #1e2140;
+  border-color: #3a3f6b;
+  color: #dde0f5;
+}
+body.dark-mode .mp-arrow { background: #161929; border-color: #3a3f6b; }
