@@ -248,6 +248,7 @@ const ShipPage = {
 
         <h3 class="ship-section-title">Notizen</h3>
         <textarea id="si-notes" class="ship-notes">${this._esc(ship.notes || '')}</textarea>
+        <span class="md-hint">**fett** · *kursiv* · # Überschrift · - Liste · | Tabelle |</span>
 
         ${this._shipAttachmentsWidget(ship)}
       </div>`;
@@ -280,7 +281,7 @@ const ShipPage = {
         ${row('Betriebskosten', ship.operatingCost ? 'Cr ' + Number(ship.operatingCost).toLocaleString('de-DE') + ' / Monat' : '')}
       </div>
 
-      ${ship.notes ? `<h3 class="ship-section-title">Notizen</h3><p class="ship-notes-view">${this._esc(ship.notes)}</p>` : ''}
+      ${ship.notes ? `<h3 class="ship-section-title">Notizen</h3><div class="ship-notes-view md-content">${Md.render(ship.notes)}</div>` : ''}
       ${this._shipAttachmentsWidget(ship)}
     </div>`;
   },

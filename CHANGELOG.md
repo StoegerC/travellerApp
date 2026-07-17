@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Behoben
+- **Schiffs-Notizen (Reiter Schiff → Übersicht) rendern jetzt Markdown** — die Leseansicht gab den Text bisher als reinen Text aus, während Krit- und Schulden-Notizen im selben Tab längst Markdown konnten. Jetzt läuft auch die Übersichts-Notiz durch den Markdown-Renderer: Fett/Kursiv, Überschriften, Listen, Tabellen und `@`-Erwähnungen (inkl. Popover) funktionieren. Unter dem Eingabefeld steht dazu der übliche Format-Hinweis.
+
 ---
 
 ## [3.17.0] – 2026-07-17

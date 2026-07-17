@@ -7557,7 +7557,8 @@ body.dark-mode .update-reload-btn   { background: #dde0f5; color: #1a1d2e; }
   font-size: 14px;
   color: #444;
   line-height: 1.5;
-  white-space: pre-wrap;
+  /* kein pre-wrap mehr: der Inhalt wird seit dem Markdown-Fix über
+     Md.render() als HTML ausgegeben, Absätze macht .md-content selbst */
 }
 
 /* Status Tab */
