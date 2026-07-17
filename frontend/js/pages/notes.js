@@ -664,6 +664,7 @@ const NotesPage = {
                   ${s.sessionDate ? this._esc(s.sessionDate) + ' – ' : ''}${this._esc(s.title || 'Ohne Titel')}
                 </span>`).join('')}
             </div>` : ''}
+          ${NotesChronicle.render('persons', p.id)}
         </div>`;
     }
 
@@ -918,6 +919,7 @@ const NotesPage = {
             <div class="linked-items">
               ${sessionPersons.map(p => `<span class="link-chip person-link" data-tab="persons" data-id="${this._esc(p.id)}">${this._esc(p.name)}</span>`).join('')}
             </div>` : ''}
+          ${NotesChronicle.render('locations', l.id)}
         </div>`;
     }
 
@@ -1089,6 +1091,7 @@ const NotesPage = {
             <div class="linked-items">
               ${linkedSessions.map(s => `<span class="link-chip session-link" data-tab="sessions" data-id="${this._esc(s.id)}">${s.sessionDate ? this._esc(s.sessionDate) + ' – ' : ''}${this._esc(s.title || 'Ohne Titel')}</span>`).join('')}
             </div>` : ''}
+          ${NotesChronicle.render('quests', q.id)}
         </div>`;
     }
 
@@ -1466,7 +1469,8 @@ const NotesPage = {
     // Personen/Orte/Quests das editierbare Popover an Ort und Stelle, statt
     // die Leseposition zu verlassen (K2). Session-Erwähnungen und die
     // freistehenden Chip-Listen (Rückverlinkungen) springen weiterhin.
-    document.querySelectorAll('.link-chip[data-tab]').forEach(chip => {
+    // .chron-src: die Quellzeile eines Chronik-Absatzes — springt zur Session.
+    document.querySelectorAll('.link-chip[data-tab], .chron-src[data-tab]').forEach(chip => {
       chip.addEventListener('click', () => {
         const tab = chip.dataset.tab;
         const id  = chip.dataset.id;

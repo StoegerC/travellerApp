@@ -25,6 +25,7 @@ const ASSETS = [
   './js/pages/career.js',
   './js/pages/notes.js',
   './js/pages/notes-travellermap.js',
+  './js/pages/notes-chronicle.js',
   './js/pages/karte.js',
   './js/pages/combat.js',
   './js/pages/finances.js',

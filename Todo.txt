@@ -44,18 +44,6 @@ SERVER / BETRIEB (nautilus)
     reboot-Zeilen) — wtmpdb-Boot-Logging aktivieren oder als bekannt abhaken.
 
 UI / UX
-[ ] Journal-Paket K1+K2+K5 umsetzen (Konzept final abgestimmt 17.07.2026, Mockups:
-    https://claude.ai/code/artifact/9719c4f3-aaeb-4cec-bd69-a059c93564e6 )
-    Gilt für Personen, Orte UND Quests. Reihenfolge (einzeln release-fähig):
-    1. [ERLEDIGT in 3.14.0] K2 Popover (notes-popover.js).
-    2. [ERLEDIGT in 3.15.0] K1/@-Mechanik (mention-autocomplete.js): Kürzel @p:/@o:/@q:,
-       Filter-Chips, Sortierung, Anlegen→Popover.
-    3. K5 Auto-Chronik: Detailkarten (Person/Ort/Quest) zeigen unter dem Steckbrief
-       automatisch die VOLLSTÄNDIGEN Absätze aller Sessions mit @Erwähnung des
-       Eintrags, chronologisch aufsteigend nach In-Game-Datum (Fallback
-       Session-Datum), mit Sprung zur Originalstelle; Erwähnungen darin anklickbar
-       (→ K2-Popover); Absatz mit Mehrfach-Erwähnung nur einmal. Erhöht die Prio von
-       "Erwähnungen aktualisieren" (eingefrorene Namen, siehe unten).
 [ ] Sync-Fehler deutlicher machen: Warnung "Änderungen noch nicht hochgeladen"
     bzw. Zähler ausstehender Pushes statt nur dezentem Header-Badge
 [ ] Erwähnungen aktualisieren: "@[Name](typ:id)" friert den Namen ein —
