@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.16.0] – 2026-07-17
+
+### Neu
+- **Automatische Chronik auf Personen-, Orts- und Quest-Karten (Journal-Paket, Teil 3 von 3 — damit ist das Paket komplett)** — die Detailkarten zeigen unter dem kuratierten Steckbrief einen neuen Abschnitt **„Chronik"**: die vollständigen Absätze aller Journal-Einträge (eigene und geteilte Kampagnen-Sessions), in denen der Eintrag per `@`-Erwähnung vorkommt, chronologisch aufsteigend nach In-Game-Datum (Fallback: Session-Datum). Es wird nichts kopiert — die Absätze werden zur Renderzeit aus den Berichten eingesammelt (neues Mixin `frontend/js/pages/notes-chronicle.js`); die Beschreibung bleibt das von Hand gepflegte Destillat. Jeder Absatz erscheint nur einmal, auch bei Mehrfach-Erwähnung; die Quellzeile („Titel · Datum ↗") springt zur Originalstelle im Journal; Erwähnungen innerhalb der Chronik bleiben anklickbar und öffnen das Erwähnungs-Popover (3.14.0) — so hangelt man sich durchs Beziehungsgeflecht. Bewusste Grenze: Gefunden wird nur, was als Erwähnung geschrieben ist — reiner Namenstext ohne `@` erscheint nicht.
+
+---
+
 ## [3.15.0] – 2026-07-17
 
 ### Neu

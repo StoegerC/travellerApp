@@ -8168,3 +8168,37 @@ body.dark-mode .mention-create-item:hover { background: #1e2a3a; }
 body.dark-mode .mention-create--person   { color: #a5adf9; }
 body.dark-mode .mention-create--location { color: #4ade80; }
 body.dark-mode .mention-create--quest    { color: #fbbf24; }
+
+/* ===== CHRONIK (K5) ===== */
+.chron-section {
+  border-top: 1px solid #e5e7f0;
+  margin-top: 18px;
+  padding-top: 12px;
+}
+.chron-title {
+  margin: 0 0 10px;
+  font-size: 0.95em;
+  color: #555;
+}
+.chron-item {
+  border-left: 3px solid #d5d8e8;
+  padding: 2px 12px;
+  margin: 0 0 14px;
+}
+.chron-src {
+  display: inline-block;
+  font-size: 0.82em;
+  color: #667eea;
+  cursor: pointer;
+  margin-bottom: 4px;
+  min-height: 24px;
+}
+.chron-src:hover { text-decoration: underline; }
+.chron-text { font-size: 0.93em; }
+.chron-text + .chron-text { margin-top: 8px; }
+
+/* ===== DARK MODE: CHRONIK ===== */
+body.dark-mode .chron-section { border-top-color: #262a44; }
+body.dark-mode .chron-title   { color: #9095b8; }
+body.dark-mode .chron-item    { border-left-color: #2c3050; }
+body.dark-mode .chron-src     { color: #818cf8; }
