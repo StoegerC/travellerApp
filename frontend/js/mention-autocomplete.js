@@ -7,6 +7,17 @@
  *
  * Erwähnungs-Syntax @[Name](typ:id) wird von Md._mentions()
  * (frontend/js/markdown.js) als klickbarer Link gerendert.
+ *
+ * Journal-Paket Teil 2 (K1/@-Mechanik, siehe Todo.txt):
+ *  - Typ-Filter: getippt als Kürzel "@p:…" / "@o:…" / "@q:…" (Doppelpunkt
+ *    macht die Absicht eindeutig — "@pearson" ohne Doppelpunkt ist eine
+ *    normale Suche über alles) ODER per antippbarer Filter-Chip-Zeile im
+ *    Dropdown-Kopf. Beides setzt denselben Filter.
+ *  - Volltextsuche ohne Groß-/Kleinschreibung (Substring, nicht Namensanfang).
+ *  - Sortierung: im aktuellen Eintrag bereits verknüpfte Einträge (Erwähnung
+ *    im Text oder Session-Tag) zuerst, danach nach createdAt absteigend.
+ *  - Kein Treffer nötig: "+ ‚X' als Person/Ort/Quest anlegen" legt einen Stub
+ *    an, fügt die Erwähnung ein und öffnet das Popover (K2) zum Befüllen.
  */
 const MentionAutocomplete = {
   _esc(s) {
@@ -63,6 +74,38 @@ const MentionAutocomplete = {
     return coords;
   },
 
+  // Ids, die im aktuellen Eintrag schon verknüpft sind: Erwähnungen im
+  // Feldtext selbst plus (auf der Notizen-Seite) die Session-Tags des offenen
+  // Formulars. Diese Einträge stehen in den Vorschlägen zuerst.
+  _linkedIds(fieldValue) {
+    const ids = new Set();
+    for (const m of fieldValue.matchAll(/\((?:person|location|quest|session):([\w-]+)\)/g)) {
+      ids.add(m[1]);
+    }
+    if (App.currentPage === 'notes' && NotesPage._editTags) {
+      for (const list of Object.values(NotesPage._editTags)) {
+        (list || []).forEach(id => ids.add(id));
+      }
+    }
+    return ids;
+  },
+
+  // Neuen Stub-Eintrag anlegen — gleiche Defaults wie das Anlegen über das
+  // Tag-Picker-Formular (NotesPage._attachTagPicker/doCreate).
+  _createEntry(pluralType, name, character) {
+    const data    = NotesPage._d(character);
+    const nameKey = pluralType === 'quests' ? 'title' : 'name';
+    const prefix  = { persons: 'p', locations: 'l', quests: 'q' }[pluralType] || 'x';
+    const item    = { id: prefix + Date.now(), [nameKey]: name, createdAt: new Date().toISOString() };
+    if (pluralType === 'persons')   { item.status = 'alive'; item.race = 'Mensch'; item.relation = 'neutral'; }
+    if (pluralType === 'locations') { item.status = 'known'; }
+    if (pluralType === 'quests')    { item.status = 'active'; }
+    data[pluralType].push(item);
+    character.notes = data;
+    NotesPage._saveAndSync(character);
+    return item;
+  },
+
   // Haengt "@"-Autovervollstaendigung an ein Feld an. fieldId/suggestionsId
   // sind Element-IDs (siehe HTML-Muster: <div class="loc-name-wrap"><textarea
   // id="..."></textarea><div id="..." class="loc-suggestions
@@ -72,16 +115,36 @@ const MentionAutocomplete = {
     const suggestEl = document.getElementById(suggestionsId);
     if (!field || !suggestEl) return;
 
-    const entities = this._entities(character);
-    let range = null; // { start, end } des "@query" im Text, das ersetzt wird
+    let range = null;        // { start, end } des "@query" im Text, das ersetzt wird
+    let manualFilter = null; // per Filter-Chip gewählt; gewinnt über das Kürzel
 
     const closeSuggestions = () => {
       suggestEl.style.display = 'none';
       suggestEl.innerHTML = '';
       range = null;
+      manualFilter = null;
     };
 
-    const TYPE_LABEL = { person: '👤 Person', location: '🌍 Ort', quest: '🎯 Quest', session: '📖 Journal' };
+    const TYPE_LABEL   = { person: '👤 Person', location: '🌍 Ort', quest: '🎯 Quest', session: '📖 Journal' };
+    const CREATE_LABEL = { person: 'Person', location: 'Ort', quest: 'Quest' };
+    const PLURAL       = { person: 'persons', location: 'locations', quest: 'quests' };
+    const SHORTCUT     = { p: 'person', o: 'location', q: 'quest' };
+    const FILTERS      = [['all', 'Alle'], ['person', 'Personen'], ['location', 'Orte'], ['quest', 'Quests']];
+
+    // Anker unter dem "@" für das Popover nach einer Neuanlage: dieselbe
+    // Schnittstelle wie ein DOM-Element (getBoundingClientRect), nur eben an
+    // der Einfügestelle im Text statt an einem Element.
+    const caretAnchor = (pos) => {
+      const f = field.getBoundingClientRect();
+      const c = this._caretCoords(field, pos);
+      const rect = {
+        left: f.left + c.left, top: f.top + c.top,
+        width: 8, height: c.height,
+      };
+      rect.right  = rect.left + rect.width;
+      rect.bottom = rect.top + rect.height;
+      return { getBoundingClientRect: () => rect };
+    };
 
     const update = () => {
       const value = field.value;
@@ -89,7 +152,17 @@ const MentionAutocomplete = {
       const match = value.slice(0, pos).match(/@([^\s@[\]]*)$/);
       if (!match) { closeSuggestions(); return; }
 
-      const query = match[1].toLowerCase();
+      // Typ-Kürzel "@p:" / "@o:" / "@q:" abtrennen (nur MIT Doppelpunkt —
+      // "@pearson" bleibt eine normale Suche über alles).
+      let rawQuery = match[1];
+      let shortcutFilter = null;
+      const sc = rawQuery.match(/^([poqPOQ]):(.*)$/);
+      if (sc) {
+        shortcutFilter = SHORTCUT[sc[1].toLowerCase()];
+        rawQuery = sc[2];
+      }
+      const filter = manualFilter || shortcutFilter || 'all';
+      const query  = rawQuery.toLowerCase();
       range = { start: pos - match[0].length, end: pos };
 
       // Dropdown unter das "@" (Start der Erwähnung) setzen statt unter das
@@ -102,45 +175,112 @@ const MentionAutocomplete = {
         right: 'auto',
       });
 
-      const results = [
-        ...entities.persons.map(p   => ({ type: 'person',   id: p.id, label: p.name })),
-        ...entities.locations.map(l => ({ type: 'location', id: l.id, label: l.name })),
-        ...entities.quests.map(q    => ({ type: 'quest',    id: q.id, label: q.title })),
-        ...entities.sessions.map(s  => ({ type: 'session',  id: s.id, label: s.title })),
-      ].filter(r => r.label && r.label.toLowerCase().includes(query)).slice(0, 8);
+      // Entities bei jedem Update frisch mergen (statt einmalig beim attach):
+      // Neuanlagen aus diesem Dropdown und Popover-Umbenennungen sind so
+      // sofort sichtbar, ohne dass die Seite neu rendern muss.
+      const entities = this._entities(character);
+      const pool = [];
+      if (filter === 'all' || filter === 'person')
+        pool.push(...entities.persons.map(p   => ({ type: 'person',   id: p.id, label: p.name,  createdAt: p.createdAt })));
+      if (filter === 'all' || filter === 'location')
+        pool.push(...entities.locations.map(l => ({ type: 'location', id: l.id, label: l.name,  createdAt: l.createdAt })));
+      if (filter === 'all' || filter === 'quest')
+        pool.push(...entities.quests.map(q    => ({ type: 'quest',    id: q.id, label: q.title, createdAt: q.createdAt })));
+      if (filter === 'all')
+        pool.push(...entities.sessions.map(s  => ({ type: 'session',  id: s.id, label: s.title, createdAt: s.createdAt })));
 
-      if (!results.length) {
-        suggestEl.innerHTML = '<div class="loc-suggest-empty">Kein Treffer</div>';
-        suggestEl.style.display = '';
-        return;
-      }
+      // Volltextsuche (Substring, case-insensitiv) + Sortierung: bereits im
+      // Eintrag Verknüpftes zuerst, danach die zuletzt erstellten Einträge.
+      const linked  = this._linkedIds(value);
+      const created = (r) => Date.parse(r.createdAt || 0) || 0;
+      const results = pool
+        .filter(r => r.label && r.label.toLowerCase().includes(query))
+        .sort((a, b) =>
+          ((linked.has(b.id) ? 1 : 0) - (linked.has(a.id) ? 1 : 0)) ||
+          (created(b) - created(a)))
+        .slice(0, 8);
 
-      suggestEl.innerHTML = results.map((r, i) => `
+      // Anlegen-Zeilen: bei aktivem Filter nur der eine Typ, sonst alle drei.
+      // Sessions entstehen nie aus einer Erwähnung heraus.
+      const createTypes = rawQuery.trim()
+        ? (filter === 'all' ? ['person', 'location', 'quest'] : [filter]).filter(t => t !== 'session')
+        : [];
+
+      const chipRow = `
+        <div class="mention-filter-row">
+          ${FILTERS.map(([val, label]) => `
+            <button type="button" class="mention-filter-chip${filter === val ? ' active' : ''}" data-filter="${val}">${label}</button>`).join('')}
+        </div>`;
+
+      const resultRows = results.map((r, i) => `
         <div class="loc-suggest-item mention-suggest-item" data-idx="${i}">
           <strong>${this._esc(r.label)}</strong>
-          <span>${TYPE_LABEL[r.type]}</span>
+          <span>${linked.has(r.id) ? '<em class="mention-linked-flag">im Eintrag</em> ' : ''}${TYPE_LABEL[r.type]}</span>
         </div>`).join('');
+
+      const createRows = createTypes.map(t => `
+        <div class="mention-suggest-item mention-create-item mention-create--${t}" data-ctype="${t}">
+          ✚ „${this._esc(rawQuery.trim())}" als ${CREATE_LABEL[t]} anlegen
+        </div>`).join('');
+
+      const emptyRow = (!results.length && !createRows)
+        ? '<div class="loc-suggest-empty">Kein Treffer</div>' : '';
+
+      suggestEl.innerHTML = chipRow + resultRows + createRows + emptyRow;
       suggestEl.style.display = '';
 
-      suggestEl.querySelectorAll('.mention-suggest-item').forEach(item => {
+      // Filter-Chips: mousedown statt click, damit das Feld den Fokus behält.
+      suggestEl.querySelectorAll('.mention-filter-chip').forEach(chip => {
+        chip.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          manualFilter = chip.dataset.filter === 'all' ? 'all' : chip.dataset.filter;
+          update();
+        });
+      });
+
+      const insertMention = (label, type, id) => {
+        const before = field.value.slice(0, range.start);
+        const after  = field.value.slice(range.end);
+        const insertion = `@[${label}](${type}:${id}) `;
+        field.value = before + insertion + after;
+        const newPos = before.length + insertion.length;
+        field.focus();
+        field.setSelectionRange(newPos, newPos);
+        // Synthetisches input-Event statt eines vollen Re-Renders: loest
+        // den bestehenden Autosave-Mechanismus aus, ohne das Feld (und
+        // damit Fokus/Cursor) zu ersetzen.
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+      };
+
+      suggestEl.querySelectorAll('.mention-suggest-item:not(.mention-create-item)').forEach(item => {
         // mousedown statt click: feuert vor dem blur des Feldes, damit der
         // Cursor/Fokus beim Einfügen erhalten bleibt.
         item.addEventListener('mousedown', (e) => {
           e.preventDefault();
           const r = results[parseInt(item.dataset.idx)];
           if (!r || !range) return;
-          const before = value.slice(0, range.start);
-          const after  = field.value.slice(range.end);
-          const insertion = `@[${r.label}](${r.type}:${r.id}) `;
-          field.value = before + insertion + after;
-          const newPos = before.length + insertion.length;
-          field.focus();
-          field.setSelectionRange(newPos, newPos);
-          // Synthetisches input-Event statt eines vollen Re-Renders: loest
-          // den bestehenden Autosave-Mechanismus aus, ohne das Feld (und
-          // damit Fokus/Cursor) zu ersetzen.
-          field.dispatchEvent(new Event('input', { bubbles: true }));
+          insertMention(r.label, r.type, r.id);
           closeSuggestions();
+        });
+      });
+
+      // Neuanlage: Stub anlegen, Erwähnung einfügen, Popover (K2) zum
+      // Befüllen öffnen — der Session-Tag kommt wie bei jeder Erwähnung
+      // automatisch beim Speichern dazu (Mention-Scan in NotesPage.save()).
+      suggestEl.querySelectorAll('.mention-create-item').forEach(item => {
+        item.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          if (!range) return;
+          const type   = item.dataset.ctype;
+          const name   = rawQuery.trim();
+          const anchorPos = range.start;
+          const entry  = this._createEntry(PLURAL[type], name, character);
+          insertMention(name, type, entry.id);
+          closeSuggestions();
+          MentionPopover.open({
+            type: PLURAL[type], id: entry.id,
+            anchorEl: caretAnchor(anchorPos), isNew: true,
+          });
         });
       });
     };

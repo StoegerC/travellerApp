@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Neu
+- **Überarbeitete @-Erwähnungsmechanik (Journal-Paket, Teil 2 von 3)** — die „@"-Autovervollständigung (Journal-Bericht und alle anderen Erwähnungsfelder) kann jetzt deutlich mehr: **Typ-Filter** per getipptem Kürzel `@p:`/`@o:`/`@q:` (Doppelpunkt macht die Absicht eindeutig — `@pearson` ohne Doppelpunkt bleibt eine normale Suche über alles) **oder** per antippbarer Filter-Chip-Zeile im Dropdown-Kopf (Alle | Personen | Orte | Quests) — beides setzt denselben Filter, das Kürzel wählt den Chip sichtbar an. **Sortierung:** im aktuellen Eintrag bereits verknüpfte Einträge (Erwähnung im Text oder Session-Tag, markiert mit „im Eintrag") stehen zuerst, danach kommen die zuletzt erstellten. **Neuanlage aus dem Schreibfluss:** unter den Treffern bieten farbcodierte Zeilen „✚ ‚X' als Person/Ort/Quest anlegen" an (bei aktivem Filter nur der passende Typ) — die Auswahl legt einen Eintrag mit den üblichen Defaults an, fügt die Erwähnung an der Schreibstelle ein und öffnet das Erwähnungs-Popover (3.14.0) direkt zum Befüllen; der Session-Tag kommt wie bei jeder Erwähnung automatisch beim Speichern dazu. Die Vorschlagsdaten werden zudem bei jedem Tastendruck frisch gelesen statt einmal beim Rendern — Neuanlagen und Umbenennungen erscheinen sofort. Die Volltextsuche (Substring, unabhängig von Groß-/Kleinschreibung) gilt unverändert.
+
 ---
 
 ## [3.14.0] – 2026-07-17

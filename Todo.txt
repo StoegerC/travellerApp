@@ -47,15 +47,9 @@ UI / UX
 [ ] Journal-Paket K1+K2+K5 umsetzen (Konzept final abgestimmt 17.07.2026, Mockups:
     https://claude.ai/code/artifact/9719c4f3-aaeb-4cec-bd69-a059c93564e6 )
     Gilt für Personen, Orte UND Quests. Reihenfolge (einzeln release-fähig):
-    1. [ERLEDIGT in 3.14.0] K2 Popover (notes-popover.js). Vierter Einstieg
-       "Neuanlage via @-Autocomplete" folgt mit Schritt 2.
-    2. K1/@-Mechanik: Typ-Filter per Kürzel @p:/@o:/@q: (Doppelpunkt!) UND antippbare
-       Filter-Chips im Dropdown-Kopf (Alle|Personen|Orte|Quests) — beides derselbe
-       Filter; @ ohne Doppelpunkt sucht über alles. Volltextsuche case-insensitive
-       (Substring, nicht nur Namensanfang). Sortierung: im Eintrag bereits verknüpfte
-       zuerst, dann createdAt absteigend. Kein Treffer → "+ ‚X' als Person/Ort/Quest
-       anlegen" (bei aktivem Filter nur der eine Typ); Anlegen öffnet das K2-Popover
-       mit vorbefülltem Namen.
+    1. [ERLEDIGT in 3.14.0] K2 Popover (notes-popover.js).
+    2. [ERLEDIGT in 3.15.0] K1/@-Mechanik (mention-autocomplete.js): Kürzel @p:/@o:/@q:,
+       Filter-Chips, Sortierung, Anlegen→Popover.
     3. K5 Auto-Chronik: Detailkarten (Person/Ort/Quest) zeigen unter dem Steckbrief
        automatisch die VOLLSTÄNDIGEN Absätze aller Sessions mit @Erwähnung des
        Eintrags, chronologisch aufsteigend nach In-Game-Datum (Fallback
