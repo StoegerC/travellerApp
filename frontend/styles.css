@@ -1945,9 +1945,18 @@ label.attachment-upload-btn {
 }
 
 .session-links {
-  margin-top: 16px;
-  padding-top: 12px;
+  margin-top: 36px;
+  padding-top: 16px;
   border-top: 1.5px solid #eee;
+}
+
+/* Die Zusammenfassung soll dezent hinter dem Bericht zurücktreten:
+   graue Chips statt der kräftigen Typ-Farben, gedämpfte Labels. */
+.session-link-group strong { color: #8a8ea6; font-weight: 600; }
+.session-links .link-chip {
+  background: #f1f2f6;
+  color: #61657e;
+  font-weight: 500;
 }
 
 .session-link-group {
@@ -8202,3 +8211,24 @@ body.dark-mode .chron-section { border-top-color: #262a44; }
 body.dark-mode .chron-title   { color: #9095b8; }
 body.dark-mode .chron-item    { border-left-color: #2c3050; }
 body.dark-mode .chron-src     { color: #818cf8; }
+
+/* ===== POPOVER: SEITEN-LINK ===== */
+.mp-head { display: flex; justify-content: flex-end; margin: -4px 0 4px; }
+.mp-open-page {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 0.82em;
+  cursor: pointer;
+  padding: 6px 0;
+}
+.mp-open-page:hover { text-decoration: underline; }
+body.dark-mode .mp-open-page { color: #818cf8; }
+
+/* ===== DARK MODE: DEZENTE SESSION-ZUSAMMENFASSUNG ===== */
+body.dark-mode .session-links { border-top-color: #262a44; }
+body.dark-mode .session-link-group strong { color: #666c8f; }
+body.dark-mode .session-links .link-chip {
+  background: #1b1e33;
+  color: #9095b8;
+}
