@@ -47,13 +47,8 @@ UI / UX
 [ ] Journal-Paket K1+K2+K5 umsetzen (Konzept final abgestimmt 17.07.2026, Mockups:
     https://claude.ai/code/artifact/9719c4f3-aaeb-4cec-bd69-a059c93564e6 )
     Gilt für Personen, Orte UND Quests. Reihenfolge (einzeln release-fähig):
-    1. K2 Popover: kompakte editierbare Karte, vier Einstiege (Lesemodus-Tipp auf
-       @Erwähnung; Edit-Modus-Tipp auf Tag-Chip; automatisch nach Neuanlage via
-       @-Autocomplete oder Formular). Buttons Übernehmen/Abbrechen; Tipp außerhalb =
-       Abbrechen mit Rückfrage nur bei Änderungen; Abbrechen nach Neuanlage löscht
-       den Eintrag NICHT (nur Feldeingaben). iPad: flippt nach oben bei Platzmangel
-       unterhalb; Handy hochkant: immer Bottom-Sheet. Popover in _isBusyEditing()
-       aufnehmen (Sync-Poll-Re-Render).
+    1. [ERLEDIGT in 3.14.0] K2 Popover (notes-popover.js). Vierter Einstieg
+       "Neuanlage via @-Autocomplete" folgt mit Schritt 2.
     2. K1/@-Mechanik: Typ-Filter per Kürzel @p:/@o:/@q: (Doppelpunkt!) UND antippbare
        Filter-Chips im Dropdown-Kopf (Alle|Personen|Orte|Quests) — beides derselbe
        Filter; @ ohne Doppelpunkt sucht über alles. Volltextsuche case-insensitive

@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Neu
+- **Erwähnungs-Popover (Journal-Paket, Teil 1 von 3)** — Personen, Orte und Quests lassen sich jetzt direkt aus dem Journal heraus ansehen und bearbeiten, ohne die Seite zu wechseln (neue Komponente `frontend/js/notes-popover.js`). Eine kompakte, editierbare Karte öffnet sich auf drei Wegen: **Lesemodus** – Tipp auf eine `@`-Erwähnung im Fließtext (statt wie bisher zum Eintrag zu springen; Session-Erwähnungen und die freistehenden Rückverlink-Chips springen weiterhin); **Bearbeitungsmodus** – Tipp auf einen Tag-Chip (das × am Chip entfernt weiterhin nur die Verknüpfung); **automatisch nach einer Neuanlage** über das Tag-Picker-Formular (Name vorbefüllt, Fokus im ersten leeren Feld). Felder je Typ wie in den Detail-Formularen (Person: Name/Rasse/Rolle/Beziehung/Status/Beschreibung; Ort: Name/Sektor/UWP/Status/Besuchsdatum/Beschreibung, inkl. Datums-Vorbelegung vom aktiven Journal beim Umstellen auf „Besucht"; Quest: Titel/Ziel/Belohnung/Status). **Übernehmen** speichert und synct, **Abbrechen** verwirft; Tipp auf den Hintergrund bzw. Escape gilt als Abbrechen mit Rückfrage nur bei ungespeicherten Änderungen; nach einer Neuanlage verwirft Abbrechen nur die Feldeingaben, der Eintrag bleibt. Das Popover öffnet unter dem Anker und flippt nach oben, wenn unten zu wenig Platz ist; auf schmalen Screens (< 640 px) erscheint stattdessen ein Bottom-Sheet. Im Bearbeitungsmodus wird nach „Übernehmen" nichts neu gerendert (laufende Berichts-Eingaben bleiben unangetastet), nur Chip-Beschriftungen ziehen nach; Sync-Poll-Re-Renders pausieren, solange das Popover offen ist (`App._isBusyEditing()`).
+
 ---
 
 ## [3.13.2] – 2026-07-17
