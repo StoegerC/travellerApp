@@ -77,6 +77,7 @@ const MentionPopover = {
 
     panel.querySelector('.mp-apply').addEventListener('click', () => this._apply());
     panel.querySelector('.mp-cancel').addEventListener('click', () => this.close());
+    panel.querySelector('.mp-open-page').addEventListener('click', () => this._openFullPage());
     backdrop.addEventListener('click', (e) => {
       if (e.target === backdrop) this._requestCancel();
     });
@@ -105,6 +106,26 @@ const MentionPopover = {
     const dirty = JSON.stringify(this._readFields()) !== this._initial;
     if (dirty && !confirm('Änderungen verwerfen?')) return;
     this.close();
+  },
+
+  // Wechsel auf die volle Detailseite des Eintrags — gleicher Ablauf wie der
+  // Link-Chip-Sprung in NotesPage (offenes Formular vorher sichern, Edit-
+  // Kontexte zurücksetzen). Ungespeicherte Popover-Felder wie bei Abbrechen.
+  _openFullPage() {
+    const { type, id } = this._ctx || {};
+    if (!type) return;
+    const dirty = JSON.stringify(this._readFields()) !== this._initial;
+    if (dirty && !confirm('Änderungen verwerfen?')) return;
+    this.close();
+    const char = App.currentCharacter;
+    if (char) NotesPage.save(char);
+    NotesPage._activeTab = type;
+    NotesPage._detailId  = id;
+    NotesPage._editTags        = null;
+    NotesPage._editAttachments = null;
+    NotesPage._editPersonLinks = null;
+    NotesPage._editQuestLinks  = null;
+    App.renderCurrentPage();
   },
 
   // ── Formular ──────────────────────────────────────────────────────────────
@@ -183,11 +204,17 @@ const MentionPopover = {
               ${opt('completed', entry.status || 'active', 'Abgeschlossen')}
               ${opt('failed',    entry.status || 'active', 'Gescheitert')}
             </select></div>
-        </div>`;
+        </div>
+        <div class="form-group"><label>Beschreibung</label>
+          <textarea id="mpDesc" rows="3" placeholder="Hintergrund, Stand der Dinge …">${e(entry.description)}</textarea></div>`;
     }
 
+    const pageLabel = { persons: 'Zur Personen-Seite', locations: 'Zur Orts-Seite', quests: 'Zur Quest-Seite' }[type];
     return `
       <div class="mp-arrow"></div>
+      <div class="mp-head">
+        <button type="button" class="mp-open-page">${pageLabel} ↗</button>
+      </div>
       ${fields}
       <div class="mp-actions">
         <button class="mp-apply btn-success">Übernehmen</button>
@@ -221,10 +248,11 @@ const MentionPopover = {
       };
     }
     return {
-      title:     val('#mpName')?.trim() || '',
-      objective: val('#mpObjective') || '',
-      reward:    val('#mpReward')?.trim() || '',
-      status:    val('#mpStatus'),
+      title:       val('#mpName')?.trim() || '',
+      objective:   val('#mpObjective') || '',
+      reward:      val('#mpReward')?.trim() || '',
+      status:      val('#mpStatus'),
+      description: val('#mpDesc') || '',
     };
   },
 

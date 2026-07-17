@@ -425,13 +425,13 @@ const NotesPage = {
           ${taggedPersons.length || taggedLocations.length || taggedQuests.length ? `
             <div class="session-links">
               ${taggedPersons.length ? `<div class="session-link-group"><strong>Personen:</strong>
-                ${taggedPersons.map(p => `<span class="link-chip person-link" data-tab="persons" data-id="${this._esc(p.id)}">${this._esc(p.name)}</span>`).join('')}
+                ${taggedPersons.map(p => `<span class="link-chip pop-chip person-link" data-tab="persons" data-id="${this._esc(p.id)}">${this._esc(p.name)}</span>`).join('')}
               </div>` : ''}
               ${taggedLocations.length ? `<div class="session-link-group"><strong>Orte:</strong>
-                ${taggedLocations.map(l => `<span class="link-chip location-link" data-tab="locations" data-id="${this._esc(l.id)}">${this._esc(l.name)}</span>`).join('')}
+                ${taggedLocations.map(l => `<span class="link-chip pop-chip location-link" data-tab="locations" data-id="${this._esc(l.id)}">${this._esc(l.name)}</span>`).join('')}
               </div>` : ''}
               ${taggedQuests.length ? `<div class="session-link-group"><strong>Quests:</strong>
-                ${taggedQuests.map(q => `<span class="link-chip quest-link" data-tab="quests" data-id="${this._esc(q.id)}">${this._esc(q.title)}</span>`).join('')}
+                ${taggedQuests.map(q => `<span class="link-chip pop-chip quest-link" data-tab="quests" data-id="${this._esc(q.id)}">${this._esc(q.title)}</span>`).join('')}
               </div>` : ''}
             </div>` : ''}
         </div>`;
@@ -1474,7 +1474,11 @@ const NotesPage = {
       chip.addEventListener('click', () => {
         const tab = chip.dataset.tab;
         const id  = chip.dataset.id;
-        if (chip.classList.contains('mention-chip') && ['persons', 'locations', 'quests'].includes(tab)) {
+        // .pop-chip: die Zusammenfassungs-Chips unten im Journal-Eintrag —
+        // öffnen ebenfalls das Popover; zur vollen Seite kommt man von dort
+        // über dessen "Zur …-Seite ↗"-Link.
+        if ((chip.classList.contains('mention-chip') || chip.classList.contains('pop-chip'))
+            && ['persons', 'locations', 'quests'].includes(tab)) {
           MentionPopover.open({ type: tab, id, anchorEl: chip });
           return;
         }

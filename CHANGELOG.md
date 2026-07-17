@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.17.0] – 2026-07-17
+
+### Geändert
+- **Feinschliff am Journal-Paket (nach erstem Praxistest)** — vier Ergänzungen: **(1)** Das Erwähnungs-Popover hat oben rechts einen Link **„Zur Personen-/Orts-/Quest-Seite ↗"**, der auf die volle Detailseite wechselt (ungespeicherte Popover-Felder wie bei Abbrechen, mit Rückfrage). **(2)** Das Quest-Popover enthält jetzt auch die **Beschreibung**. **(3)** Die Zusammenfassungs-Chips unten im Journal-Eintrag (Personen/Orte/Quests) öffnen im Lesemodus ebenfalls das **Popover** statt direkt zu springen — zur vollen Seite kommt man von dort über den neuen Link. **(4)** Die Zusammenfassung tritt optisch zurück: mehr Abstand zum Berichtstext (36 px statt 16 px) und dezente graue Chips mit gedämpften Labels statt der kräftigen Typ-Farben — die farbigen Erwähnungen im Fließtext bleiben unverändert.
+
+---
+
 ## [3.16.0] – 2026-07-17
 
 ### Neu
