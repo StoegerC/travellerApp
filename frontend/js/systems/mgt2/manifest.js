@@ -16,6 +16,10 @@ const Mgt2System = {
   id:   'traveller',
   name: 'Mongoose Traveller 2e',
 
+  // Kalender-Vertrag (Phase 2): In-Game-Datumsfelder der Kern-Seiten —
+  // Widget, Placeholder und Label kommen von hier, siehe mgt2/calendar.js.
+  calendar: Mgt2Calendar,
+
   // Mischung aus Kern-Seiten (metadata, equipment, notes) und MGT2-Seiten
   // (attributes, ship, combat, career, karte — liegen unter systems/mgt2/).
   tabs: [

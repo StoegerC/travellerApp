@@ -98,7 +98,7 @@ const MetadataPage = {
               </div>
               <div class="meta-age-field">
                 <label for="charBirthdate">Geburtsdatum:</label>
-                <input type="text" id="charBirthdate" value="${this._esc(meta.birthdate)}" placeholder="z.B. 1100-001">
+                <input type="text" id="charBirthdate" value="${this._esc(meta.birthdate)}" placeholder="${this._esc(App._calendar().placeholder)}">
               </div>
             </div>
             <div class="form-group">

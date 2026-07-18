@@ -233,7 +233,7 @@ const FinancesPage = {
           <input id="txDesc" type="text" placeholder="Beschreibung (@ verlinkt Personen/Orte/Quests/Journal)" class="fin-modal-field">
           <div id="txDescSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
         </div>
-        <input  id="txDate"   type="text"   placeholder="Ingame-Datum (z.B. 1105-234)" class="fin-modal-field">
+        <input  id="txDate"   type="text"   placeholder="Ingame-Datum${App._calendar().placeholder ? ` (${this._esc(App._calendar().placeholder)})` : ``}" class="fin-modal-field">
         <select id="txCat"    class="fin-modal-field">
           ${cats.map(c => `<option value="${c.v}">${c.l}</option>`).join('')}
         </select>
@@ -545,7 +545,7 @@ const FinancesPage = {
     overlay.innerHTML = `
       <div class="fin-settle">
         <h3>Abrechnung</h3>
-        <input id="settleDate" type="text" placeholder="Ingame-Datum (z.B. 1105-034)" class="fin-modal-field" value="${this._esc(App.currentCharacter?.activeJournalDate() || '')}">
+        <input id="settleDate" type="text" placeholder="Ingame-Datum${App._calendar().placeholder ? ` (${this._esc(App._calendar().placeholder)})` : ``}" class="fin-modal-field" value="${this._esc(App.currentCharacter?.activeJournalDate() || '')}">
         <div class="fin-settle-list">${rows}</div>
         <div class="fin-settle-total" id="settleTotal"></div>
         <div class="fin-modal-actions">
