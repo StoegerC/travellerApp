@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.19.0] – 2026-07-18
+
 ### Geändert
 - **Multi-System-Umbau, Phase 1: System-Registry und MGT2-Modul** — reiner Struktur-Umzug ohne Verhaltensänderung. Neu: `frontend/js/systems/registry.js` (der Kern fragt mit `character.system` nach dem Manifest des Regelsystems — der alte Todo-Punkt „Regel-System-Switch" ist damit erledigt) und `frontend/js/systems/mgt2/manifest.js` (Vertrag des MGT2-Moduls, registriert unter der historischen id `traveller`; Phase-1-Umfang: id, Name, Tab-Leiste). Die fünf MGT2-Seiten (`attributes`, `combat`, `career`, `ship`, `karte`) samt Travellermap-Mixin und Skill-Daten sind per `git mv` nach `systems/mgt2/` umgezogen; Kern-Seiten bleiben unter `pages/`. Tab-Leiste und Seiten-Container werden jetzt aus dem Manifest generiert (`App._buildTabs()`) statt hart in `index.html` zu stehen; `App.pages`/`_PAGE_LABELS` sind durch Manifest-Zugriffe ersetzt. Dazu `frontend/js/systems/README.md`: der Leitfaden zum Implementieren neuer Regelsysteme (Vertrag, Daten-Bauordnung, Seiten-Vertrag, Registrierung, Verifikation).
 
