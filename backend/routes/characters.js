@@ -14,6 +14,25 @@ const router = express.Router();
 
 function isGm(user) { return user.roles.includes('gm'); }
 
+// Multi-System Phase 0 — Stolperdraht gegen Alt-Clients: Ein Push, der die
+// system-Kennung eines bestehenden Charakters ändert oder ein vorhandenes
+// systemData-Feld weglässt, stammt praktisch sicher von einer App-Version,
+// die diese Felder nicht kennt und sie beim Laden verworfen hat (das
+// Frontend-Modell reicht Unbekanntes erst seit dem Passthrough-Fix durch).
+// Statt still zu überschreiben antwortet der Server wie bei der optimistischen
+// Sperre mit 409 + aktuellem Stand — der Alt-Client landet nach seinen
+// Merge-Retries in einem sichtbaren Sync-Fehler, die Daten bleiben unversehrt.
+// Reiner Key-/String-Vergleich, der Server bleibt regelwerk-agnostisch.
+// (Der Admin-Rollback läuft bewusst an dieser Route vorbei direkt über db.js.)
+function pushGuardViolation(storedJsonStr, incoming) {
+  let stored;
+  try { stored = JSON.parse(storedJsonStr); } catch { return false; }
+  if (!stored || typeof stored !== 'object' || !incoming || typeof incoming !== 'object') return false;
+  if (stored.system && String(incoming.system ?? '') !== String(stored.system)) return true;
+  if (('systemData' in stored) && !('systemData' in incoming)) return true;
+  return false;
+}
+
 // GET /chars – nur eigene, ausser gm-Flag (dann alle, fuer Meister-Uebersicht).
 // "mine" verraet dem Frontend, ob es sich lokal wie ein voll editierbarer
 // eigener Charakter verhalten darf oder read-only (fremd, nur ueber gm-Flag
@@ -51,6 +70,10 @@ router.put('/char/:id', (req, res) => {
   const existing = db.getCharacter(req.params.id);
   if (existing && existing.ownerId !== req.user.id) return res.status(403).send('Forbidden');
 
+  if (existing && pushGuardViolation(existing.data, req.body)) {
+    return res.status(409).json({ data: JSON.parse(existing.data), updatedAt: existing.updatedAt });
+  }
+
   const body = JSON.stringify(req.body);
   // Der bisherige Stand dieses Charakters zaehlt nicht mit - sonst schluege ein
   // reines Speichern ohne Groessenzuwachs am Limit fehl.
@@ -75,3 +98,5 @@ router.delete('/char/:id', (req, res) => {
 });
 
 module.exports = router;
+// Fuer Tests (backend/test/): reiner Helfer ohne Express-Kontext.
+module.exports.pushGuardViolation = pushGuardViolation;

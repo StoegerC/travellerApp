@@ -36,11 +36,9 @@ CHARAKTERVERWALTUNG
     Orte/Quests) + System-Erweiterungen via generischem /campaign/:id/ext/:key.
     Zweites System = minimales spielunabhängiges "Universal"-Template
     (zugleich Kopiervorlage). Phasen (einzeln release-fähig):
-    0. Tolerantes Character-Modell (Passthrough unbekannter Felder!) +
-       Server-Stolperdraht in PUT /char (system-Wechsel/systemData-Verlust
-       => 409) + Import-Versionswächter (_minAppVersion). DRINGEND zuerst —
-       heute verwirft toJSON/fromJSON unbekannte Felder (stiller Datenverlust
-       zwischen App-Versionen).
+    0. [ERLEDIGT in 3.18.0] Tolerantes Character-Modell (Passthrough) +
+       Server-Stolperdraht + Import-Versionswächter. WICHTIG: vor dem ersten
+       Nicht-MGT2-Charakter müssen ALLE Geräte >= 3.18.0 laufen.
     1. systems/registry.js + systems/mgt2/ als reiner Umzug (attributes,
        combat, career-Timeline, ship, karte, travellermap, skills-Daten);
        Tab-Leiste aus Manifest; character.system auswerten. Leitfaden als

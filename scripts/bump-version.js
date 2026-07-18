@@ -80,6 +80,16 @@ function main() {
   sw = sw.replace(cacheRe, `$1${newVersion}$2`);
   writeFile('frontend/sw.js', sw);
 
+  // ── frontend/js/app.js: APP_VERSION-Konstante (Import-Versionswächter) ──
+  let appJs = readFile('frontend/js/app.js');
+  const appVerRe = /(const APP_VERSION = ')[\d.]+(')/;
+  if (!appVerRe.test(appJs)) {
+    console.error('APP_VERSION-Konstante nicht gefunden in frontend/js/app.js');
+    process.exit(1);
+  }
+  appJs = appJs.replace(appVerRe, `$1${newVersion}$2`);
+  writeFile('frontend/js/app.js', appJs);
+
   // ── frontend/manifest.json: "version"-Feld ──────────────────────────────
   let manifest = readFile('frontend/manifest.json');
   const manifestRe = /("version":\s*")[^"]*(")/;
@@ -120,6 +130,7 @@ function main() {
   console.log(`Version ${oldVersion} -> ${newVersion}`);
   console.log(`  frontend/index.html: ${queryCount} Cache-Busting-Query(s) + Header aktualisiert`);
   console.log('  frontend/sw.js: CACHE-Name aktualisiert');
+  console.log('  frontend/js/app.js: APP_VERSION aktualisiert');
   console.log('  frontend/manifest.json: "version" aktualisiert');
   console.log(`  CHANGELOG.md: [Unreleased] -> [${newVersion}] – ${today}, neue leere [Unreleased]-Sektion angelegt`);
 }

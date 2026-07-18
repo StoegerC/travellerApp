@@ -153,3 +153,29 @@ test('getCampaignUpdatedAt: liefert den Spaltenwert und bumpt bei updateCampaign
   assert.strictEqual(db.getCampaignUpdatedAt('etag-nix'), null, 'unbekannte ID -> null');
   db.deleteCampaign('etag-camp2');
 });
+
+// ── Multi-System Phase 0: Push-Stolperdraht ──────────────────────────────────
+
+test('pushGuardViolation: blockt system-Wechsel und systemData-Verlust, sonst nicht', () => {
+  const characters = require('../routes/characters');
+  const g = characters.pushGuardViolation;
+
+  const mgt2 = JSON.stringify({ id: 'c1', system: 'traveller', metadata: {} });
+  const dg   = JSON.stringify({ id: 'c2', system: 'delta-green', systemData: { bonds: [] } });
+
+  // Normalfälle: unverändertes System, MGT2 ohne systemData -> kein Block
+  assert.strictEqual(g(mgt2, { id: 'c1', system: 'traveller', metadata: {} }), false);
+  assert.strictEqual(g(dg, { id: 'c2', system: 'delta-green', systemData: { bonds: [{}] } }), false);
+
+  // Alt-Client-Signaturen: Kennung geändert/fehlt oder systemData weggefallen
+  assert.strictEqual(g(dg, { id: 'c2', system: 'traveller', systemData: {} }), true, 'system geändert');
+  assert.strictEqual(g(dg, { id: 'c2', systemData: {} }), true, 'system fehlt');
+  assert.strictEqual(g(dg, { id: 'c2', system: 'delta-green' }), true, 'systemData verloren');
+
+  // systemData darf leer sein, solange der Schlüssel da ist (leeres Objekt ist legitim)
+  assert.strictEqual(g(dg, { id: 'c2', system: 'delta-green', systemData: null }), false);
+
+  // Defensive: unparsebarer Altbestand oder kaputter Input blockt nie
+  assert.strictEqual(g('kein json', { system: 'x' }), false);
+  assert.strictEqual(g(mgt2, null), false);
+});

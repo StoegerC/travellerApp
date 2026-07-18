@@ -75,6 +75,19 @@ class Character {
     // Zuletzt vom Server gesehener Versions-Zeitstempel (opaker String, siehe
     // backend/db.js updated_at) — für die optimistische Sperre beim Push.
     this._syncMeta = { updatedAt: data._syncMeta?.updatedAt || null };
+
+    // Multi-System Phase 0 — Passthrough: unbekannte Top-Level-Felder
+    // verlustfrei durchreichen. Bisher zählten fromJSON/toJSON alle Felder
+    // explizit auf; alles Unbekannte (z.B. das künftige systemData anderer
+    // Regelsysteme oder Felder neuerer App-Versionen) wurde beim Roundtrip
+    // stillschweigend verworfen — Datenverlust, sobald verschiedene
+    // App-Stände denselben Charakter über die Cloud synchen. toJSON() gibt
+    // diese Felder unverändert wieder aus (bekannte Felder gewinnen bei
+    // Namensgleichheit, die es per Konstruktion nicht gibt).
+    this._passthrough = {};
+    for (const key of Object.keys(data)) {
+      if (!Character._KNOWN_KEYS.has(key)) this._passthrough[key] = data[key];
+    }
   }
 
   /**
@@ -317,6 +330,7 @@ class Character {
     // character.notes.sessions.push(...)) auch den gecachten "alten" Stand
     // veraendern, wodurch der Vergleich nie einen Unterschied findet.
     return JSON.parse(JSON.stringify({
+      ...this._passthrough,
       id:         this.id,
       system:     this.system,
       syncMode:   this.syncMode,
@@ -345,3 +359,13 @@ class Character {
     return new Character(data);
   }
 }
+
+// Die im Konstruktor/toJSON() explizit behandelten Top-Level-Felder. Alles,
+// was hier NICHT steht, läuft über den Passthrough (siehe Konstruktor-Ende).
+// Beim Einführen eines neuen bekannten Feldes hier ergänzen — sonst landet es
+// doppelt (einmal behandelt, einmal durchgereicht).
+Character._KNOWN_KEYS = new Set([
+  'id', 'system', 'syncMode', 'campaignId', 'metadata', 'attributes', 'skills',
+  'equipment', 'notes', 'radiationDose', 'firstAidLog', 'finances', 'career',
+  'training', 'ships', 'activeShipId', 'shipRoles', '_syncMeta',
+]);

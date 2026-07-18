@@ -330,7 +330,15 @@ const MetadataPage = {
   _exportJSON() {
     const char = window.currentCharacter;
     if (!char) return;
-    const json = JSON.stringify(char.toJSON(), null, 2);
+    const payload = char.toJSON();
+    // Import-Versionswächter (Multi-System Phase 0): nur stempeln, wenn der
+    // Export Felder enthält, die ältere App-Stände beim Import verwerfen
+    // würden — normale MGT2-Exporte bleiben in beliebig alten Ständen
+    // importierbar. Geprüft wird der Stempel in App._importJSON().
+    if (payload.system !== 'traveller' || 'systemData' in payload) {
+      payload._minAppVersion = APP_VERSION;
+    }
+    const json = JSON.stringify(payload, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
