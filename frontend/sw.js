@@ -1,4 +1,4 @@
-const CACHE = 'traveller-v3.18.0';
+const CACHE = 'traveller-v3.19.0';
 
 const ASSETS = [
   './',
@@ -15,21 +15,23 @@ const ASSETS = [
   './js/markdown.js',
   './js/mention-autocomplete.js',
   './js/notes-popover.js',
-  './js/data/skills.js',
   './js/models/character.js',
   './js/sync-merge.js',
   './js/storage.js',
   './js/pages/metadata.js',
-  './js/pages/attributes.js',
   './js/pages/equipment.js',
-  './js/pages/career.js',
   './js/pages/notes.js',
-  './js/pages/notes-travellermap.js',
   './js/pages/notes-chronicle.js',
-  './js/pages/karte.js',
-  './js/pages/combat.js',
   './js/pages/finances.js',
-  './js/pages/ship.js',
+  './js/systems/registry.js',
+  './js/systems/mgt2/manifest.js',
+  './js/systems/mgt2/data/skills.js',
+  './js/systems/mgt2/pages/attributes.js',
+  './js/systems/mgt2/pages/ship.js',
+  './js/systems/mgt2/pages/career.js',
+  './js/systems/mgt2/pages/notes-travellermap.js',
+  './js/systems/mgt2/pages/karte.js',
+  './js/systems/mgt2/pages/combat.js',
   './js/app.js',
 ];
 
