@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.18.0] – 2026-07-18
+
 ### Neu
 - **Multi-System-Umbau, Phase 0: tolerantes Charakter-Modell + Schutzmechanismen** — Fundament für die geplante Aufspaltung in Kern + Regelsystem-Module (siehe Todo.txt). Drei Bausteine: **(1) Passthrough** — `Character.fromJSON()/toJSON()` verwarf bisher alle unbekannten Top-Level-Felder; jetzt werden sie unverändert durchgereicht (`Character._KNOWN_KEYS` definiert die behandelten Felder). Damit gehen Felder neuerer App-Versionen (künftig z.B. `systemData` anderer Regelsysteme) beim Sync zwischen unterschiedlichen App-Ständen nicht mehr stillschweigend verloren. Für MGT2-Bestandscharaktere ändert sich nichts (Roundtrip byte-identisch). **(2) Server-Stolperdraht** — `PUT /char/:id` lehnt Pushes mit 409 ab, die die `system`-Kennung eines bestehenden Charakters ändern oder ein vorhandenes `systemData`-Feld weglassen (typische Signatur eines veralteten Clients, der diese Felder beim Laden verworfen hat); der Alt-Client endet in einem sichtbaren Sync-Fehler statt Daten zu zerstören, der Admin-Rollback läuft bewusst an der Route vorbei. **(3) Import-Versionswächter** — JSON-Exporte von Charakteren mit Fremdsystem-Feldern tragen ein `_minAppVersion`; der Import prüft es gegen die neue `APP_VERSION`-Konstante (wird von `bump-version.js` mitgepflegt) und lehnt zu neue Exporte mit klarer Meldung ab, statt sie kaputt zu importieren. Normale MGT2-Exporte bleiben ungestempelt und in beliebig alten Ständen importierbar.
 
