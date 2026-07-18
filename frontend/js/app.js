@@ -1,6 +1,11 @@
 /**
  * Hauptanwendungs-Logik
  */
+// Laufende App-Version — wird von scripts/bump-version.js mitgebumpt.
+// Genutzt vom Import-Versionswächter (Multi-System Phase 0): JSON-Exporte
+// können ein _minAppVersion tragen, das der Import hiergegen prüft.
+const APP_VERSION = '3.17.1';
+
 const App = {
   currentCharacter: null,
   currentPage: 'metadata',
@@ -1075,6 +1080,18 @@ const App = {
     });
   },
 
+  // true wenn Version a kleiner als b ist (numerischer Vergleich je Punktteil,
+  // fehlende Teile zählen als 0 — "3.18" < "3.18.1").
+  _versionLt(a, b) {
+    const pa = String(a).split('.').map(n => parseInt(n) || 0);
+    const pb = String(b).split('.').map(n => parseInt(n) || 0);
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+      const x = pa[i] || 0, y = pb[i] || 0;
+      if (x !== y) return x < y;
+    }
+    return false;
+  },
+
   _importJSON(e) {
     const file = e.target.files[0];
     e.target.value = '';
@@ -1085,6 +1102,15 @@ const App = {
       try { data = JSON.parse(event.target.result); }
       catch { this.showStatus('Ungültige JSON-Datei', 'error'); return; }
       if (!data.id || !data.metadata) { this.showStatus('Kein gültiger Traveller-Charakter', 'error'); return; }
+      // Import-Versionswächter (Multi-System Phase 0): Exporte mit Feldern,
+      // die ältere App-Stände beim Import verwerfen würden, tragen ein
+      // _minAppVersion (siehe MetadataPage._exportJSON). Eine zu alte
+      // Installation lehnt den Import ab, statt still Daten zu verlieren.
+      if (data._minAppVersion && this._versionLt(APP_VERSION, data._minAppVersion)) {
+        this.showStatus(`Import benötigt App-Version ${data._minAppVersion} (installiert: v${APP_VERSION}) — bitte erst aktualisieren`, 'error');
+        return;
+      }
+      delete data._minAppVersion; // Export-Metadatum, gehört nicht in den Charakter
       const existing = Storage.listCharacters();
       const conflict = existing.find(c => c.id === data.id);
       if (conflict) {
