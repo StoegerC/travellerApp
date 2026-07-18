@@ -24,6 +24,7 @@ const ASSETS = [
   './js/pages/notes-chronicle.js',
   './js/pages/finances.js',
   './js/systems/registry.js',
+  './js/systems/mgt2/calendar.js',
   './js/systems/mgt2/manifest.js',
   './js/systems/mgt2/data/skills.js',
   './js/systems/mgt2/pages/attributes.js',

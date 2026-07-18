@@ -319,25 +319,8 @@ const NotesPage = {
               <input type="date" id="sessionDate" value="${this._esc(s.sessionDate)}">
             </div>
             <div class="form-group">
-              <label>In-Game-Datum (Imperialkalender)</label>
-              <div class="trav-date-simple">
-                <div class="trav-date-fields">
-                  <div class="trav-date-field-wrap">
-                    <span class="trav-date-sub-label">Jahr</span>
-                    <input type="number" id="sessionDateYear" class="trav-date-num-inp"
-                           value="${s.inGameDate ? this._esc(s.inGameDate.split('-')[0]) : ''}"
-                           min="0" max="9999" placeholder="z.B. 1106">
-                  </div>
-                  <div class="trav-date-field-wrap">
-                    <span class="trav-date-sub-label">Tag (1–365)</span>
-                    <input type="number" id="sessionDateDay" class="trav-date-num-inp"
-                           value="${s.inGameDate ? String(parseInt(s.inGameDate.split('-')[1] || '0')) : ''}"
-                           min="1" max="365" placeholder="z.B. 190">
-                  </div>
-                </div>
-                <input type="hidden" id="sessionIngameDate" value="${this._esc(s.inGameDate || '')}">
-                <div class="trav-date-preview" id="sessionDatePreview"${s.inGameDate ? '' : ' style="display:none"'}>${s.inGameDate || ''}</div>
-              </div>
+              <label>In-Game-Datum${App._calendar().label ? ` (${this._esc(App._calendar().label)})` : ''}</label>
+              ${App._calendar().renderInput('sessionIngameDate', s.inGameDate || '')}
             </div>
             <div class="form-group">
               <label>Erstellt am</label>
@@ -809,25 +792,8 @@ const NotesPage = {
               </select>
             </div>
             <div class="form-group" id="visitedDateGroup" style="${l.status !== 'visited' ? 'display:none' : ''}">
-              <label>Besuchsdatum (Imperialkalender)</label>
-              <div class="trav-date-simple">
-                <div class="trav-date-fields">
-                  <div class="trav-date-field-wrap">
-                    <span class="trav-date-sub-label">Jahr</span>
-                    <input type="number" id="travDateYear" class="trav-date-num-inp"
-                           value="${l.visitedDate ? this._esc(l.visitedDate.split('-')[0]) : ''}"
-                           min="0" max="9999" placeholder="z.B. 1106">
-                  </div>
-                  <div class="trav-date-field-wrap">
-                    <span class="trav-date-sub-label">Tag (1–365)</span>
-                    <input type="number" id="travDateDay" class="trav-date-num-inp"
-                           value="${l.visitedDate ? String(parseInt(l.visitedDate.split('-')[1] || '0')) : ''}"
-                           min="1" max="365" placeholder="z.B. 190">
-                  </div>
-                </div>
-                <input type="hidden" id="locVisitedDate" value="${this._esc(l.visitedDate || '')}">
-                <div class="trav-date-preview" id="travDatePreview"${l.visitedDate ? '' : ' style="display:none"'}>${l.visitedDate || ''}</div>
-              </div>
+              <label>Besuchsdatum${App._calendar().label ? ` (${this._esc(App._calendar().label)})` : ''}</label>
+              ${App._calendar().renderInput('locVisitedDate', l.visitedDate || '')}
             </div>
           </div>
           <div class="form-group"><label>Beschreibung</label>
@@ -1635,7 +1601,7 @@ const NotesPage = {
     this._attachQuestFilter();
 
     // In-Game-Datum im Journal
-    this._attachTravDatePicker('sessionDateYear', 'sessionDateDay', 'sessionIngameDate', 'sessionDatePreview');
+    App._calendar().attachInput('sessionIngameDate');
 
     // Session aktiv schalten
     document.getElementById('setActiveSessionBtn')?.addEventListener('click', (e) => {
@@ -1952,21 +1918,17 @@ const NotesPage = {
         const dateGroup = document.getElementById('visitedDateGroup');
         if (dateGroup) dateGroup.style.display = locStatusSel.value === 'visited' ? '' : 'none';
 
-        const yearInp = document.getElementById('travDateYear');
-        const dayInp  = document.getElementById('travDateDay');
-        if (locStatusSel.value !== 'visited' || !yearInp || !dayInp) return;
-        if (yearInp.value || dayInp.value) return;
-        const [year, day] = (App.currentCharacter?.activeJournalDate() || '').split('-');
-        if (!year || !day) return;
-        yearInp.value = year;
-        dayInp.value  = String(parseInt(day));
-        // input-Event stößt den Picker-Sync (hidden Feld + Vorschau) und den
-        // Autosave an (bubbles, siehe App-Listener auf dem Content-Bereich)
-        yearInp.dispatchEvent(new Event('input', { bubbles: true }));
+        // Beim Umstellen auf "Besucht" ein noch leeres Datum mit dem aktiven
+        // Journal vorbelegen (nie ein vorhandenes überschreiben) — über den
+        // Kalender-Vertrag, das Format kennt nur das System.
+        if (locStatusSel.value !== 'visited') return;
+        if (document.getElementById('locVisitedDate')?.value.trim()) return;
+        const d = App.currentCharacter?.activeJournalDate() || '';
+        if (d) App._calendar().setInput('locVisitedDate', d);
       });
     }
 
-    this._attachTravDatePicker();
+    App._calendar().attachInput('locVisitedDate');
     this._attachLocTravSearch();
 
     const search    = document.getElementById('locationSearch');

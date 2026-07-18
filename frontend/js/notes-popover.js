@@ -184,7 +184,7 @@ const MentionPopover = {
               ${opt('rumor',   entry.status || 'known', 'Gerücht')}
             </select></div>
           <div class="form-group" id="mpVisitedRow"><label>Besucht am (In-Game)</label>
-            <input type="text" id="mpVisited" value="${e(entry.visitedDate)}" placeholder="z.B. 1105-03"></div>
+            <input type="text" id="mpVisited" value="${e(entry.visitedDate)}" placeholder="${e(App._calendar().placeholder)}"></div>
         </div>
         <div class="form-group"><label>Beschreibung</label>
           <textarea id="mpDesc" rows="4" placeholder="Was macht diesen Ort aus?">${e(entry.description)}</textarea></div>`;

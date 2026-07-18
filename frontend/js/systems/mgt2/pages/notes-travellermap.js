@@ -9,10 +9,10 @@
  * Reihenfolge in index.html und sw.js.
  *
  * Enthaelt: Imperialkalender-Formatierung (_formatTravDate/_formatTravDateShort),
- * den YYYY-DDD-Datumspicker (_attachTravDatePicker, auch vom Journal genutzt),
  * UWP-Dekodierung (_decodeUWP), Travellermap-Treffernormalisierung
  * (_parseTravellermapHit) und die beiden Orts-Suchfelder
- * (_attachLocAutocomplete/_attachLocTravSearch).
+ * (_attachLocAutocomplete/_attachLocTravSearch). Der YYYY-DDD-Datumspicker
+ * lebt seit Phase 2 als Kalender-Vertrag in systems/mgt2/calendar.js.
  */
 Object.assign(NotesPage, {
   // ─────────────────── IMPERIALKALENDER HELPERS ────────────────────────────
@@ -40,33 +40,6 @@ Object.assign(NotesPage, {
     const month = Math.ceil(doy / 30);
     const day   = doy - (month - 1) * 30;
     return `${day}/${month}/${year}`;
-  },
-
-  _attachTravDatePicker(yearId = 'travDateYear', dayId = 'travDateDay', hiddenId = 'locVisitedDate', previewId = 'travDatePreview') {
-    const yearInp = document.getElementById(yearId);
-    const dayInp  = document.getElementById(dayId);
-    const hidden  = document.getElementById(hiddenId);
-    const preview = document.getElementById(previewId);
-    if (!yearInp || !dayInp || !hidden) return;
-
-    const update = () => {
-      const year = parseInt(yearInp.value);
-      const day  = parseInt(dayInp.value);
-      if (!yearInp.value || !dayInp.value || isNaN(year) || isNaN(day) || day < 1 || day > 365) {
-        hidden.value = '';
-        if (preview) { preview.textContent = ''; preview.style.display = 'none'; }
-        return;
-      }
-      const dateStr = `${year}-${String(day).padStart(3, '0')}`;
-      hidden.value = dateStr;
-      if (preview) {
-        preview.textContent = dateStr;
-        preview.style.display = '';
-      }
-    };
-
-    yearInp.addEventListener('input', update);
-    dayInp.addEventListener('input', update);
   },
 
   _decodeUWP(uwp) {

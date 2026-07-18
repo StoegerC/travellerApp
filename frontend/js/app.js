@@ -39,6 +39,25 @@ const App = {
   _page(pageName) { return this._tab(pageName)?.page() || null; },
   _pageLabel(pageName) { return this._tab(pageName)?.label || pageName; },
 
+  // Kalender-Vertrag des aktiven Systems (Phase 2): In-Game-Datumsfelder der
+  // Kern-Seiten laufen hierüber. Systeme ohne eigenen Kalender bekommen den
+  // Fallback: ein schlichtes Textfeld, der Wert bleibt ein sortierbarer String.
+  _calendar() {
+    return this._system().calendar || {
+      label: '',
+      placeholder: '',
+      renderInput: (id, value) =>
+        `<input type="text" id="${id}" value="${String(value ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')}">`,
+      attachInput: () => {},
+      setInput: (id, value) => {
+        const el = document.getElementById(id);
+        if (!el || el.value.trim()) return;
+        el.value = String(value || '');
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      },
+    };
+  },
+
   // Baut Tab-Leiste und Seiten-Container aus dem Manifest — exakt das Markup,
   // das zuvor hart in index.html stand. Läuft vor setupEventListeners(),
   // damit die Tab-Klick-Listener die generierten Buttons finden.

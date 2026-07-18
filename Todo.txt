@@ -42,8 +42,9 @@ CHARAKTERVERWALTUNG
     1. [ERLEDIGT in 3.19.0] systems/registry.js + systems/mgt2/ (Umzug),
        Tab-Leiste aus Manifest, character.system ausgewertet, Leitfaden
        als systems/README.md.
-    2. Kern MGT2-frei: Kalender-Widget (Imperialkalender raus aus Journal/
-       Orten/Finanzen/Geburtsdatum!), entityExtraFields (Rasse->MGT2-Feld!),
+    2. Kern MGT2-frei: [2a ERLEDIGT in 3.20.0: Kalender-Vertrag —
+       systems/mgt2/calendar.js, App._calendar() mit Textfeld-Fallback]
+       Noch offen: entityExtraFields (Rasse->MGT2-Feld!),
        Label-Map (Quest/Session), metadataExtraFields (Helden XP),
        financeCategories, mergeSpec (inkl. systemData-Pfade granular!),
        career.js aufteilen (Hintergrund&Persönlichkeit/Ereignisse/Favoriten

@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Geändert
+- **Multi-System-Umbau, Phase 2a: Kalender-Vertrag** — der Imperialkalender ist aus dem Kern verschwunden. Neu: `systems/mgt2/calendar.js` implementiert den Kalender-Vertrag des Manifests (`label`, `placeholder`, `renderInput`/`attachInput`/`setInput` — das bekannte Jahr+Tag-Widget mit Wertfeld und Vorschau, zuvor doppelt in `notes.js`). Die Kern-Seiten rendern In-Game-Datumsfelder jetzt über `App._calendar()`: Journal-Eintrag, Orts-Besuchsdatum (inkl. der Vorbelegung vom aktiven Journal beim Umstellen auf „Besucht"), Finanz-Dialoge, Geburtsdatum und Orts-Popover kennen das Datumsformat nicht mehr. Systeme ohne eigenen Kalender bekommen automatisch ein schlichtes Textfeld (Fallback). Der alte `_attachTravDatePicker` im Travellermap-Mixin entfällt. Verhalten und Optik für MGT2 unverändert.
+
 ---
 
 ## [3.19.0] – 2026-07-18
