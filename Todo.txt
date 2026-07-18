@@ -23,7 +23,42 @@ DATENHALTUNG
     nur mit einem Hinweistext darauf hin, löst es aber nicht strukturell.
 
 CHARAKTERVERWALTUNG
-[ ] Regel-System-Switch (character.system wird gesetzt aber nie ausgewertet)
+[ ] Multi-System-Umbau: App in systemunabhängigen Kern + Regelsystem-Module
+    aufspalten (ersetzt den alten Punkt "Regel-System-Switch"). Plan final
+    beschlossen 18.07.2026 nach 3 Challenge-Runden (20 Funde), Details/Manifest-
+    Vertrag/Leitfaden:
+    https://claude.ai/code/artifact/2425ab98-9a40-48f7-893b-55ba52456266
+    Kernentscheidungen: MGT2 registriert sich unter id 'traveller', KEINE
+    Datenmigration der Bestandscharaktere ("B+": Bestandsschutz für flache
+    MGT2-Felder; neue Systeme kapseln alles unter character.systemData;
+    unbekannte System-Kennung => read-only mit Kern-Tabs). Kampagnen systemrein
+    (system-Feld, Join-Prüfung Client+Server) mit Kern-Basis (Journal/Personen/
+    Orte/Quests) + System-Erweiterungen via generischem /campaign/:id/ext/:key.
+    Zweites System = minimales spielunabhängiges "Universal"-Template
+    (zugleich Kopiervorlage). Phasen (einzeln release-fähig):
+    0. Tolerantes Character-Modell (Passthrough unbekannter Felder!) +
+       Server-Stolperdraht in PUT /char (system-Wechsel/systemData-Verlust
+       => 409) + Import-Versionswächter (_minAppVersion). DRINGEND zuerst —
+       heute verwirft toJSON/fromJSON unbekannte Felder (stiller Datenverlust
+       zwischen App-Versionen).
+    1. systems/registry.js + systems/mgt2/ als reiner Umzug (attributes,
+       combat, career-Timeline, ship, karte, travellermap, skills-Daten);
+       Tab-Leiste aus Manifest; character.system auswerten. Leitfaden als
+       systems/README.md ins Repo.
+    2. Kern MGT2-frei: Kalender-Widget (Imperialkalender raus aus Journal/
+       Orten/Finanzen/Geburtsdatum!), entityExtraFields (Rasse->MGT2-Feld!),
+       Label-Map (Quest/Session), metadataExtraFields (Helden XP),
+       financeCategories, mergeSpec (inkl. systemData-Pfade granular!),
+       career.js aufteilen (Hintergrund&Persönlichkeit/Ereignisse/Favoriten
+       sind Kern, Datenpfad career.background via backgroundPath),
+       Kern-Widget-Bibliothek (Zähler/Tabellenlisten/Tracker).
+       Abnahme: grep traveller|UWP|Imperialkalender|Vargr|Cr über Kern leer.
+    3. Mehrsystem-Betrieb: Neuanlage mit System-Auswahl, Cloud-Liste als
+       sortierbare Tabelle (Name+System, GET /chars liefert system mit),
+       Charakterwechsel wechselt System/Tabs (fehlender Tab -> Charakter-Tab).
+    4. Universal-Template als Beweis (Kern-Tabs + freie Werte-Listen).
+    5. Kampagnen: system-Feld + Join-Prüfung + generisches Erweiterungs-API.
+    6. (optional, nur bei Bedarf) freiwillige MGT2-Migration nach systemData.
 
 SERVER / BETRIEB (nautilus)
 [ ] Persistentes Journal aktivieren — Ursache des Ausfalls vom 10.07.2026
