@@ -27,24 +27,41 @@ const App = {
   // regulaeren loadCharacter() zurueckgesetzt.
   _readOnlyView: false,
 
-  // Anzeigenamen der Tabs fuer den Versionsverlauf (siehe showVersionHistory).
-  _PAGE_LABELS: {
-    metadata: 'Charakter', attributes: 'Attribute', equipment: 'Ausrüstung',
-    ship: 'Schiff', combat: 'Kampf', career: 'Werdegang', notes: 'Log', karte: 'Karte',
+  // ── System-Manifest (Multi-System Phase 1) ────────────────────────────────
+  // Tabs, Seiten und Labels kommen aus dem Manifest des aktiven Regelsystems
+  // (SystemRegistry, siehe systems/README.md) statt aus harten Maps.
+  // _system() wertet character.system aus — der frühere Todo-Punkt
+  // "Regel-System-Switch"; ohne Charakter gilt das Default-System (MGT2).
+  _system() {
+    return SystemRegistry.get(this.currentCharacter?.system);
   },
+  _tab(pageName)  { return this._system().tabs.find(t => t.id === pageName) || null; },
+  _page(pageName) { return this._tab(pageName)?.page() || null; },
+  _pageLabel(pageName) { return this._tab(pageName)?.label || pageName; },
 
-  pages: {
-    metadata:   MetadataPage,
-    attributes: AttributesPage,
-    equipment:  EquipmentPage,
-    career:     CareerPage,
-    notes:      NotesPage,
-    karte:      KartePage,
-    combat:     CombatPage,
-    ship:       ShipPage,
+  // Baut Tab-Leiste und Seiten-Container aus dem Manifest — exakt das Markup,
+  // das zuvor hart in index.html stand. Läuft vor setupEventListeners(),
+  // damit die Tab-Klick-Listener die generierten Buttons finden.
+  _buildTabs() {
+    const sys = this._system();
+    const nav = document.querySelector('.tab-navigation');
+    nav.innerHTML = sys.tabs.map(t => `
+      <button class="tab-btn${t.id === this.currentPage ? ' active' : ''}" data-page="${t.id}">
+        <span class="tab-icon">${t.icon}</span>
+        <span class="tab-label">${t.label}</span>
+      </button>`).join('');
+    const content = document.querySelector('main.content');
+    content.querySelectorAll('.page-content').forEach(el => el.remove());
+    sys.tabs.forEach(t => {
+      const div = document.createElement('div');
+      div.id = `${t.id}-page`;
+      div.className = 'page-content' + (t.id === this.currentPage ? ' active' : '');
+      content.appendChild(div);
+    });
   },
 
   init() {
+    this._buildTabs();
     this.initDarkMode();
     this.setupEventListeners();
     this._initPullToRefresh();
@@ -332,7 +349,7 @@ const App = {
     // Snapshot vor page.save(), damit undo den Pre-Save-Zustand wiederherstellt
     this._takeSnapshot();
 
-    const page = this.pages[this.currentPage];
+    const page = this._page(this.currentPage);
     if (page && page.save) page.save(this.currentCharacter);
 
     if (Storage.saveCharacter(this.currentCharacter)) {
@@ -405,7 +422,7 @@ const App = {
       <button class="vh-item" data-vid="${v.id}">
         <span class="vh-time">${this._fmtVersionTime(v.timestamp)}</span>
         <span class="vh-name">${this._esc(v.data?.metadata?.name || 'Namenlos')}</span>
-        ${v.page ? `<span class="vh-page">${this._esc(this._PAGE_LABELS[v.page] || v.page)}</span>` : ''}
+        ${v.page ? `<span class="vh-page">${this._esc(this._pageLabel(v.page))}</span>` : ''}
       </button>`).join('');
 
     list.querySelectorAll('.vh-item').forEach(btn => {
@@ -439,7 +456,7 @@ const App = {
 
   // ── Seiten-Navigation ───────────────────────────────────────────────────
   switchPage(pageName) {
-    if (!this.pages[pageName]) return;
+    if (!this._page(pageName)) return;
 
     clearTimeout(this._autosaveTimer);
     this._doSave(true);
@@ -458,7 +475,7 @@ const App = {
 
     window.currentCharacter = this.currentCharacter;
 
-    const page = this.pages[this.currentPage];
+    const page = this._page(this.currentPage);
     if (!page) return;
 
     // Beim Re-Render während einer aktiven Notiz-Bearbeitung den DOM-Stand zuerst
@@ -499,7 +516,7 @@ const App = {
   // ── Edit-Modus ──────────────────────────────────────────────────────────
   toggleEditMode() {
     if (this._readOnlyView) return; // Meister-Ansicht eines fremden Charakters
-    const page = this.pages[this.currentPage];
+    const page = this._page(this.currentPage);
     if (!page) return;
 
     if (this.editMode) {

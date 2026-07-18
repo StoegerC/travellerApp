@@ -39,10 +39,9 @@ CHARAKTERVERWALTUNG
     0. [ERLEDIGT in 3.18.0] Tolerantes Character-Modell (Passthrough) +
        Server-Stolperdraht + Import-Versionswächter. WICHTIG: vor dem ersten
        Nicht-MGT2-Charakter müssen ALLE Geräte >= 3.18.0 laufen.
-    1. systems/registry.js + systems/mgt2/ als reiner Umzug (attributes,
-       combat, career-Timeline, ship, karte, travellermap, skills-Daten);
-       Tab-Leiste aus Manifest; character.system auswerten. Leitfaden als
-       systems/README.md ins Repo.
+    1. [ERLEDIGT in 3.19.0] systems/registry.js + systems/mgt2/ (Umzug),
+       Tab-Leiste aus Manifest, character.system ausgewertet, Leitfaden
+       als systems/README.md.
     2. Kern MGT2-frei: Kalender-Widget (Imperialkalender raus aus Journal/
        Orten/Finanzen/Geburtsdatum!), entityExtraFields (Rasse->MGT2-Feld!),
        Label-Map (Quest/Session), metadataExtraFields (Helden XP),

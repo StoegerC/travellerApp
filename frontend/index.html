@@ -91,41 +91,9 @@
       </div>
     </header>
 
-    <!-- Navigation Tabs -->
-    <nav class="tab-navigation">
-      <button class="tab-btn active" data-page="metadata">
-        <span class="tab-icon">👤</span>
-        <span class="tab-label">Charakter</span>
-      </button>
-      <button class="tab-btn" data-page="attributes">
-        <span class="tab-icon">⚡</span>
-        <span class="tab-label">Attribute</span>
-      </button>
-      <button class="tab-btn" data-page="equipment">
-        <span class="tab-icon">🎒</span>
-        <span class="tab-label">Ausrüstung</span>
-      </button>
-      <button class="tab-btn" data-page="ship">
-        <span class="tab-icon">🚀</span>
-        <span class="tab-label">Schiff</span>
-      </button>
-      <button class="tab-btn" data-page="combat">
-        <span class="tab-icon">⚔️</span>
-        <span class="tab-label">Kampf</span>
-      </button>
-      <button class="tab-btn" data-page="career">
-        <span class="tab-icon">📋</span>
-        <span class="tab-label">Werdegang</span>
-      </button>
-      <button class="tab-btn" data-page="notes">
-        <span class="tab-icon">📝</span>
-        <span class="tab-label">Log</span>
-      </button>
-      <button class="tab-btn" data-page="karte">
-        <span class="tab-icon">🗺️</span>
-        <span class="tab-label">Karte</span>
-      </button>
-    </nav>
+    <!-- Navigation Tabs + Seiten-Container werden aus dem Manifest des
+         aktiven Regelsystems generiert (App._buildTabs, Multi-System Phase 1) -->
+    <nav class="tab-navigation"></nav>
 
     <!-- Content -->
     <main class="content">
@@ -133,14 +101,6 @@
         <div class="ptr-spinner"></div>
         <span class="ptr-text">Zum Aktualisieren ziehen</span>
       </div>
-      <div id="metadata-page"   class="page-content active"></div>
-      <div id="attributes-page" class="page-content"></div>
-      <div id="equipment-page"  class="page-content"></div>
-      <div id="career-page"     class="page-content"></div>
-      <div id="notes-page"      class="page-content"></div>
-      <div id="karte-page"      class="page-content"></div>
-      <div id="combat-page"     class="page-content"></div>
-      <div id="ship-page"       class="page-content"></div>
     </main>
 
   </div>
@@ -406,21 +366,25 @@
   <script src="js/markdown.js?v=3.18.0"></script>
   <script src="js/mention-autocomplete.js?v=3.18.0"></script>
   <script src="js/notes-popover.js?v=3.18.0"></script>
-  <script src="js/data/skills.js?v=3.18.0"></script>
+  <script src="js/systems/mgt2/data/skills.js?v=3.18.0"></script>
   <script src="js/models/character.js?v=3.18.0"></script>
   <script src="js/sync-merge.js?v=3.18.0"></script>
   <script src="js/storage.js?v=3.18.0"></script>
+  <!-- Kern-Seiten -->
   <script src="js/pages/metadata.js?v=3.18.0"></script>
-  <script src="js/pages/attributes.js?v=3.18.0"></script>
   <script src="js/pages/finances.js?v=3.18.0"></script>
   <script src="js/pages/equipment.js?v=3.18.0"></script>
-  <script src="js/pages/ship.js?v=3.18.0"></script>
-  <script src="js/pages/career.js?v=3.18.0"></script>
   <script src="js/pages/notes.js?v=3.18.0"></script>
-  <script src="js/pages/notes-travellermap.js?v=3.18.0"></script>
   <script src="js/pages/notes-chronicle.js?v=3.18.0"></script>
-  <script src="js/pages/karte.js?v=3.18.0"></script>
-  <script src="js/pages/combat.js?v=3.18.0"></script>
+  <!-- Regelsystem-Module (siehe js/systems/README.md) -->
+  <script src="js/systems/mgt2/pages/attributes.js?v=3.18.0"></script>
+  <script src="js/systems/mgt2/pages/ship.js?v=3.18.0"></script>
+  <script src="js/systems/mgt2/pages/career.js?v=3.18.0"></script>
+  <script src="js/systems/mgt2/pages/notes-travellermap.js?v=3.18.0"></script>
+  <script src="js/systems/mgt2/pages/karte.js?v=3.18.0"></script>
+  <script src="js/systems/mgt2/pages/combat.js?v=3.18.0"></script>
+  <script src="js/systems/registry.js?v=3.18.0"></script>
+  <script src="js/systems/mgt2/manifest.js?v=3.18.0"></script>
   <script src="js/app.js?v=3.18.0"></script>
   <script>
     if ('serviceWorker' in navigator) {
