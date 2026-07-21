@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.21.0] – 2026-07-21
+
 ### Geändert
 - **Multi-System-Umbau, Phase 2b: Zusatzfelder-Vertrag (`entityExtraFields`)** — die Rassen-Auswahl im Personen-Formular war Traveller-Inventar mitten im Kern-Log (Feld-Audit Fund F2). Neu: `App._entityExtraFields()`/`_renderExtraFields()`/`_readExtraFields()`/`_extraFieldDefaults()`/`_nonDefaultExtraFields()` rendern, lesen und befüllen deklarativ definierte Zusatzfelder pro Log-Entitätstyp (Personen/Orte/Quests), ohne die Feldliste zu kennen. Das Notes-Detailformular, das Erwähnungs-Popover, die Tag-Picker-Schnellanlage und das @-Autocomplete nutzen jetzt alle denselben Vertrag statt eigener Rassen-Listen; Popover-Felder laufen unter einem eigenen `mp-extra-`-Präfix, damit gleichzeitig offene Formulare nie dieselbe Feld-id doppelt vergeben. MGT2 registriert seine Rassenliste (`persons: [{ key: 'race', … }]`) im Manifest; Systeme ohne Zusatzfelder rendern schlicht nichts. Verhalten und Optik für MGT2 unverändert (Select mit denselben acht Optionen, Default „Mensch", Badge in der Leseansicht nur bei Abweichung vom Default).
 
