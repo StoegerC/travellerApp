@@ -4,7 +4,7 @@
 // Laufende App-Version — wird von scripts/bump-version.js mitgebumpt.
 // Genutzt vom Import-Versionswächter (Multi-System Phase 0): JSON-Exporte
 // können ein _minAppVersion tragen, das der Import hiergegen prüft.
-const APP_VERSION = '3.21.0';
+const APP_VERSION = '3.22.0';
 
 const App = {
   currentCharacter: null,
@@ -73,6 +73,26 @@ const App = {
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   },
 
+  // Rendert EIN Feld als .form-group (select/number/text) — Basis sowohl für
+  // Entitäts- als auch für Metadata-Zusatzfelder (siehe unten).
+  _renderExtraFieldHtml(field, value, idPrefix) {
+    const id  = `${idPrefix}-${field.key}`;
+    const val = value ?? field.default ?? '';
+    if (field.type === 'select') {
+      const opts = (field.options || []).map(o =>
+        `<option value="${this._escExtra(o)}"${String(val) === String(o) ? ' selected' : ''}>${this._escExtra(o)}</option>`
+      ).join('');
+      return `<div class="form-group"><label>${this._escExtra(field.label)}</label><select id="${id}">${opts}</select></div>`;
+    }
+    if (field.type === 'number') {
+      const attrs = ['min', 'max', 'step']
+        .filter(k => field[k] !== undefined)
+        .map(k => `${k}="${this._escExtra(field[k])}"`).join(' ');
+      return `<div class="form-group"><label>${this._escExtra(field.label)}</label><input type="number" id="${id}" value="${this._escExtra(val)}" ${attrs}></div>`;
+    }
+    return `<div class="form-group"><label>${this._escExtra(field.label)}</label><input type="text" id="${id}" value="${this._escExtra(val)}"></div>`;
+  },
+
   // HTML aller Zusatzfelder eines Typs für ein Formular — je ein .form-group,
   // reiht sich also nahtlos in bestehende .detail-form-row/.mp-row ein.
   // idPrefix trennt z.B. das Notes-Detailformular ("extra-") vom gleichzeitig
@@ -80,17 +100,7 @@ const App = {
   // können pro Feld denselben key haben, dürfen aber nie dieselbe DOM-id
   // tragen (siehe bestehende mp*-Präfixe im Popover für dasselbe Muster).
   _renderExtraFields(pluralType, entity = {}, idPrefix = 'extra') {
-    return this._entityExtraFields(pluralType).map(f => {
-      const id  = `${idPrefix}-${f.key}`;
-      const val = entity[f.key] ?? f.default ?? '';
-      if (f.type === 'select') {
-        const opts = (f.options || []).map(o =>
-          `<option value="${this._escExtra(o)}"${String(val) === String(o) ? ' selected' : ''}>${this._escExtra(o)}</option>`
-        ).join('');
-        return `<div class="form-group"><label>${this._escExtra(f.label)}</label><select id="${id}">${opts}</select></div>`;
-      }
-      return `<div class="form-group"><label>${this._escExtra(f.label)}</label><input type="text" id="${id}" value="${this._escExtra(val)}"></div>`;
-    }).join('');
+    return this._entityExtraFields(pluralType).map(f => this._renderExtraFieldHtml(f, entity[f.key], idPrefix)).join('');
   },
 
   // Liest alle Zusatzfelder eines Typs aus dem DOM zurück (für save()).
@@ -120,6 +130,54 @@ const App = {
       const val = entity[f.key];
       return val && val !== (f.default ?? '');
     });
+  },
+
+  // Alters-Grenzen des aktiven Systems fürs Alter-Feld der Kern-Charakterseite
+  // (Phase 2, Feld-Audit Fund F3) — Fallback ohne Manifest-Angabe: keine Grenze.
+  _ageRange() {
+    return this._system().ageRange || [0, 999];
+  },
+
+  // ── Charakter-Zusatzfelder (Phase 2): metadataExtraFields aus dem Manifest ─
+  // Hausregel-Felder auf der Kern-Charakterseite (z.B. MGT2s Helden XP) —
+  // liegen weiterhin unter character.metadata (Bestandsschutz, keine neue
+  // Datenstruktur), aber die Kern-Seite kennt Feldliste/Label/Grenzen nicht.
+  // Feld-Definition: { key, label, type: 'number'|'text', min?, max?, step?, default? }.
+  _metadataExtraFields() {
+    return this._system().metadataExtraFields || [];
+  },
+
+  _renderMetadataExtraFields(meta = {}) {
+    return this._metadataExtraFields().map(f => this._renderExtraFieldHtml(f, meta[f.key], 'meta-extra')).join('');
+  },
+
+  // Leseansicht: gleiche "<strong>Label:</strong> Wert"-Zeile wie die
+  // übrigen Kern-Felder auf der Charakterseite.
+  _renderMetadataExtraFieldsView(meta = {}) {
+    return this._metadataExtraFields().map(f =>
+      `<div><strong>${this._escExtra(f.label)}:</strong> ${this._escExtra(meta[f.key] ?? f.default ?? '')}</div>`
+    ).join('');
+  },
+
+  // Liest alle Metadata-Zusatzfelder aus dem DOM (für save()); Zahlenfelder
+  // werden auf min/max geklemmt, damit ein leeres/ungültiges Feld nie NaN
+  // oder einen Wert außerhalb der Systemgrenzen speichert.
+  _readMetadataExtraFields() {
+    const out = {};
+    this._metadataExtraFields().forEach(f => {
+      const el = document.getElementById(`meta-extra-${f.key}`);
+      if (!el) return;
+      if (f.type === 'number') {
+        let n = parseInt(el.value);
+        if (isNaN(n)) n = f.default ?? 0;
+        if (f.min !== undefined) n = Math.max(f.min, n);
+        if (f.max !== undefined) n = Math.min(f.max, n);
+        out[f.key] = n;
+      } else {
+        out[f.key] = el.value;
+      }
+    });
+    return out;
   },
 
   // Baut Tab-Leiste und Seiten-Container aus dem Manifest — exakt das Markup,

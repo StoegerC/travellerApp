@@ -31,6 +31,19 @@ const Mgt2System = {
     ],
   },
 
+  // Alters-Grenzen auf der Kern-Charakterseite (Phase 2, Feld-Audit Fund F3):
+  // 18–120 ist eine MGT2-Annahme (Musterungsalter), kein Kern-Konzept.
+  ageRange: [18, 120],
+
+  // Zusatzfeld auf der Kern-Charakterseite (Phase 2, Feld-Audit Fund F4):
+  // Helden XP ist eine MGT2-Hausregel, kein Kern-Konzept. Bleibt unter
+  // character.metadata.heroXp (Bestandsschutz) — auch der eigene, direkt
+  // editierbare Zähler im Kampf-Tab (combat.js) liest/schreibt weiterhin
+  // genau dieses Feld, das ist reiner MGT2-Code und bleibt unverändert.
+  metadataExtraFields: [
+    { key: 'heroXp', label: 'Helden XP', type: 'number', min: 0, step: 1, default: 0 },
+  ],
+
   // Mischung aus Kern-Seiten (metadata, equipment, notes) und MGT2-Seiten
   // (attributes, ship, combat, career, karte — liegen unter systems/mgt2/).
   tabs: [
