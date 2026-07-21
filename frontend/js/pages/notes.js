@@ -177,7 +177,7 @@ const NotesPage = {
       { id: 'sessions',  label: '📜 Journal',  count: data.sessions.length  },
       { id: 'persons',   label: '👥 Personen', count: data.persons.length   },
       { id: 'locations', label: '🌍 Orte',     count: data.locations.length },
-      { id: 'quests',    label: '⚔️ Quests',   count: data.quests.length    },
+      { id: 'quests',    label: `⚔️ ${App._label('quests')}`,   count: data.quests.length    },
     ];
     let html = '<div class="notes-subtabs">';
     tabs.forEach(t => {
@@ -212,8 +212,8 @@ const NotesPage = {
 
     let html = `<div class="notes-list-header">
       <div class="person-search-row">
-        <input type="text" id="sessionSearch" class="notes-search" placeholder="Sessions durchsuchen …">
-        <button id="addSessionBtn" class="btn-success">+ Session</button>
+        <input type="text" id="sessionSearch" class="notes-search" placeholder="${App._label('sessions')} durchsuchen …">
+        <button id="addSessionBtn" class="btn-success">+ ${App._label('session')}</button>
       </div>
       ${filterPersons.length || filterLocations.length || filterEvents.length ? `
       <div class="session-filter-group">
@@ -245,7 +245,7 @@ const NotesPage = {
       <tbody>`;
 
     if (data.sessions.length === 0 && this._extEntries('sessions').length === 0) {
-      html += `<tr><td colspan="6" class="nt-empty">Noch keine Session eingetragen. Tippe auf „+ Session".</td></tr>`;
+      html += `<tr><td colspan="6" class="nt-empty">Noch keine ${App._label('session')} eingetragen. Tippe auf „+ ${App._label('session')}".</td></tr>`;
     } else {
       this._sortedList(data.sessions, 'sessions').forEach(s => {
         const events   = (s.tags?.events || []).join(', ');
@@ -284,7 +284,7 @@ const NotesPage = {
     const s = isNew
       ? { id: 'new', title: '', sessionDate: '', inGameDate: '', content: '', tags: { persons: [], locations: [], quests: [], events: [] } }
       : this._findEntry('sessions', id, data);
-    if (!s) return '<p class="notes-empty">Session nicht gefunden.</p>';
+    if (!s) return `<p class="notes-empty">${App._label('session')} nicht gefunden.</p>`;
 
     // Init edit tags when entering edit for first time
     if (App.editMode && !this._editTags) {
@@ -315,7 +315,7 @@ const NotesPage = {
         <div class="session-form">
           <div class="session-form-dates">
             <div class="form-group">
-              <label>Datum der Session</label>
+              <label>Datum der ${App._label('session')}</label>
               <input type="date" id="sessionDate" value="${this._esc(s.sessionDate)}">
             </div>
             <div class="form-group">
@@ -329,16 +329,16 @@ const NotesPage = {
           </div>
           <div class="form-group">
             <label>Titel</label>
-            <input type="text" id="sessionTitle" value="${this._esc(s.title)}" placeholder="Sessionsname">
+            <input type="text" id="sessionTitle" value="${this._esc(s.title)}" placeholder="${App._label('session')}name">
           </div>
 
           <div class="form-group">
             <label>Bericht</label>
             <div class="loc-name-wrap">
-              <textarea id="sessionContent" rows="14" placeholder="Bericht … ('@' verlinkt Personen/Orte/Quests)">${this._esc(s.content || '')}</textarea>
+              <textarea id="sessionContent" rows="14" placeholder="Bericht … ('@' verlinkt Personen/Orte/${App._label('quests')})">${this._esc(s.content || '')}</textarea>
               <div id="sessionMentionSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
             </div>
-            <span class="md-hint">**fett** · *kursiv* · # Überschrift · - Liste · | Tabelle | · @ verlinkt Personen/Orte/Quests</span>
+            <span class="md-hint">**fett** · *kursiv* · # Überschrift · - Liste · | Tabelle | · @ verlinkt Personen/Orte/${App._label('quests')}</span>
           </div>
 
           <div class="form-group">
@@ -413,7 +413,7 @@ const NotesPage = {
               ${taggedLocations.length ? `<div class="session-link-group"><strong>Orte:</strong>
                 ${taggedLocations.map(l => `<span class="link-chip pop-chip location-link" data-tab="locations" data-id="${this._esc(l.id)}">${this._esc(l.name)}</span>`).join('')}
               </div>` : ''}
-              ${taggedQuests.length ? `<div class="session-link-group"><strong>Quests:</strong>
+              ${taggedQuests.length ? `<div class="session-link-group"><strong>${App._label('quests')}:</strong>
                 ${taggedQuests.map(q => `<span class="link-chip pop-chip quest-link" data-tab="quests" data-id="${this._esc(q.id)}">${this._esc(q.title)}</span>`).join('')}
               </div>` : ''}
             </div>` : ''}
@@ -584,7 +584,7 @@ const NotesPage = {
               <textarea id="personDescription" rows="5" placeholder="Aussehen, Eigenheiten, wichtige Infos …">${this._esc(p.description)}</textarea>
               <div id="personDescriptionSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
             </div>
-            <span class="md-hint">**fett** · *kursiv* · # Überschrift · | Tabelle | · @ verlinkt Personen/Orte/Quests/Journal</span>
+            <span class="md-hint">**fett** · *kursiv* · # Überschrift · | Tabelle | · @ verlinkt Personen/Orte/${App._label('quests')}/Journal</span>
           </div>
           <div class="form-group form-group-ts">
             <label>Erstellt am</label>
@@ -595,8 +595,8 @@ const NotesPage = {
             return `<label class="link-session-row">
               <input type="checkbox" id="linkToSession"${active ? ' checked' : ' disabled'}>
               <span>Mit aktivem Journal verlinken${active
-                ? ` <em class="link-session-name">${this._esc(active.title || 'Aktuelle Session')}</em>`
-                : ' <em class="link-session-none">(keine aktive Session)</em>'}</span>
+                ? ` <em class="link-session-name">${this._esc(active.title || `Aktuelle ${App._label('session')}`)}</em>`
+                : ` <em class="link-session-none">(keine aktive ${App._label('session')})</em>`}</span>
             </label>`;
           })() : ''}
           ${App.currentCharacter?.campaignId ? `
@@ -630,7 +630,7 @@ const NotesPage = {
           </div>
           ${p.description ? `<div class="detail-desc md-content">${Md.render(p.description)}</div>` : ''}
           ${linkedSessions.length ? `
-            <h4>Erscheint in Sessions</h4>
+            <h4>Erscheint in ${App._label('sessions')}</h4>
             <div class="linked-items">
               ${linkedSessions.map(s => `
                 <span class="link-chip session-link" data-tab="sessions" data-id="${this._esc(s.id)}">
@@ -791,14 +791,14 @@ const NotesPage = {
               <textarea id="locDescription" rows="4" placeholder="Atmosphäre, Regierung, wichtige Orte …">${this._esc(l.description)}</textarea>
               <div id="locDescriptionSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
             </div>
-            <span class="md-hint">**fett** · *kursiv* · # Überschrift · | Tabelle | · @ verlinkt Personen/Orte/Quests/Journal</span>
+            <span class="md-hint">**fett** · *kursiv* · # Überschrift · | Tabelle | · @ verlinkt Personen/Orte/${App._label('quests')}/Journal</span>
           </div>
           <div class="form-group"><label>Notizen</label>
             <div class="loc-name-wrap">
               <textarea id="locNotes" rows="3" placeholder="Persönliche Anmerkungen, Gerüchte, Kontakte …">${this._esc(l.notes)}</textarea>
               <div id="locNotesSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
             </div>
-            <span class="md-hint">**fett** · *kursiv* · # Überschrift · | Tabelle | · @ verlinkt Personen/Orte/Quests/Journal</span>
+            <span class="md-hint">**fett** · *kursiv* · # Überschrift · | Tabelle | · @ verlinkt Personen/Orte/${App._label('quests')}/Journal</span>
           </div>
           <div class="form-group form-group-ts">
             <label>Erstellt am</label>
@@ -809,8 +809,8 @@ const NotesPage = {
             return `<label class="link-session-row">
               <input type="checkbox" id="linkToSession"${active ? ' checked' : ' disabled'}>
               <span>Mit aktivem Journal verlinken${active
-                ? ` <em class="link-session-name">${this._esc(active.title || 'Aktuelle Session')}</em>`
-                : ' <em class="link-session-none">(keine aktive Session)</em>'}</span>
+                ? ` <em class="link-session-name">${this._esc(active.title || `Aktuelle ${App._label('session')}`)}</em>`
+                : ` <em class="link-session-none">(keine aktive ${App._label('session')})</em>`}</span>
             </label>`;
           })() : ''}
           ${App.currentCharacter?.campaignId ? `
@@ -861,7 +861,7 @@ const NotesPage = {
           ${l.description ? `<div class="detail-desc md-content">${Md.render(l.description)}</div>` : ''}
           ${l.notes ? `<div class="detail-notes"><strong>Notizen</strong><div class="md-content">${Md.render(l.notes)}</div></div>` : ''}
           ${linkedSessions.length ? `
-            <h4>Erwähnt in Sessions</h4>
+            <h4>Erwähnt in ${App._label('sessions')}</h4>
             <div class="linked-items">
               ${linkedSessions.map(s => `<span class="link-chip session-link" data-tab="sessions" data-id="${this._esc(s.id)}">${s.sessionDate ? this._esc(s.sessionDate) + ' – ' : ''}${this._esc(s.title || 'Ohne Titel')}</span>`).join('')}
             </div>` : ''}
@@ -871,7 +871,7 @@ const NotesPage = {
               ${directPersons.map(p => `<span class="link-chip person-link" data-tab="persons" data-id="${this._esc(p.id)}">📍 ${this._esc(p.name)}</span>`).join('')}
             </div>` : ''}
           ${sessionPersons.length ? `
-            <h4>Aus Sessions bekannt</h4>
+            <h4>Aus ${App._label('sessions')} bekannt</h4>
             <div class="linked-items">
               ${sessionPersons.map(p => `<span class="link-chip person-link" data-tab="persons" data-id="${this._esc(p.id)}">${this._esc(p.name)}</span>`).join('')}
             </div>` : ''}
@@ -891,8 +891,8 @@ const NotesPage = {
     const f = this._questFilterVal;
     let html = `<div class="notes-list-header">
       <div class="person-search-row">
-        <input type="text" id="questSearch" class="notes-search" placeholder="Quests durchsuchen …">
-        <button id="addQuestBtn" class="btn-success">+ Quest</button>
+        <input type="text" id="questSearch" class="notes-search" placeholder="${App._label('quests')} durchsuchen …">
+        <button id="addQuestBtn" class="btn-success">+ ${App._label('quest')}</button>
       </div>
       <div class="session-filter-group">
         <span class="session-filter-label">Filter</span>
@@ -921,9 +921,9 @@ const NotesPage = {
       .filter(q => !f || (q.status || 'active') === f);
 
     if (data.quests.length === 0 && this._extEntries('quests').length === 0) {
-      html += `<tr><td colspan="6" class="nt-empty">Noch keine Quests eingetragen.</td></tr>`;
+      html += `<tr><td colspan="6" class="nt-empty">Noch keine ${App._label('quests')} eingetragen.</td></tr>`;
     } else if (filtered.length === 0) {
-      html += `<tr><td colspan="6" class="nt-empty">Keine Quests in dieser Kategorie.</td></tr>`;
+      html += `<tr><td colspan="6" class="nt-empty">Keine ${App._label('quests')} in dieser Kategorie.</td></tr>`;
     }
 
     filtered.forEach(q => {
@@ -963,7 +963,7 @@ const NotesPage = {
     const q = isNew
       ? { id: 'new', title: '', description: '', objective: '', reward: '', questGiverIds: [], locationIds: [], status: 'active' }
       : this._findEntry('quests', id, data);
-    if (!q) return '<p class="notes-empty">Quest nicht gefunden.</p>';
+    if (!q) return `<p class="notes-empty">${App._label('quest')} nicht gefunden.</p>`;
 
     // Init Auftraggeber-/Orts-Verknuepfungs-Staging beim ersten Betreten des Bearbeitungsmodus
     if (App.editMode && !this._editQuestLinks) {
@@ -985,7 +985,7 @@ const NotesPage = {
       html += `
         <div class="detail-form">
           <div class="form-group"><label>Titel</label>
-            <input type="text" id="questTitle" value="${this._esc(q.title)}" placeholder="Questname">
+            <input type="text" id="questTitle" value="${this._esc(q.title)}" placeholder="${App._label('quest')}name">
           </div>
           <div class="form-group"><label>Status</label>
             <select id="questStatus">
@@ -1002,7 +1002,7 @@ const NotesPage = {
               <textarea id="questObjective" rows="3" placeholder="Was muss erreicht werden?">${this._esc(q.objective)}</textarea>
               <div id="questObjectiveSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
             </div>
-            <span class="md-hint">**fett** · *kursiv* · - Liste · | Tabelle | · @ verlinkt Personen/Orte/Quests/Journal</span>
+            <span class="md-hint">**fett** · *kursiv* · - Liste · | Tabelle | · @ verlinkt Personen/Orte/${App._label('quests')}/Journal</span>
           </div>
           <div class="form-group"><label>Belohnung</label>
             <input type="text" id="questReward" value="${this._esc(q.reward)}" placeholder="z.B. 50.000 ${this._esc(App._currency())}, Passage, Information">
@@ -1012,7 +1012,7 @@ const NotesPage = {
               <textarea id="questDescription" rows="4" placeholder="Kontext, Hinweise, offene Fragen …">${this._esc(q.description)}</textarea>
               <div id="questDescriptionSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
             </div>
-            <span class="md-hint">**fett** · *kursiv* · # Überschrift · | Tabelle | · @ verlinkt Personen/Orte/Quests/Journal</span>
+            <span class="md-hint">**fett** · *kursiv* · # Überschrift · | Tabelle | · @ verlinkt Personen/Orte/${App._label('quests')}/Journal</span>
           </div>
           <div class="form-group form-group-ts">
             <label>Erstellt am</label>
@@ -1043,7 +1043,7 @@ const NotesPage = {
           ${q.reward ? `<div class="detail-section"><strong>Belohnung:</strong> ${this._esc(q.reward)}</div>` : ''}
           ${q.description ? `<div class="detail-desc md-content">${Md.render(q.description)}</div>` : ''}
           ${linkedSessions.length ? `
-            <h4>Erwähnt in Sessions</h4>
+            <h4>Erwähnt in ${App._label('sessions')}</h4>
             <div class="linked-items">
               ${linkedSessions.map(s => `<span class="link-chip session-link" data-tab="sessions" data-id="${this._esc(s.id)}">${s.sessionDate ? this._esc(s.sessionDate) + ' – ' : ''}${this._esc(s.title || 'Ohne Titel')}</span>`).join('')}
             </div>` : ''}
@@ -1103,7 +1103,7 @@ const NotesPage = {
   _relationLabel(r)    { return { friendly: 'Freundlich', neutral: 'Neutral', hostile: 'Feindlich' }[r] || 'Neutral'; },
   _locStatusLabel(s)   { return { visited: 'Besucht', known: 'Bekannt', rumor: 'Gerücht' }[s] || 'Bekannt'; },
   _questStatusLabel(s) { return { active: 'Aktiv', backlog: 'Backlog', completed: 'Abgeschlossen', failed: 'Gescheitert' }[s] || 'Aktiv'; },
-  _newItemLabel(type)  { return { persons: 'Neue Person', locations: 'Neuen Ort', quests: 'Neue Quest' }[type] || 'Neu'; },
+  _newItemLabel(type)  { return { persons: 'Neue Person', locations: 'Neuen Ort', quests: `Neue ${App._label('quest')}` }[type] || 'Neu'; },
 
   // ──────────────────────────────── SAVE ───────────────────────────────────
   save(character) {

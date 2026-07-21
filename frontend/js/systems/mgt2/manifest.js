@@ -16,6 +16,10 @@ const Mgt2System = {
   id:   'traveller',
   name: 'Mongoose Traveller 2e',
 
+  // Begriffs-Labels (Phase 2): das Log-Paket im Kern nennt Quests/Sessions
+  // mit diesen Wörtern statt sie fest zu verdrahten — siehe App._label().
+  labels: { quest: 'Quest', quests: 'Quests', session: 'Session', sessions: 'Sessions' },
+
   // Kalender-Vertrag (Phase 2): In-Game-Datumsfelder der Kern-Seiten —
   // Widget, Placeholder und Label kommen von hier, siehe mgt2/calendar.js.
   calendar: Mgt2Calendar,

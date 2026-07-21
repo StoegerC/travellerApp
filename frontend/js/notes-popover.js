@@ -204,7 +204,7 @@ const MentionPopover = {
           <textarea id="mpDesc" rows="3" placeholder="Hintergrund, Stand der Dinge …">${e(entry.description)}</textarea></div>`;
     }
 
-    const pageLabel = { persons: 'Zur Personen-Seite', locations: 'Zur Orts-Seite', quests: 'Zur Quest-Seite' }[type];
+    const pageLabel = { persons: 'Zur Personen-Seite', locations: 'Zur Orts-Seite', quests: `Zur ${App._label('quest')}-Seite` }[type];
     return `
       <div class="mp-arrow"></div>
       <div class="mp-head">
