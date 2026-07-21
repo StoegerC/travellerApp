@@ -44,8 +44,9 @@ CHARAKTERVERWALTUNG
        als systems/README.md.
     2. Kern MGT2-frei: [2a ERLEDIGT in 3.20.0: Kalender-Vertrag —
        systems/mgt2/calendar.js, App._calendar() mit Textfeld-Fallback]
-       Noch offen: entityExtraFields (Rasse->MGT2-Feld!),
-       Label-Map (Quest/Session), metadataExtraFields (Helden XP),
+       [2b ERLEDIGT in 3.21.0: entityExtraFields — App._entityExtraFields()
+       u.a., Rasse ist jetzt MGT2-Manifest-Feld, mp-extra-Präfix im Popover]
+       Noch offen: Label-Map (Quest/Session), metadataExtraFields (Helden XP),
        financeCategories, mergeSpec (inkl. systemData-Pfade granular!),
        career.js aufteilen (Hintergrund&Persönlichkeit/Ereignisse/Favoriten
        sind Kern, Datenpfad career.background via backgroundPath),
