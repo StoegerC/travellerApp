@@ -137,16 +137,11 @@ const MentionPopover = {
 
     let fields = '';
     if (type === 'persons') {
-      const race = entry.race || 'Mensch';
       fields = `
         <div class="form-group"><label>Name</label>
           <input type="text" id="mpName" value="${e(entry.name)}"></div>
         <div class="mp-row">
-          <div class="form-group"><label>Rasse</label>
-            <select id="mpRace">
-              ${['Mensch','Vargr','Aslan','Zhodani','Droyne','Hiver',"K'kree",'Sonstige']
-                .map(r => opt(r, race, r)).join('')}
-            </select></div>
+          ${App._renderExtraFields('persons', entry, 'mp-extra')}
           <div class="form-group"><label>Rolle</label>
             <input type="text" id="mpRole" value="${e(entry.role)}" placeholder="z.B. Händler, Informant"></div>
         </div>
@@ -230,7 +225,7 @@ const MentionPopover = {
     if (type === 'persons') {
       return {
         name:        val('#mpName')?.trim() || '',
-        race:        val('#mpRace'),
+        ...App._readExtraFields('persons', 'mp-extra'),
         role:        val('#mpRole')?.trim() || '',
         relation:    val('#mpRelation'),
         status:      val('#mpStatus'),

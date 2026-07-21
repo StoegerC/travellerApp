@@ -1997,7 +1997,7 @@ label.attachment-upload-btn {
 }
 
 .person-role { font-size: 14px; color: #666; font-style: italic; margin: 0 0 4px; }
-.person-race { font-size: 13px; color: #888; margin: 0 0 8px; }
+.entity-extra-badge { font-size: 13px; color: #888; margin: 0 0 8px; }
 .quest-giver { font-size: 14px; color: #444; margin: 4px 0 8px; }
 .quest-locations { font-size: 14px; color: #444; margin: 4px 0 8px; }
 
@@ -6643,7 +6643,7 @@ body.dark-mode .detail-section {
 }
 body.dark-mode .detail-section strong { color: #9095b8; }
 body.dark-mode .person-role { color: #8890b0; }
-body.dark-mode .person-race { color: #6068a0; }
+body.dark-mode .entity-extra-badge { color: #6068a0; }
 
 /* ── Ort-Bearbeitungsformular ── */
 body.dark-mode .loc-suggestions {

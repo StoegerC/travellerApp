@@ -20,6 +20,17 @@ const Mgt2System = {
   // Widget, Placeholder und Label kommen von hier, siehe mgt2/calendar.js.
   calendar: Mgt2Calendar,
 
+  // Zusatzfelder für Log-Entitäten (Phase 2, Feld-Audit Fund F2): die
+  // Rassen-Auswahl im Personen-Formular ist Traveller-Inventar, kein
+  // Kern-Konzept — Kern-Formular und -Popover rendern/lesen/befüllen sie
+  // generisch über App._entityExtraFields() (siehe app.js).
+  entityExtraFields: {
+    persons: [
+      { key: 'race', label: 'Rasse', type: 'select', default: 'Mensch',
+        options: ['Mensch', 'Vargr', 'Aslan', 'Zhodani', 'Droyne', 'Hiver', "K'kree", 'Sonstige'] },
+    ],
+  },
+
   // Mischung aus Kern-Seiten (metadata, equipment, notes) und MGT2-Seiten
   // (attributes, ship, combat, career, karte — liegen unter systems/mgt2/).
   tabs: [

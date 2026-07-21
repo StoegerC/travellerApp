@@ -97,9 +97,10 @@ const MentionAutocomplete = {
     const nameKey = pluralType === 'quests' ? 'title' : 'name';
     const prefix  = { persons: 'p', locations: 'l', quests: 'q' }[pluralType] || 'x';
     const item    = { id: prefix + Date.now(), [nameKey]: name, createdAt: new Date().toISOString() };
-    if (pluralType === 'persons')   { item.status = 'alive'; item.race = 'Mensch'; item.relation = 'neutral'; }
+    if (pluralType === 'persons')   { item.status = 'alive'; item.relation = 'neutral'; }
     if (pluralType === 'locations') { item.status = 'known'; }
     if (pluralType === 'quests')    { item.status = 'active'; }
+    Object.assign(item, App._extraFieldDefaults(pluralType));
     data[pluralType].push(item);
     character.notes = data;
     NotesPage._saveAndSync(character);

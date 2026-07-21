@@ -513,7 +513,8 @@ const NotesPage = {
   _personDetail(id, data) {
     const isNew = id === 'new';
     const p = isNew
-      ? { id: 'new', name: '', role: '', race: 'Mensch', description: '', status: 'alive', relation: 'neutral', image: null, locationIds: [] }
+      ? { id: 'new', name: '', role: '', description: '', status: 'alive', relation: 'neutral', image: null, locationIds: [],
+          ...App._extraFieldDefaults('persons') }
       : this._findEntry('persons', id, data);
     if (!p) return '<p class="notes-empty">Person nicht gefunden.</p>';
 
@@ -573,19 +574,7 @@ const NotesPage = {
                     <option value="hostile"  ${p.relation === 'hostile'  ? 'selected' : ''}>Feindlich</option>
                   </select>
                 </div>
-                <div class="form-group">
-                  <label>Rasse</label>
-                  <select id="personRace">
-                    <option value="Mensch"   ${(p.race || 'Mensch') === 'Mensch'   ? 'selected' : ''}>Mensch</option>
-                    <option value="Vargr"    ${p.race === 'Vargr'    ? 'selected' : ''}>Vargr</option>
-                    <option value="Aslan"    ${p.race === 'Aslan'    ? 'selected' : ''}>Aslan</option>
-                    <option value="Zhodani"  ${p.race === 'Zhodani'  ? 'selected' : ''}>Zhodani</option>
-                    <option value="Droyne"   ${p.race === 'Droyne'   ? 'selected' : ''}>Droyne</option>
-                    <option value="Hiver"    ${p.race === 'Hiver'    ? 'selected' : ''}>Hiver</option>
-                    <option value="K'kree"   ${p.race === "K'kree"   ? 'selected' : ''}>K'kree</option>
-                    <option value="Sonstige" ${p.race === 'Sonstige' ? 'selected' : ''}>Sonstige</option>
-                  </select>
-                </div>
+                ${App._renderExtraFields('persons', p)}
               </div>
             </div>
           </div>
@@ -635,7 +624,8 @@ const NotesPage = {
                 ${linkedLocationObjs.map(loc => `<span class="link-chip location-link" data-tab="locations" data-id="${this._esc(loc.id)}">📍 ${this._esc(loc.name)}</span>`).join('')}
               </div>
               ${p.role ? `<p class="person-role"><em>${this._esc(p.role)}</em></p>` : ''}
-              ${p.race && p.race !== 'Mensch' ? `<p class="person-race">${this._esc(p.race)}</p>` : ''}
+              ${App._nonDefaultExtraFields('persons', p).map(f =>
+                `<p class="entity-extra-badge">${this._esc(p[f.key])}</p>`).join('')}
             </div>
           </div>
           ${p.description ? `<div class="detail-desc md-content">${Md.render(p.description)}</div>` : ''}
@@ -1183,7 +1173,7 @@ const NotesPage = {
         id:          isNew ? ('p' + Date.now()) : id,
         name:        document.getElementById('personName')?.value?.trim() || '',
         role:        document.getElementById('personRole')?.value?.trim() || '',
-        race:        document.getElementById('personRace')?.value || 'Mensch',
+        ...App._readExtraFields('persons'),
         description: document.getElementById('personDescription')?.value || '',
         status:      document.getElementById('personStatus')?.value || 'alive',
         relation:    document.getElementById('personRelation')?.value || 'neutral',
@@ -1734,9 +1724,10 @@ const NotesPage = {
       const prefix  = { persons: 'p', locations: 'l', quests: 'q' }[type] || 'x';
       const newItem = { id: prefix + Date.now(), [nameKey]: name, createdAt: new Date().toISOString() };
 
-      if (type === 'persons')   { newItem.status = 'alive';   newItem.race = 'Mensch'; newItem.relation = 'neutral'; }
+      if (type === 'persons')   { newItem.status = 'alive';   newItem.relation = 'neutral'; }
       if (type === 'locations') { newItem.status = 'known'; }
       if (type === 'quests')    { newItem.status = 'active'; newItem.title = name; }
+      Object.assign(newItem, App._extraFieldDefaults(type));
 
       data[type].push(newItem);
       char.notes = data;

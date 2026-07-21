@@ -4,7 +4,7 @@
 // Laufende App-Version — wird von scripts/bump-version.js mitgebumpt.
 // Genutzt vom Import-Versionswächter (Multi-System Phase 0): JSON-Exporte
 // können ein _minAppVersion tragen, das der Import hiergegen prüft.
-const APP_VERSION = '3.20.0';
+const APP_VERSION = '3.21.0';
 
 const App = {
   currentCharacter: null,
@@ -56,6 +56,70 @@ const App = {
         el.dispatchEvent(new Event('input', { bubbles: true }));
       },
     };
+  },
+
+  // ── Entitäts-Zusatzfelder (Phase 2): entityExtraFields aus dem Manifest ────
+  // Personen/Orte/Quests bekommen je System zusätzliche Felder (z.B. MGT2s
+  // Rassen-Auswahl bei Personen) — Kern-Formulare (Notes-Detailformular,
+  // Erwähnungs-Popover) und Kern-Neuanlage (Tag-Picker, @-Autocomplete) kennen
+  // die Feldliste nicht, sondern rendern/lesen/befüllen sie generisch.
+  // Feld-Definition: { key, label, type: 'select'|'text', options?, default? }.
+  _entityExtraFields(pluralType) {
+    return this._system().entityExtraFields?.[pluralType] || [];
+  },
+
+  _escExtra(s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  },
+
+  // HTML aller Zusatzfelder eines Typs für ein Formular — je ein .form-group,
+  // reiht sich also nahtlos in bestehende .detail-form-row/.mp-row ein.
+  // idPrefix trennt z.B. das Notes-Detailformular ("extra-") vom gleichzeitig
+  // möglichen Erwähnungs-Popover eines ANDEREN Eintrags ("mp-extra-") — beide
+  // können pro Feld denselben key haben, dürfen aber nie dieselbe DOM-id
+  // tragen (siehe bestehende mp*-Präfixe im Popover für dasselbe Muster).
+  _renderExtraFields(pluralType, entity = {}, idPrefix = 'extra') {
+    return this._entityExtraFields(pluralType).map(f => {
+      const id  = `${idPrefix}-${f.key}`;
+      const val = entity[f.key] ?? f.default ?? '';
+      if (f.type === 'select') {
+        const opts = (f.options || []).map(o =>
+          `<option value="${this._escExtra(o)}"${String(val) === String(o) ? ' selected' : ''}>${this._escExtra(o)}</option>`
+        ).join('');
+        return `<div class="form-group"><label>${this._escExtra(f.label)}</label><select id="${id}">${opts}</select></div>`;
+      }
+      return `<div class="form-group"><label>${this._escExtra(f.label)}</label><input type="text" id="${id}" value="${this._escExtra(val)}"></div>`;
+    }).join('');
+  },
+
+  // Liest alle Zusatzfelder eines Typs aus dem DOM zurück (für save()).
+  _readExtraFields(pluralType, idPrefix = 'extra') {
+    const out = {};
+    this._entityExtraFields(pluralType).forEach(f => {
+      const el = document.getElementById(`${idPrefix}-${f.key}`);
+      if (el) out[f.key] = el.value;
+    });
+    return out;
+  },
+
+  // Default-Werte aller Zusatzfelder eines Typs (für Neuanlage ohne Formular,
+  // z.B. Tag-Picker-Schnellanlage oder @-Autocomplete).
+  _extraFieldDefaults(pluralType) {
+    const out = {};
+    this._entityExtraFields(pluralType).forEach(f => {
+      if (f.default !== undefined) out[f.key] = f.default;
+    });
+    return out;
+  },
+
+  // Zusatzfelder, deren Wert vom Default abweicht — für die kompakte
+  // Leseansicht (z.B. Rassen-Zeile, nur wenn nicht "Mensch").
+  _nonDefaultExtraFields(pluralType, entity = {}) {
+    return this._entityExtraFields(pluralType).filter(f => {
+      const val = entity[f.key];
+      return val && val !== (f.default ?? '');
+    });
   },
 
   // Baut Tab-Leiste und Seiten-Container aus dem Manifest — exakt das Markup,
