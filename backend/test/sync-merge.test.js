@@ -103,13 +103,71 @@ test('_mergeShip: geloeschtes Schiff -> ganzes (neueres) Objekt, keine Feld-Reku
 });
 
 // ── mergeCharacter: End-to-End ueber alle Array-Felder ────────────────────────
+//
+// mergeSpec kommt seit Multi-System Phase 2f als Parameter rein (statt hier
+// selbst z.B. per SystemRegistry nachzuschlagen) - sync-merge.js bleibt
+// dadurch reines Plain-JS ohne Browser-Globals, siehe Datei-Kopfkommentar
+// und den Vertrag in systems/mgt2/manifest.js. Die Tests bilden hier ein
+// MGT2-aehnliches mergeSpec direkt nach.
+const MGT2_SPEC = {
+  arrays: { skills: 'name', training: true, 'career.terms': true, 'career.keyEvents': true },
+  ships: true,
+};
 
 test('mergeCharacter: Skalarfelder aus local, Skills per name gemerged', () => {
   const local  = { id: 'c', metadata: { name: 'LokalName' }, skills: [{ name: 'Pilot', level: 2, updatedAt: iso(2000) }] };
   const remote = { id: 'c', metadata: { name: 'RemoteName' }, skills: [{ name: 'Gun', level: 1, updatedAt: iso(1000) }] };
-  const merged = SyncMerge.mergeCharacter(local, remote);
+  const merged = SyncMerge.mergeCharacter(local, remote, MGT2_SPEC);
   assert.strictEqual(merged.metadata.name, 'LokalName');
   assert.deepStrictEqual(merged.skills.map(s => s.name).sort(), ['Gun', 'Pilot']);
+});
+
+test('mergeCharacter: ohne mergeSpec bleiben System-Arrays unangetastet (lokal gewinnt komplett, kein Array-Merge)', () => {
+  // Der generische Kern kennt keine MGT2-Feldnamen mehr - ohne mergeSpec
+  // verhaelt sich "skills" wie jedes andere unbekannte Top-Level-Feld: die
+  // lokale Version gewinnt komplett (ueber den Skalarfeld-Spread), remote
+  // wird NICHT hineingemergt. Kein Crash, kein Datenverlust auf der
+  // lokalen Seite, aber auch keine Vereinigung.
+  const local  = { id: 'c', metadata: { name: 'X' }, skills: [{ name: 'Pilot', level: 2 }] };
+  const remote = { id: 'c', metadata: { name: 'Y' }, skills: [{ name: 'Gun', level: 1 }] };
+  const merged = SyncMerge.mergeCharacter(local, remote);
+  assert.deepStrictEqual(merged.skills, local.skills, 'skills = lokaler Rohzustand, kein Merge');
+  assert.strictEqual('ships' in merged, false, 'ships taucht gar nicht erst auf, wenn keine Seite es hat');
+});
+
+test('mergeCharacter: mergeSpec.arrays mit gemeinsamem Praefix (career.terms + career.keyEvents) - keiner ueberschreibt den anderen', () => {
+  // Regressionstest fuer die Materialisierungs-Falle: wuerde das
+  // Zwischenobjekt "career" pro Pfad neu aus {...remote.career,
+  // ...local.career} aufgebaut statt nur einmal pro Merge-Lauf, wuerde der
+  // zweite Pfad (keyEvents) das bereits gemergte Ergebnis des ersten
+  // (terms) mit dem unangetasteten lokalen Rohzustand ueberschreiben.
+  const local = {
+    id: 'c',
+    career: {
+      background: { appearance: 'Lokal' },
+      terms:     [{ id: 't-local', updatedAt: iso(2000) }],
+      keyEvents: [{ id: 'e-local', updatedAt: iso(2000) }],
+    },
+  };
+  const remote = {
+    id: 'c',
+    career: {
+      background: { appearance: 'Remote' },
+      terms:     [{ id: 't-remote', updatedAt: iso(1000) }],
+      keyEvents: [{ id: 'e-remote', updatedAt: iso(1000) }],
+    },
+  };
+  const merged = SyncMerge.mergeCharacter(local, remote, MGT2_SPEC);
+  assert.deepStrictEqual(merged.career.terms.map(t => t.id).sort(),     ['t-local', 't-remote']);
+  assert.deepStrictEqual(merged.career.keyEvents.map(e => e.id).sort(), ['e-local', 'e-remote']);
+  assert.strictEqual(merged.career.background.appearance, 'Lokal', 'Skalarfeld unter career bleibt local-gewinnt');
+});
+
+test('mergeCharacter: mergeSpec.arrays mit keyField true mergt nach "id" (training)', () => {
+  const local  = { id: 'c', training: [{ id: 'tr1', skillName: 'Pilot', updatedAt: iso(2000) }] };
+  const remote = { id: 'c', training: [{ id: 'tr2', skillName: 'Gunnery', updatedAt: iso(1000) }] };
+  const merged = SyncMerge.mergeCharacter(local, remote, MGT2_SPEC);
+  assert.deepStrictEqual(merged.training.map(t => t.id).sort(), ['tr1', 'tr2']);
 });
 
 test('mergeCharacter: Notizen jeder Kategorie werden vereinigt', () => {
@@ -139,7 +197,7 @@ test('mergeCharacter: ein von einem Mitspieler geloeschter Eintrag bleibt geloes
 
 test('mergeCharacter: fehlende Teil-Objekte (leerer Remote-Stand) werfen nicht', () => {
   const local = { id: 'c', metadata: { name: 'X' }, ships: [{ id: 's', updatedAt: iso(1) }] };
-  const merged = SyncMerge.mergeCharacter(local, {});
+  const merged = SyncMerge.mergeCharacter(local, {}, MGT2_SPEC);
   assert.strictEqual(merged.metadata.name, 'X');
   assert.deepStrictEqual(merged.ships.map(s => s.id), ['s']);
   assert.ok(Array.isArray(merged.notes.sessions));

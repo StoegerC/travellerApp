@@ -59,10 +59,17 @@ CHARAKTERVERWALTUNG
        App._label(key) statt ~20 hartcodierte Textstellen (Tabs, Buttons,
        Placeholder, Popover, @-Autocomplete). IDs/CSS/Datenfelder bewusst
        unverändert (Implementierungsdetail); "Log"/"Journal" bleiben fest.]
-       Noch offen: mergeSpec (inkl. systemData-Pfade granular!),
-       career.js aufteilen (Hintergrund&Persönlichkeit/Ereignisse/Favoriten
-       sind Kern, Datenpfad career.background via backgroundPath),
-       Kern-Widget-Bibliothek (Zähler/Tabellenlisten/Tracker).
+       [2f ERLEDIGT in 3.25.0: mergeSpec-Vertrag — SyncMerge.mergeCharacter()
+       kennt keine MGT2-Feldnamen mehr, bekommt mergeSpec als Parameter von
+       app.js (App._system().mergeSpec) statt selbst SystemRegistry
+       abzufragen — sync-merge.js bleibt dadurch Plain-JS ohne
+       Browser-Globals (Backend nutzt dieselbe Datei per require()).
+       arrays: {pfad: true|"key"}, ships: true für den rekursiven
+       Schiffs-Merge. Shared-Prefix-Falle (career.terms + career.keyEvents)
+       mit Materialized-Set abgesichert + Regressionstest.]
+       Noch offen: career.js aufteilen (Hintergrund&Persönlichkeit/
+       Ereignisse/Favoriten sind Kern, Datenpfad career.background via
+       backgroundPath), Kern-Widget-Bibliothek (Zähler/Tabellenlisten/Tracker).
        Abnahme: grep traveller|UWP|Imperialkalender|Vargr|Cr über Kern leer.
     3. Mehrsystem-Betrieb: Neuanlage mit System-Auswahl, Cloud-Liste als
        sortierbare Tabelle (Name+System, GET /chars liefert system mit),
