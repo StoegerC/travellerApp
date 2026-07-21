@@ -94,7 +94,7 @@ const MetadataPage = {
             <div class="form-group meta-age-row">
               <div class="meta-age-field">
                 <label for="charAge">Alter:</label>
-                <input type="number" id="charAge" value="${meta.age || 18}" min="18" max="120">
+                <input type="number" id="charAge" value="${meta.age || App._ageRange()[0]}" min="${App._ageRange()[0]}" max="${App._ageRange()[1]}">
               </div>
               <div class="meta-age-field">
                 <label for="charBirthdate">Geburtsdatum:</label>
@@ -105,10 +105,7 @@ const MetadataPage = {
               <label for="charHomeworld">Heimatplanet:</label>
               <input type="text" id="charHomeworld" value="${this._esc(meta.homeworld)}" placeholder="Planet oder Station">
             </div>
-            <div class="form-group">
-              <label for="charHeroXp">Helden XP:</label>
-              <input type="number" id="charHeroXp" value="${typeof meta.heroXp === 'number' ? meta.heroXp : 0}" min="0" step="1">
-            </div>
+            ${App._renderMetadataExtraFields(meta)}
             <div class="char-id-row"><strong>Charakter-ID:</strong> <span class="char-id-value">${this._esc(character.id)}</span></div>
           </div>
         </div>
@@ -127,7 +124,7 @@ const MetadataPage = {
               <div><strong>Titel / Rang:</strong> ${this._esc(meta.title) || '–'}</div>
               <div><strong>Alter:</strong> ${meta.age || 18} Jahre${meta.birthdate ? ` <span class="meta-birthdate">(geb. ${this._esc(meta.birthdate)})</span>` : ''}</div>
               <div><strong>Heimatplanet:</strong> ${this._esc(meta.homeworld) || '–'}</div>
-              <div><strong>Helden XP:</strong> ${typeof meta.heroXp === 'number' ? meta.heroXp : 0}</div>
+              ${App._renderMetadataExtraFieldsView(meta)}
               <div><strong>Charakter-ID:</strong> <span class="char-id-value">${this._esc(character.id)}</span></div>
             </div>
           </div>
@@ -178,10 +175,10 @@ const MetadataPage = {
       ...character.metadata,
       name:      document.getElementById('charName')?.value      || '',
       title:     document.getElementById('charTitle')?.value     || '',
-      age:       parseInt(document.getElementById('charAge')?.value) || 18,
+      age:       parseInt(document.getElementById('charAge')?.value) || App._ageRange()[0],
       birthdate: document.getElementById('charBirthdate')?.value   || '',
       homeworld: document.getElementById('charHomeworld')?.value   || '',
-      heroXp:    Math.max(0, parseInt(document.getElementById('charHeroXp')?.value) || 0),
+      ...App._readMetadataExtraFields(),
     };
   },
 

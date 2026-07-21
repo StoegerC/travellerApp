@@ -46,7 +46,11 @@ CHARAKTERVERWALTUNG
        systems/mgt2/calendar.js, App._calendar() mit Textfeld-Fallback]
        [2b ERLEDIGT in 3.21.0: entityExtraFields — App._entityExtraFields()
        u.a., Rasse ist jetzt MGT2-Manifest-Feld, mp-extra-Präfix im Popover]
-       Noch offen: Label-Map (Quest/Session), metadataExtraFields (Helden XP),
+       [2c ERLEDIGT in 3.22.0: metadataExtraFields + ageRange — Helden XP und
+       Altersgrenzen 18-120 sind jetzt MGT2-Manifest-Felder; gemeinsamer
+       Renderer _renderExtraFieldHtml für Entity- UND Metadata-Zusatzfelder,
+       neuer Typ "number" mit min/max/step-Clamping beim Speichern]
+       Noch offen: Label-Map (Quest/Session),
        financeCategories, mergeSpec (inkl. systemData-Pfade granular!),
        career.js aufteilen (Hintergrund&Persönlichkeit/Ereignisse/Favoriten
        sind Kern, Datenpfad career.background via backgroundPath),
