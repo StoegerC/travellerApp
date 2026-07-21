@@ -55,8 +55,11 @@ CHARAKTERVERWALTUNG
        Abrechnung) sind MGT2-Manifest-Felder; NBSP zwischen Währung und
        Betrag bewusst erhalten (App._currency()/_financeCategories()/
        _categoryMeta()/_defaultDebtCategory()/_defaultSettleCategory())]
-       Noch offen: Label-Map (Quest/Session),
-       mergeSpec (inkl. systemData-Pfade granular!),
+       [2e ERLEDIGT in 3.24.0: labels-Vertrag — Quest/Session als
+       App._label(key) statt ~20 hartcodierte Textstellen (Tabs, Buttons,
+       Placeholder, Popover, @-Autocomplete). IDs/CSS/Datenfelder bewusst
+       unverändert (Implementierungsdetail); "Log"/"Journal" bleiben fest.]
+       Noch offen: mergeSpec (inkl. systemData-Pfade granular!),
        career.js aufteilen (Hintergrund&Persönlichkeit/Ereignisse/Favoriten
        sind Kern, Datenpfad career.background via backgroundPath),
        Kern-Widget-Bibliothek (Zähler/Tabellenlisten/Tracker).

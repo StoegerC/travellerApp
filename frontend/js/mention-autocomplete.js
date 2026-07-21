@@ -126,11 +126,11 @@ const MentionAutocomplete = {
       manualFilter = null;
     };
 
-    const TYPE_LABEL   = { person: '👤 Person', location: '🌍 Ort', quest: '🎯 Quest', session: '📖 Journal' };
-    const CREATE_LABEL = { person: 'Person', location: 'Ort', quest: 'Quest' };
+    const TYPE_LABEL   = { person: '👤 Person', location: '🌍 Ort', quest: `🎯 ${App._label('quest')}`, session: '📖 Journal' };
+    const CREATE_LABEL = { person: 'Person', location: 'Ort', quest: App._label('quest') };
     const PLURAL       = { person: 'persons', location: 'locations', quest: 'quests' };
     const SHORTCUT     = { p: 'person', o: 'location', q: 'quest' };
-    const FILTERS      = [['all', 'Alle'], ['person', 'Personen'], ['location', 'Orte'], ['quest', 'Quests']];
+    const FILTERS      = [['all', 'Alle'], ['person', 'Personen'], ['location', 'Orte'], ['quest', App._label('quests')]];
 
     // Anker unter dem "@" für das Popover nach einer Neuanlage: dieselbe
     // Schnittstelle wie ein DOM-Element (getBoundingClientRect), nur eben an

@@ -4,7 +4,7 @@
 // Laufende App-Version — wird von scripts/bump-version.js mitgebumpt.
 // Genutzt vom Import-Versionswächter (Multi-System Phase 0): JSON-Exporte
 // können ein _minAppVersion tragen, das der Import hiergegen prüft.
-const APP_VERSION = '3.23.0';
+const APP_VERSION = '3.24.0';
 
 const App = {
   currentCharacter: null,
@@ -169,6 +169,18 @@ const App = {
   },
   _defaultSettleCategory() {
     return this._system().defaultSettleCategory ?? this._financeCategories()[0]?.key ?? '';
+  },
+
+  // ── Begriffs-Labels (Phase 2): labels aus dem Manifest ──────────────────────
+  // "Quest"/"Session" sind MGT2-Vokabular, kein Kern-Konzept — ein künftiges
+  // System (z.B. Delta Green) nennt es "Operation"/"Einsatzbericht". Das
+  // Log-Paket (notes.js, Popover, @-Autocomplete) baut seine Texte mit
+  // App._label(key) statt harter deutscher Wörter. Fallback ohne
+  // Manifest-Angabe: die MGT2-Begriffe, damit ein Kern-Grep nach neuen
+  // Systemen nie auf einen leeren String trifft.
+  _LABEL_DEFAULTS: { quest: 'Quest', quests: 'Quests', session: 'Session', sessions: 'Sessions' },
+  _label(key) {
+    return this._system().labels?.[key] || this._LABEL_DEFAULTS[key] || key;
   },
 
   // ── Charakter-Zusatzfelder (Phase 2): metadataExtraFields aus dem Manifest ─

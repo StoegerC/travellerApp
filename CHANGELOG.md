@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.24.0] – 2026-07-21
+
+### Geändert
+- **Multi-System-Umbau, Phase 2e: `labels`-Vertrag für Quest/Session** — die Begriffe „Quest" und „Session" waren an rund zwanzig sichtbaren Textstellen im Kern-Log fest verdrahtet (Tab-Beschriftungen, Buttons, Platzhalter, Zwischenüberschriften, Popover-Link, @-Autocomplete-Badges/-Filterchips) — reines MGT2-Vokabular, ein künftiges System nennt es anders (z.B. „Operation"/„Einsatzbericht"). Neu: `App._label(key)` liest `quest`/`quests`/`session`/`sessions` aus dem Manifest, mit den MGT2-Begriffen als Fallback. Bewusst **nicht** angetastet: interne IDs, CSS-Klassen und Datenfeldnamen (`notes.sessions`, `notes.quests`, `#addQuestBtn`, `.session-link` usw.) — die sind Implementierungsdetail, kein UI-Text, und bleiben aus Bestandsschutz-Gründen unverändert. „Log" und „Journal" (die übergeordneten Seiten-/Abschnittstitel) bleiben ebenfalls fest, da sie genrefrei genug sind, um für jedes System zu funktionieren.
+
+---
+
 ## [3.23.0] – 2026-07-21
 
 ### Geändert
