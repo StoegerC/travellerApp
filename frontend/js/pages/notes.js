@@ -1005,7 +1005,7 @@ const NotesPage = {
             <span class="md-hint">**fett** · *kursiv* · - Liste · | Tabelle | · @ verlinkt Personen/Orte/Quests/Journal</span>
           </div>
           <div class="form-group"><label>Belohnung</label>
-            <input type="text" id="questReward" value="${this._esc(q.reward)}" placeholder="z.B. 50.000 Cr, Passage, Information">
+            <input type="text" id="questReward" value="${this._esc(q.reward)}" placeholder="z.B. 50.000 ${this._esc(App._currency())}, Passage, Information">
           </div>
           <div class="form-group"><label>Beschreibung / Hintergrund</label>
             <div class="loc-name-wrap">

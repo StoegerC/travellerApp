@@ -50,8 +50,13 @@ CHARAKTERVERWALTUNG
        Altersgrenzen 18-120 sind jetzt MGT2-Manifest-Felder; gemeinsamer
        Renderer _renderExtraFieldHtml für Entity- UND Metadata-Zusatzfelder,
        neuer Typ "number" mit min/max/step-Clamping beim Speichern]
+       [2d ERLEDIGT in 3.23.0: currency + financeCategories — "Cr" und die
+       Kategorienliste (inkl. der zwei automatischen Buchungen Schuldenrate/
+       Abrechnung) sind MGT2-Manifest-Felder; NBSP zwischen Währung und
+       Betrag bewusst erhalten (App._currency()/_financeCategories()/
+       _categoryMeta()/_defaultDebtCategory()/_defaultSettleCategory())]
        Noch offen: Label-Map (Quest/Session),
-       financeCategories, mergeSpec (inkl. systemData-Pfade granular!),
+       mergeSpec (inkl. systemData-Pfade granular!),
        career.js aufteilen (Hintergrund&Persönlichkeit/Ereignisse/Favoriten
        sind Kern, Datenpfad career.background via backgroundPath),
        Kern-Widget-Bibliothek (Zähler/Tabellenlisten/Tracker).

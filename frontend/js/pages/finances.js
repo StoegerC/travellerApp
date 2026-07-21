@@ -12,8 +12,11 @@ const FinancesPage = {
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   },
 
+  // NBSP (U+00A0) statt normalem Leerzeichen zwischen Währung und Betrag —
+  // verhindert einen Zeilenumbruch mitten im Betrag (z.B. Währungssymbol
+  // allein am Zeilenende). Bewusst beibehalten, kein Stilversehen.
   _fmt(n) {
-    return 'Cr ' + Math.abs(Math.round(n)).toLocaleString('de-DE');
+    return App._currency() + ' ' + Math.abs(Math.round(n)).toLocaleString('de-DE');
   },
 
   _fmtSigned(n) {
@@ -21,14 +24,7 @@ const FinancesPage = {
   },
 
   _catMeta(cat) {
-    const map = {
-      sold:      { label: 'Sold',       cls: 'cat-sold'      },
-      equipment: { label: 'Ausrüstung', cls: 'cat-equipment' },
-      ship:      { label: 'Schiff',     cls: 'cat-ship'      },
-      trade:     { label: 'Handel',     cls: 'cat-trade'     },
-      other:     { label: 'Sonstiges',  cls: 'cat-other'     },
-    };
-    return map[cat] || map.other;
+    return App._categoryMeta(cat);
   },
 
   _f(character) {
@@ -91,14 +87,7 @@ const FinancesPage = {
   // ── Block 2: Transaktions-Log ─────────────────────────────────────────────
 
   _block2(f) {
-    const filters = [
-      { key: 'all',       label: 'Alle'       },
-      { key: 'sold',      label: 'Sold'       },
-      { key: 'equipment', label: 'Ausrüstung' },
-      { key: 'ship',      label: 'Schiff'     },
-      { key: 'trade',     label: 'Handel'     },
-      { key: 'other',     label: 'Sonstiges'  },
-    ];
+    const filters = [{ key: 'all', label: 'Alle' }, ...App._financeCategories()];
 
     const visible = f.transactions.filter(t => !t._deleted);
     const list = (this._filter === 'all'
@@ -218,17 +207,11 @@ const FinancesPage = {
   // ── Modals ────────────────────────────────────────────────────────────────
 
   _modalTx() {
-    const cats = [
-      { v: 'sold',      l: 'Sold'       },
-      { v: 'equipment', l: 'Ausrüstung' },
-      { v: 'ship',      l: 'Schiff'     },
-      { v: 'trade',     l: 'Handel'     },
-      { v: 'other',     l: 'Sonstiges'  },
-    ];
+    const cats = App._financeCategories().map(c => ({ v: c.key, l: c.label }));
     return `<div class="fin-modal-overlay" id="txModal">
       <div class="fin-modal">
         <h3 id="txModalTitle">Einnahme</h3>
-        <input  id="txAmount" type="number" min="0" placeholder="Betrag (Cr)" class="fin-modal-field">
+        <input  id="txAmount" type="number" min="0" placeholder="Betrag (${this._esc(App._currency())})" class="fin-modal-field">
         <div class="loc-name-wrap">
           <input id="txDesc" type="text" placeholder="Beschreibung (@ verlinkt Personen/Orte/Quests/Journal)" class="fin-modal-field">
           <div id="txDescSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
@@ -250,7 +233,7 @@ const FinancesPage = {
       <div class="fin-modal">
         <h3>Wiederkehrender Posten</h3>
         <input  id="recDesc"     type="text"   placeholder="Beschreibung" class="fin-modal-field">
-        <input  id="recAmount"   type="number" min="0" placeholder="Betrag (Cr)" class="fin-modal-field">
+        <input  id="recAmount"   type="number" min="0" placeholder="Betrag (${this._esc(App._currency())})" class="fin-modal-field">
         <select id="recSign"     class="fin-modal-field">
           <option value="1">Einnahme (+)</option>
           <option value="-1">Ausgabe (−)</option>
@@ -276,8 +259,8 @@ const FinancesPage = {
         <h3>Schuld hinzufügen</h3>
         <input    id="debtName"     type="text"   placeholder="Name (z.B. Schiffsdarlehen MCr 1,0)" class="fin-modal-field">
         <input    id="debtCreditor" type="text"   placeholder="Gläubiger (optional)"                 class="fin-modal-field">
-        <input    id="debtTotal"    type="number" min="0" placeholder="Gesamtbetrag (Cr)"            class="fin-modal-field">
-        <input    id="debtMonthly"  type="number" min="0" placeholder="Monatsrate (Cr)"              class="fin-modal-field">
+        <input    id="debtTotal"    type="number" min="0" placeholder="Gesamtbetrag (${this._esc(App._currency())})"            class="fin-modal-field">
+        <input    id="debtMonthly"  type="number" min="0" placeholder="Monatsrate (${this._esc(App._currency())})"              class="fin-modal-field">
         <div class="loc-name-wrap">
           <textarea id="debtNotes" placeholder="Notizen (optional, @ verlinkt Personen/Orte/Quests/Journal)" class="fin-modal-field fin-modal-textarea"></textarea>
           <div id="debtNotesSuggestions" class="loc-suggestions mention-suggestions" style="display:none"></div>
@@ -336,7 +319,7 @@ const FinancesPage = {
       });
     });
     document.querySelector('.fin-pension-edit')?.addEventListener('click', () => {
-      const val = window.prompt('Pension pro Monat (Cr):', f.pension || 0);
+      const val = window.prompt(`Pension pro Monat (${App._currency()}):`, f.pension || 0);
       if (val === null) return;
       const n = parseFloat(val);
       if (!isNaN(n)) { f.pension = n; Storage.saveCharacter(char); rerender(); }
@@ -494,7 +477,7 @@ const FinancesPage = {
         debt.remainingAmount = Math.max(0, debt.remainingAmount - actual);
         debt.updatedAt = new Date().toISOString();
         f.cashCredits -= actual;
-        f.transactions.push({ id: 'tx-' + Date.now(), ingameDate: '', description: `Rate: ${debt.name}`, amount: -actual, category: 'ship', createdAt: Date.now(), updatedAt: new Date().toISOString() });
+        f.transactions.push({ id: 'tx-' + Date.now(), ingameDate: '', description: `Rate: ${debt.name}`, amount: -actual, category: App._defaultDebtCategory(), createdAt: Date.now(), updatedAt: new Date().toISOString() });
         Storage.saveCharacter(char);
         rerender();
       });
@@ -589,7 +572,7 @@ const FinancesPage = {
           ingameDate,
           description: r.description,
           amount:      r.amount,
-          category:    'other',
+          category:    App._defaultSettleCategory(),
           createdAt:   now,
           updatedAt:   new Date(now).toISOString(),
         });

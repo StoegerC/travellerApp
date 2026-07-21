@@ -191,7 +191,7 @@ const MentionPopover = {
           <textarea id="mpObjective" rows="2" placeholder="Was muss erreicht werden?">${e(entry.objective)}</textarea></div>
         <div class="mp-row">
           <div class="form-group"><label>Belohnung</label>
-            <input type="text" id="mpReward" value="${e(entry.reward)}" placeholder="z.B. 10.000 Cr"></div>
+            <input type="text" id="mpReward" value="${e(entry.reward)}" placeholder="z.B. 10.000 ${e(App._currency())}"></div>
           <div class="form-group"><label>Status</label>
             <select id="mpStatus">
               ${opt('active',    entry.status || 'active', 'Aktiv')}

@@ -138,6 +138,39 @@ const App = {
     return this._system().ageRange || [0, 999];
   },
 
+  // ── Währung & Finanz-Kategorien (Phase 2, Feld-Audit Fund F5) ──────────────
+  // "Cr" und die Kategorienliste (Sold/Schiff/Handel/…) sind Traveller-Realität,
+  // kein Kern-Konzept — Kern-Seiten (finances.js, equipment.js, notes.js)
+  // fragen stattdessen hier nach. Fallback ohne Manifest-Angabe: leere Währung
+  // bzw. keine Kategorien (dann zeigt finances.js nur den Betrag, keine Badges).
+  _currency() {
+    return this._system().currency || '';
+  },
+
+  _financeCategories() {
+    return this._system().financeCategories || [];
+  },
+
+  // Label + CSS-Klasse zu einem Kategorie-Key. Unbekannter/fehlender Key
+  // fällt auf die letzte definierte Kategorie zurück (bei MGT2 "Sonstiges") —
+  // dieselbe Fallback-Semantik wie das bisherige, jetzt ersetzte _catMeta().
+  _categoryMeta(key) {
+    const cats = this._financeCategories();
+    if (!cats.length) return { label: key || '', cls: '' };
+    const found = cats.find(c => c.key === key) || cats[cats.length - 1];
+    return { label: found.label, cls: `cat-${found.key}` };
+  },
+
+  // Kategorie, die automatisch gebuchte Transaktionen bekommen (Schuldenrate,
+  // Abrechnung wiederkehrender Posten) — je ein Manifest-Key, Fallback: erste
+  // definierte Kategorie bzw. '' ohne jede Kategorienliste.
+  _defaultDebtCategory() {
+    return this._system().defaultDebtCategory ?? this._financeCategories()[0]?.key ?? '';
+  },
+  _defaultSettleCategory() {
+    return this._system().defaultSettleCategory ?? this._financeCategories()[0]?.key ?? '';
+  },
+
   // ── Charakter-Zusatzfelder (Phase 2): metadataExtraFields aus dem Manifest ─
   // Hausregel-Felder auf der Kern-Charakterseite (z.B. MGT2s Helden XP) —
   // liegen weiterhin unter character.metadata (Bestandsschutz, keine neue

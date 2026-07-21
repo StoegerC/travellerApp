@@ -170,7 +170,7 @@ const EquipmentPage = {
             </div>
           </td>
           <td><input class="r-reservemags" value="${parseInt(it.reserveMags) || 0}" type="number" min="0" title="Reservemagazine"></td>
-          <td><input class="r-acost"  value="${this._esc(it.ammoCost)}"   placeholder="Cr"></td>
+          <td><input class="r-acost"  value="${this._esc(it.ammoCost)}"   placeholder="${App._currency()}"></td>
           <td><input class="r-tl"     value="${this._esc(it.tl)}"         type="number" min="0" max="20"></td>
           <td><input class="r-weight" value="${this._esc(it.weight)}"     type="number" step="0.1"></td>
           <td><input class="r-traits" value="${this._esc(it.traits || '')}" placeholder="Auto 3, Bulky …"></td>
@@ -626,7 +626,7 @@ const EquipmentPage = {
           <input  class="r-ammo ammo-inp" value="0" type="number" min="0">
           <button class="ammo-btn ammo-p">+</button>
         </div></td>
-        <td><input class="r-acost"  placeholder="Cr"></td>
+        <td><input class="r-acost"  placeholder="${App._currency()}"></td>
         <td><input class="r-tl"     type="number" min="0" max="20"></td>
         <td><input class="r-weight" type="number" step="0.1"></td>
         <td><input class="r-traits" placeholder="Auto 3, Bulky …"></td>
