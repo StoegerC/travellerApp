@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.23.0] – 2026-07-21
+
 ### Geändert
 - **Multi-System-Umbau, Phase 2d: `currency`- und `financeCategories`-Vertrag** — die Währung „Cr" und die Transaktions-Kategorien (Sold/Ausrüstung/Schiff/Handel/Sonstiges) waren an neun Stellen im Kern verdrahtet, inklusive zweier automatischer Buchungen (Schuldenrate → hart „ship", Abrechnung wiederkehrender Posten → hart „other") — Feld-Audit Fund F5. Neu: `App._currency()`, `App._financeCategories()`, `App._categoryMeta()`, `App._defaultDebtCategory()`/`_defaultSettleCategory()` lesen das aus dem Manifest; Kontostand, Transaktions-/Wiederkehrend-/Schulden-Formulare, die Kategorien-Badges im Log und die Filterleiste (`finances.js`), die Munitionskosten-Spalte (`equipment.js`) sowie die Belohnungs-Placeholder in Quest-Formular und -Popover nutzen jetzt alle denselben Vertrag statt eigener „Cr"-Strings. Eine bewusst erhaltene Feinheit: Zwischen Währung und Betrag steht weiterhin ein geschütztes Leerzeichen (U+00A0) statt eines normalen — verhindert einen Zeilenumbruch mitten im Betrag. CSS-Klassen der Kategorie-Badges (`cat-sold` usw.) werden deklarativ aus dem Kategorie-Key abgeleitet. Verhalten und Optik für MGT2 unverändert.
 
