@@ -225,6 +225,19 @@ const App = {
     return out;
   },
 
+  // ── Kern-Baustein "career-background" (Phase 2, Feld-Audit Fund F1) ────────
+  // Prägende Ereignisse / Hintergrund & Persönlichkeit / Favoriten-Kontakte
+  // (siehe pages/career-background.js) sind spielunabhängig, ihr Datenpfad auf
+  // character aber Bestandsschutz-abhängig: MGT2 hält sie weiterhin unter
+  // career.background/career.keyEvents, ein künftiges System ohne eigene
+  // Angabe bekommt die Kern-Felder background/keyEvents auf oberster Ebene.
+  _backgroundPath() {
+    return this._system().backgroundPath || 'background';
+  },
+  _keyEventsPath() {
+    return this._system().keyEventsPath || 'keyEvents';
+  },
+
   // Baut Tab-Leiste und Seiten-Container aus dem Manifest — exakt das Markup,
   // das zuvor hart in index.html stand. Läuft vor setupEventListeners(),
   // damit die Tab-Klick-Listener die generierten Buttons finden.

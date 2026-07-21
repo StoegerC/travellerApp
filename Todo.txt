@@ -67,9 +67,15 @@ CHARAKTERVERWALTUNG
        arrays: {pfad: true|"key"}, ships: true für den rekursiven
        Schiffs-Merge. Shared-Prefix-Falle (career.terms + career.keyEvents)
        mit Materialized-Set abgesichert + Regressionstest.]
-       Noch offen: career.js aufteilen (Hintergrund&Persönlichkeit/
-       Ereignisse/Favoriten sind Kern, Datenpfad career.background via
-       backgroundPath), Kern-Widget-Bibliothek (Zähler/Tabellenlisten/Tracker).
+       [career.js aufgeteilt ERLEDIGT: Karriere-Timeline bleibt MGT2
+       (systems/mgt2/pages/career.js); Prägende Ereignisse/Hintergrund &
+       Persönlichkeit/Favoriten-Kontakte sind jetzt der Kern-Baustein
+       pages/career-background.js (CareerBackground, Muster wie
+       NotesChronicle, rerender-Funktion vom Aufrufer übergeben statt
+       fester Container-Id). Datenpfad weiter career.background/
+       career.keyEvents via Manifest-Schlüssel backgroundPath/
+       keyEventsPath (App._backgroundPath()/_keyEventsPath()).]
+       Noch offen: Kern-Widget-Bibliothek (Zähler/Tabellenlisten/Tracker).
        Abnahme: grep traveller|UWP|Imperialkalender|Vargr|Cr über Kern leer.
     3. Mehrsystem-Betrieb: Neuanlage mit System-Auswahl, Cloud-Liste als
        sortierbare Tabelle (Name+System, GET /chars liefert system mit),
