@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Geändert
+- **Multi-System-Umbau, Phase 2f: `mergeSpec`-Vertrag** — `SyncMerge.mergeCharacter()` kannte bisher MGT2-Feldnamen hart (Skills-Merge nach „name", Training/Career-Termine/-Ereignisse, Schiffe mit Waffen-/Finanz-Sub-Merge). Kern-Arrays (Log-Paket, Finanzen, Ausrüstung) werden weiterhin immer gemergt — die MGT2-spezifischen Arrays kommen jetzt über einen `mergeSpec`, den `app.js` explizit aus dem aktiven Manifest übergibt (`arrays: { "pfad": true|"key" }` für einfache Key-Merges, `ships: true` für den bestehenden rekursiven Schiffs-Merge mit Waffen-/Finanz-Sub-Feldern). `sync-merge.js` selbst bleibt dadurch reines, umgebungsunabhängiges Plain-JS ohne Browser-Globals — wichtig, weil das Backend dieselbe Datei per `require()` für den Kampagnen-Merge nutzt (unverändert, nur die generischen Helfer). Eine subtile Falle beim Bauen des generischen Pfad-Mechanismus: Zwei mergeSpec-Einträge mit gemeinsamem Präfix (`career.terms` und `career.keyEvents`) dürfen das Zwischenobjekt `career` nur einmal pro Merge-Lauf neu aufbauen, sonst überschreibt der zweite Eintrag das Ergebnis des ersten — dagegen jetzt eine dedizierte Absicherung samt Regressionstest. 46 statt 42 Backend-Tests (4 neue Fälle, u.a. genau dieses Präfix-Szenario mit echten Zwei-Geräte-Daten). Verhalten für MGT2-Bestandscharaktere unverändert.
+
 ---
 
 ## [3.24.0] – 2026-07-21

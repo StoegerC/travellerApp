@@ -57,6 +57,23 @@ const Mgt2System = {
   defaultDebtCategory: 'ship',
   defaultSettleCategory: 'other',
 
+  // Merge-Vertrag (Phase 2, sync-merge.js): Die Sync-Engine kennt keine
+  // MGT2-Feldnamen mehr, sondern fragt hier nach den System-Arrays. Kern-
+  // Arrays (notes.*, finances.*, equipment) sind für jedes System gleich
+  // und werden unabhängig davon immer gemergt (siehe sync-merge.js).
+  // arrays: Punkt-Pfad -> Merge-Key (true = "id", String = anderer Key,
+  // z.B. "name" bei Skills). ships: eigenes Flag statt Pfad-Eintrag, weil
+  // Schiffe Sub-Merges für weapons[]/finances.*[] brauchen (_mergeShips).
+  mergeSpec: {
+    arrays: {
+      skills: 'name',
+      training: true,
+      'career.terms':     true,
+      'career.keyEvents': true,
+    },
+    ships: true,
+  },
+
   // Zusatzfeld auf der Kern-Charakterseite (Phase 2, Feld-Audit Fund F4):
   // Helden XP ist eine MGT2-Hausregel, kein Kern-Konzept. Bleibt unter
   // character.metadata.heroXp (Bestandsschutz) — auch der eigene, direkt

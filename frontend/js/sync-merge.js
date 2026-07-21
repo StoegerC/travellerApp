@@ -97,20 +97,61 @@ const SyncMerge = {
   },
 
   /**
+   * Setzt merged[...path] auf das Array-Merge-Ergebnis von
+   * local[...path]/remote[...path] (Punkt-Pfad, z.B. "career.terms").
+   * keyField: true -> Merge-Key "id" (Standardfall, inkl. Tombstones);
+   * String -> anderer Merge-Key (z.B. "name" bei MGT2-Skills).
+   *
+   * materialized verhindert einen stillen Datenverlust bei mehreren
+   * Pfaden mit gemeinsamem Präfix (z.B. "career.terms" UND
+   * "career.keyEvents"): das Zwischenobjekt "career" darf pro Merge-Lauf
+   * nur EINMAL frisch aufgebaut werden, sonst würde der zweite Pfad das
+   * bereits gemergte Ergebnis des ersten wieder überschreiben.
+   */
+  _mergeSpecPath(merged, local, remote, path, keyField, materialized) {
+    const parts   = path.split('.');
+    const lastKey = parts.pop();
+    let mLocal = local, mRemote = remote, mMerged = merged, prefix = '';
+    for (const k of parts) {
+      prefix  = prefix ? `${prefix}.${k}` : k;
+      mLocal  = mLocal?.[k]  || {};
+      mRemote = mRemote?.[k] || {};
+      if (!materialized.has(prefix)) {
+        mMerged[k] = { ...mRemote, ...mLocal };
+        materialized.add(prefix);
+      }
+      mMerged = mMerged[k];
+    }
+    const key = keyField === true ? 'id' : keyField;
+    mMerged[lastKey] = this.purgeTombstones(this._mergeByKey(mLocal[lastKey], mRemote[lastKey], key));
+  },
+
+  /**
    * Merged zwei komplette Character.toJSON()-Objekte. localJson gewinnt als
    * Default für alle Skalar-Felder (metadata, attributes, radiationDose,
-   * firstAidLog, activeShipId, campaignId, shipRoles, syncMode, system, id),
-   * danach werden bekannte Array-Felder gezielt gemerged.
+   * firstAidLog, activeShipId, campaignId, shipRoles, syncMode, system, id).
+   *
+   * Kern-Arrays (Log-Paket, Finanzen, Ausrüstung) sind für jedes Regelsystem
+   * identisch und werden immer gemergt. System-spezifische Arrays (bei MGT2:
+   * skills/training/career.*, Schiffe) kommen über den mergeSpec-Parameter —
+   * der Kern kennt ihre Feldnamen nicht mehr. mergeSpec wird bewusst als
+   * Parameter übergeben statt hier selbst z.B. über SystemRegistry
+   * nachzuschlagen: diese Datei bleibt damit reines, umgebungsunabhängiges
+   * Plain-JS (siehe Datei-Kopfkommentar) und lässt sich ohne Browser-Globals
+   * testen. Der Aufrufer (app.js) übergibt App._system().mergeSpec.
+   *
+   * arrays: { "punkt.pfad": true | "keyName" } — true = Merge-Key "id",
+   * String = anderer Key (z.B. "name" bei MGT2-Skills). ships: boolean —
+   * eigenes Flag statt Pfad-Eintrag, weil Schiffe Sub-Merges für
+   * weapons[]/finances.*[] brauchen (_mergeShips) statt eines einfachen
+   * Array-Merges nach Key.
    */
-  mergeCharacter(localJson, remoteJson) {
+  mergeCharacter(localJson, remoteJson, mergeSpec = {}) {
     const local  = localJson  || {};
     const remote = remoteJson || {};
     const merged = { ...remote, ...local };
 
-    merged.skills = this._mergeByKey(local.skills, remote.skills, 'name');
-
     merged.equipment = this._mergeArrayField(local.equipment, remote.equipment);
-    merged.training  = this._mergeArrayField(local.training,  remote.training);
 
     const ln = local.notes  || {};
     const rn = remote.notes || {};
@@ -126,13 +167,14 @@ const SyncMerge = {
     merged.finances.recurringItems = this._mergeArrayField(lfi.recurringItems, rfi.recurringItems);
     merged.finances.debts          = this._mergeArrayField(lfi.debts,          rfi.debts);
 
-    const lc = local.career  || {};
-    const rc = remote.career || {};
-    merged.career = { ...lc };
-    merged.career.terms     = this._mergeArrayField(lc.terms,     rc.terms);
-    merged.career.keyEvents = this._mergeArrayField(lc.keyEvents, rc.keyEvents);
-
-    merged.ships = this._mergeShips(local.ships, remote.ships);
+    const spec = mergeSpec || {};
+    const materialized = new Set();
+    for (const [path, keyField] of Object.entries(spec.arrays || {})) {
+      this._mergeSpecPath(merged, local, remote, path, keyField, materialized);
+    }
+    if (spec.ships) {
+      merged.ships = this._mergeShips(local.ships, remote.ships);
+    }
 
     return merged;
   },

@@ -795,7 +795,7 @@ const App = {
     if (r.conflict && retriesLeft > 0) {
       // Jemand anderes hat zwischenzeitlich einen neueren Stand gespeichert –
       // lokal mergen (nicht blind überschreiben) und erneut versuchen.
-      const mergedJson = SyncMerge.mergeCharacter(this.currentCharacter.toJSON(), r.serverData);
+      const mergedJson = SyncMerge.mergeCharacter(this.currentCharacter.toJSON(), r.serverData, this._system().mergeSpec);
       this.currentCharacter = Character.fromJSON(mergedJson);
       this.currentCharacter._syncMeta.updatedAt = r.serverUpdatedAt;
       window.currentCharacter = this.currentCharacter;
@@ -865,7 +865,7 @@ const App = {
       // Gemergt statt blind ersetzt: falls hier noch nicht gepushte lokale
       // Änderungen liegen (z.B. der Flush oben ist fehlgeschlagen), gehen sie
       // nicht verloren, sondern werden mit dem frischen Server-Stand vereint.
-      const mergedJson = SyncMerge.mergeCharacter(this.currentCharacter.toJSON(), r.data);
+      const mergedJson = SyncMerge.mergeCharacter(this.currentCharacter.toJSON(), r.data, this._system().mergeSpec);
       const cloudChar = Character.fromJSON(mergedJson);
       cloudChar._syncMeta.updatedAt = r.updatedAt;
       this.currentCharacter = cloudChar;
