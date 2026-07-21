@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.22.0] – 2026-07-21
+
 ### Geändert
 - **Multi-System-Umbau, Phase 2c: `metadataExtraFields`- und `ageRange`-Vertrag** — Helden XP war ein MGT2-Hausregel-Feld fest verdrahtet auf der Kern-Charakterseite (Feld-Audit Fund F4), die Altersgrenzen 18–120 im selben Formular eine unausgesprochene MGT2-Annahme (Fund F3). Neu: `App._metadataExtraFields()`/`_renderMetadataExtraFields()`/`_renderMetadataExtraFieldsView()`/`_readMetadataExtraFields()` sowie `App._ageRange()` lesen beides aus dem Manifest; der generische Feld-Renderer (`_renderExtraFieldHtml`) ist jetzt der gemeinsame Baustein für Entitäts- **und** Metadata-Zusatzfelder (neu: Typ `number` mit min/max/step, inkl. serverseitigem Clamping ungültiger Werte beim Speichern). Das MGT2-Manifest deklariert `metadataExtraFields: [{ key: 'heroXp', … }]` und `ageRange: [18, 120]`; `character.metadata.heroXp` bleibt aus Bestandsschutz-Gründen unverändert an seinem Platz, der direkt editierbare Zähler im Kampf-Tab (reiner MGT2-Code) liest/schreibt weiterhin genau dasselbe Feld. Verhalten und Optik für MGT2 unverändert.
 

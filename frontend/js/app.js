@@ -4,7 +4,7 @@
 // Laufende App-Version — wird von scripts/bump-version.js mitgebumpt.
 // Genutzt vom Import-Versionswächter (Multi-System Phase 0): JSON-Exporte
 // können ein _minAppVersion tragen, das der Import hiergegen prüft.
-const APP_VERSION = '3.21.0';
+const APP_VERSION = '3.22.0';
 
 const App = {
   currentCharacter: null,
