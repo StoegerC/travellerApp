@@ -35,6 +35,24 @@ const Mgt2System = {
   // 18–120 ist eine MGT2-Annahme (Musterungsalter), kein Kern-Konzept.
   ageRange: [18, 120],
 
+  // Währung & Finanz-Kategorien (Phase 2, Feld-Audit Fund F5): Kern-Seiten
+  // (finances.js, equipment.js, notes.js) fragen App._currency()/
+  // _financeCategories() statt "Cr" bzw. die Kategorienliste hart zu kennen.
+  // CSS-Klasse pro Kategorie wird deklarativ aus dem key abgeleitet
+  // ("cat-" + key) — siehe .cat-sold/.cat-equipment/… in styles.css.
+  currency: 'Cr',
+  financeCategories: [
+    { key: 'sold',      label: 'Sold' },
+    { key: 'equipment', label: 'Ausrüstung' },
+    { key: 'ship',      label: 'Schiff' },
+    { key: 'trade',     label: 'Handel' },
+    { key: 'other',     label: 'Sonstiges' },
+  ],
+  // Automatische Buchungen (Schuldenrate, Abrechnung wiederkehrender Posten)
+  // — bisher hart 'ship'/'other', jetzt deklariert statt in finances.js verdrahtet.
+  defaultDebtCategory: 'ship',
+  defaultSettleCategory: 'other',
+
   // Zusatzfeld auf der Kern-Charakterseite (Phase 2, Feld-Audit Fund F4):
   // Helden XP ist eine MGT2-Hausregel, kein Kern-Konzept. Bleibt unter
   // character.metadata.heroXp (Bestandsschutz) — auch der eigene, direkt
