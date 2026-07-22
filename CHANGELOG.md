@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.33.0] – 2026-07-22
+
 ### Geändert
 - **Schiffs-Portrait deutlich größer** — statt fest 120×90px jetzt responsiv bis 400px, ähnlich groß wie das Charakter-Portrait (Seitenverhältnis bewusst 4:3 statt 3:4, passend für ein Schiffsfoto). Navigationspfeile und Bildzähler wurden proportional mitvergrößert (Touch-Target 44px). Die Spalten (Bild/Felder) stapeln sich jetzt auf schmalen Bildschirmen statt sich gegenseitig zu quetschen.
 
