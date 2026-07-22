@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.31.0] – 2026-07-22
+
 ### Neu
 - **App-Kopfzeile zeigt jetzt Logo + Markenname des aktiven Regelsystems** statt fest "Traveller" — neuer Manifest-Schlüssel `banner: { label, icon }` (MGT2: die bisherige Kompassrosen-Grafik als SVG, Universal: ein einfaches 🎲-Emoji als Kopiervorlage für künftige Systeme). Wechselt automatisch bei Charakteranlage/-wechsel (`App._banner()`/`_updateHeaderBanner()`); ein Charakter mit unbekannter System-Kennung (siehe Unbekannt-Regel) zeigt statt eines falsch zugeordneten Logos neutral „Unbekannt" + ❓.
 
