@@ -45,6 +45,13 @@ const Mgt2System = {
   // mit diesen Wörtern statt sie fest zu verdrahten — siehe App._label().
   labels: { quest: 'Quest', quests: 'Quests', session: 'Session', sessions: 'Sessions' },
 
+  // Standard-Notation, mit der das Würfel-Widget (dice-roller.js) einen
+  // Charakter dieses Systems beim ersten Öffnen vorbefüllt — MGT2s
+  // Standardwurf ist 2D6. Deckt sich zufällig mit dem Kern-Fallback
+  // (DiceRoller._defaultNotation()), bleibt aber bewusst explizit gesetzt,
+  // wie jeder andere Vertragsschlüssel auch.
+  diceDefault: '2D6',
+
   // Kalender-Vertrag (Phase 2): In-Game-Datumsfelder der Kern-Seiten —
   // Widget, Placeholder und Label kommen von hier, siehe mgt2/calendar.js.
   calendar: Mgt2Calendar,

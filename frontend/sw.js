@@ -11,6 +11,7 @@ const ASSETS = [
   './js/cloudsync.js',
   './js/auth.js',
   './js/campaign.js',
+  './js/dice-roller.js',
   './js/filesync.js',
   './js/markdown.js',
   './js/mention-autocomplete.js',

@@ -168,7 +168,18 @@ UI / UX
     bzw. Zähler ausstehender Pushes statt nur dezentem Header-Badge
 [ ] Erwähnungen aktualisieren: "@[Name](typ:id)" friert den Namen ein —
     Button "Erwähnungen aktualisieren" beim Umbenennen einer Person/eines Orts
-[ ] Würfelwurf-Widget: 2d6 + Modifikator direkt in der App
+[ERLEDIGT] Würfelwurf-Widget: 2d6 + Modifikator direkt in der App —
+    dice-roller.js (DiceRoller), 🎲-FAB über allen Tabs, Stepper +
+    Direkteingabe der Notation, Würfel-Animation (prefers-reduced-motion
+    respektiert), Verlauf der letzten 5 Würfe pro Charakter in
+    localStorage (bewusst nicht im Charakter-Modell/Cloud-Sync). Kern-
+    Feature mit optionalem Manifest-Schlüssel diceDefault (MGT2: "2D6").
+    Zielwert/Effekt-Berechnung bewusst NICHT eingebaut (User-Entscheidung,
+    Widget bleibt regelwerksneutral).
+[ ] Schadenswürfe direkt aus der Ausrüstung würfeln (z.B. 🎲 neben dem
+    Schaden-Feld einer Waffe) — DiceRoller.openWith(notation) ist dafür
+    bereits vorbereitet (öffnet das Widget mit vorgegebener Notation),
+    aber noch nirgends aufgerufen. Nur bei Bedarf umsetzen.
 [ ] Schnellsuche global im Header (Personen, Orte, Quests, Sessions)
 [ ] Timeline-Ansicht: Sessions chronologisch als Zeitstrahl
 [ ] Druckansicht / PDF-Export des Charakterbogens

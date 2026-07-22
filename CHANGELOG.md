@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Neu
+- **Würfel-Widget** — ein jederzeit erreichbarer 🎲-Button (unten rechts, über allen Tabs sichtbar) öffnet ein Würfel-Panel: Eingabe per Stepper (Anzahl · Seiten · Modifikator) oder Direkteingabe der Notation (`2D6+3`), ein „Würfeln"-Button mit kurzer Schüttel-Animation (respektiert `prefers-reduced-motion`), und eine Historie der letzten 5 Würfe (antippbar zum erneuten Laden). Letzte Eingabe und Verlauf sind pro Charakter gespeichert (`localStorage`, bewusst nicht im Charakter-Datenmodell — ein Wurf ist ein flüchtiges Tischereignis, kein sync-würdiger Blattinhalt). Standard-Notation kommt aus dem Manifest des aktiven Regelsystems (`diceDefault`, MGT2: „2D6"), mit Kern-Fallback für Systeme ohne eigene Angabe. `DiceRoller.openWith(notation)` ist als Hook für eine spätere Schadenswurf-Integration aus der Ausrüstung vorbereitet, aber noch nicht angebunden.
+
 ---
 
 ## [3.31.0] – 2026-07-22
