@@ -27,13 +27,20 @@ const MetadataPage = {
 
     const characters = Storage.listCharacters();
 
+    // System-Kennzeichnung im Selector (Multi-System Phase 3) nur, wenn die
+    // lokalen Charaktere tatsächlich mehr als ein Regelsystem umfassen —
+    // im heutigen Alltag (nur MGT2) bleibt die Liste dadurch unverändert.
+    const distinctSystems = new Set(characters.map(c => c.system));
+    const showSystemTag   = distinctSystems.size > 1;
+    const systemTag       = id => SystemRegistry.has(id) ? SystemRegistry.get(id).name : (id || '–');
+
     // ── Charakter-Selektor ──────────────────────────────────────────────
     let html = `
       <div class="char-selector-panel">
         <div class="char-selector-row">
           <select id="characterSelect" class="char-selector-select">
             ${characters.map(c =>
-              `<option value="${this._esc(c.id)}"${c.id === character.id ? ' selected' : ''}>${this._esc(c.name || 'Namenlos')}</option>`
+              `<option value="${this._esc(c.id)}"${c.id === character.id ? ' selected' : ''}>${this._esc(c.name || 'Namenlos')}${showSystemTag ? ` (${this._esc(systemTag(c.system))})` : ''}</option>`
             ).join('')}
           </select>
           <button id="newCharBtn"    class="btn-success char-btn">+ Neu</button>

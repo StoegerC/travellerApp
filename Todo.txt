@@ -78,9 +78,24 @@ CHARAKTERVERWALTUNG
        Damit ist Phase 2 inhaltlich abgeschlossen (Kern-Widget-Bibliothek
        bewusst zurückgestellt, siehe Phase 4).
        Abnahme: grep traveller|UWP|Imperialkalender|Vargr|Cr über Kern leer.
-    3. Mehrsystem-Betrieb: Neuanlage mit System-Auswahl, Cloud-Liste als
-       sortierbare Tabelle (Name+System, GET /chars liefert system mit),
-       Charakterwechsel wechselt System/Tabs (fehlender Tab -> Charakter-Tab).
+    3. [ERLEDIGT: Mehrsystem-Betrieb] Neuanlage mit Systemwahl-Schritt (nur
+       sichtbar bei >1 registriertem System, dynamisch aus
+       SystemRegistry.list()); Cloud-Liste als sortierbare Tabelle
+       Name/System (neue system-Spalte in der characters-Tabelle, GET
+       /chars liefert sie mit, reiner String-Kopiervorgang wie beim Namen);
+       Charakterwechsel baut die Tab-Leiste aus dem Manifest des
+       Zielcharakters neu auf (fehlender Tab -> Charakter-Tab), dafür
+       Tab-Navigation auf Event-Delegation umgestellt (sonst tot nach einem
+       Rebuild); Charakter-Selector zeigt System-Kennzeichnung, sobald lokale
+       Charaktere mehr als ein System umfassen. Zusätzlich die
+       Unbekannt-Regel aus Plan §3 umgesetzt (war bisher nur als
+       Registry-Kommentar vorgemerkt, kein zusätzlicher Phasen-Punkt nötig):
+       character.system ohne registriertes Manifest -> strikt
+       schreibgeschützt (App._readOnlyView/_unknownSystem), nur die drei
+       Kern-Tabs (App._KERN_ONLY_SYSTEM), Hinweisbanner
+       (#unknown-system-banner). Mit einem Fake-Zweitsystem in Playwright
+       end-to-end verifiziert (Systemwahl, Wechsel hin und zurück,
+       Tab-Klicks nach Rebuild, Unbekannt-Regel, sortierbare Cloud-Tabelle).
     4. Universal-Template als Beweis (Kern-Tabs + freie Werte-Listen).
        Dabei auch die Kern-Widget-Bibliothek (Zähler/Tabellenlisten/Tracker,
        Challenge-Fund U4) bauen — bewusst NICHT vorab in Phase 2 gemacht:

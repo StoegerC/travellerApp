@@ -23,9 +23,30 @@ const App = {
   _CAMPAIGN_POLL: 15000,
   _LAST_CHAR_KEY: 'traveller_last_character_id',
   // Read-only-Ansicht fuer Meister, die einen fremden Charakter ueber
-  // showCloudCharList() laden (gm-Flag, kein Owner) - wird bei jedem
-  // regulaeren loadCharacter() zurueckgesetzt.
+  // showCloudCharList() laden (gm-Flag, kein Owner), ODER fuer einen
+  // Charakter mit unbekannter System-Kennung (siehe _unknownSystem) - wird
+  // bei jedem regulaeren loadCharacter() neu bestimmt.
   _readOnlyView: false,
+
+  // Multi-System Phase 3, Unbekannt-Regel (Plan §3): true, wenn character.system
+  // keinem registrierten Manifest entspricht (Import aus neuerer App-Version,
+  // Sync von einem Geraet mit einem hier nicht installierten System). Erzwingt
+  // read-only (siehe _readOnlyView) und schaltet _system() auf reine Kern-Tabs
+  // um, statt MGT2-Tabs ueber fremde Regeldaten zu legen.
+  _unknownSystem: false,
+
+  // Minimal-Manifest fuer _unknownSystem: nur die Kern-Seiten, keine
+  // System-spezifischen Zusatzvertraege (calendar/currency/labels/… fehlen
+  // hier bewusst — jeder App._xxx()-Accessor hat dafuer schon einen
+  // neutralen Fallback, siehe deren jeweilige Definition weiter unten).
+  _KERN_ONLY_SYSTEM: {
+    id: '_unknown', name: 'Unbekanntes System',
+    tabs: [
+      { id: 'metadata',  icon: '👤', label: 'Charakter',  page: () => MetadataPage },
+      { id: 'equipment', icon: '🎒', label: 'Ausrüstung', page: () => EquipmentPage },
+      { id: 'notes',     icon: '📝', label: 'Log',        page: () => NotesPage },
+    ],
+  },
 
   // ── System-Manifest (Multi-System Phase 1) ────────────────────────────────
   // Tabs, Seiten und Labels kommen aus dem Manifest des aktiven Regelsystems
@@ -33,6 +54,7 @@ const App = {
   // _system() wertet character.system aus — der frühere Todo-Punkt
   // "Regel-System-Switch"; ohne Charakter gilt das Default-System (MGT2).
   _system() {
+    if (this._unknownSystem) return this._KERN_ONLY_SYSTEM;
     return SystemRegistry.get(this.currentCharacter?.system);
   },
   _tab(pageName)  { return this._system().tabs.find(t => t.id === pageName) || null; },
@@ -278,12 +300,13 @@ const App = {
   },
 
   setupEventListeners() {
-    // Tab-Navigation
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const target = e.target.closest('.tab-btn');
-        if (target) this.switchPage(target.dataset.page);
-      });
+    // Tab-Navigation. Delegiert auf den (statischen) Container statt auf die
+    // einzelnen Buttons: _buildTabs() ersetzt deren innerHTML beim Wechsel auf
+    // einen Charakter eines anderen Regelsystems (Multi-System Phase 3) — an
+    // die alten Button-Elemente gebundene Listener wären damit weg.
+    document.querySelector('.tab-navigation').addEventListener('click', (e) => {
+      const target = e.target.closest('.tab-btn');
+      if (target) this.switchPage(target.dataset.page);
     });
 
     // Globale Header-Buttons
@@ -381,11 +404,17 @@ const App = {
   // ausstehenden Push sofort _pushToCloud() aufruft; ein "danach" gesetztes
   // _readOnlyView wuerde dieses erste Flush-Push nicht mehr rechtzeitig stoppen.
   loadCharacter(id, readOnly = false) {
+    const previousSystem = this.currentCharacter?.system;
     this.currentCharacter = Storage.loadCharacter(id);
     if (!this.currentCharacter) { console.error('Charakter nicht gefunden:', id); return; }
     window.currentCharacter = this.currentCharacter;
     localStorage.setItem(this._LAST_CHAR_KEY, id);
-    this._readOnlyView = readOnly;
+    // Unbekannt-Regel (Multi-System Phase 3, Plan §3): eine System-Kennung,
+    // die diese Installation nicht registriert hat, erzwingt read-only —
+    // dieselbe Sperre wie bei der Meister-Fremdansicht (readOnly-Parameter).
+    this._unknownSystem = !SystemRegistry.has(this.currentCharacter.system);
+    this._readOnlyView = readOnly || this._unknownSystem;
+    this._updateUnknownSystemBanner();
     this.editMode = false;
     this._undoStack = [];
     this._updateUndoBtn();
@@ -393,6 +422,16 @@ const App = {
     this._syncState = { status: 'idle', lastSync: null, error: null };
     this._pendingPush = false;
     this._campaignData = null;
+
+    // Multi-System Phase 3: wechselt der Charakter das Regelsystem (oder ist
+    // dessen Kennung unbekannt), muss die Tab-Leiste neu aus dem passenden
+    // Manifest aufgebaut werden — sonst zeigt sie noch die Tabs des vorherigen
+    // Charakters. currentPage zuerst pruefen: existiert die gerade offene
+    // Seite im Zielsystem nicht (z.B. Schiff), landet man auf dem Charakter-Tab.
+    if (this.currentCharacter.system !== previousSystem || this._unknownSystem) {
+      if (!this._tab(this.currentPage)) this.currentPage = 'metadata';
+      this._buildTabs();
+    }
 
     if (this.currentCharacter.syncMode === 'cloud') {
       this._startCloudPoll();
@@ -412,10 +451,10 @@ const App = {
   },
 
   async createNewCharacter() {
-    const syncMode = await this._showNewCharDialog();
-    if (syncMode === null) return;
+    const result = await this._showNewCharDialog();
+    if (result === null) return;
 
-    const char = new Character({ system: 'traveller', syncMode });
+    const char = new Character({ system: result.systemId, syncMode: result.syncMode });
     Storage.saveCharacter(char);
     this.currentCharacter = char;
     window.currentCharacter = char;
@@ -424,9 +463,17 @@ const App = {
     this._updateUndoBtn();
     this.editMode = true;
     this._syncState = { status: 'idle', lastSync: null, error: null };
+    // Neuanlage wählt immer ein registriertes System (siehe Systemwahl-Schritt
+    // unten) — nie schreibgeschützt/unbekannt, unabhängig vom Vorzustand.
+    this._unknownSystem = false;
+    this._readOnlyView  = false;
+    this._updateUnknownSystemBanner();
     this._updateHeaderName();
+    // Tab-Leiste neu aufbauen: das neue System kann von dem des zuvor
+    // offenen Charakters abweichen (Multi-System Phase 3).
+    this._buildTabs();
 
-    if (syncMode === 'cloud') {
+    if (result.syncMode === 'cloud') {
       this._startCloudPoll();
       this._pushToCloud();
     } else {
@@ -441,21 +488,44 @@ const App = {
     this.showStatus('Neuer Charakter erstellt', 'success');
   },
 
+  // Resolve-Wert: { syncMode: 'local'|'cloud', systemId } oder null bei Abbruch.
   _showNewCharDialog() {
     return new Promise(resolve => {
-      const modal    = document.getElementById('newCharModal');
-      const step1    = document.getElementById('ncStep1');
-      const step2    = document.getElementById('ncStep2');
-      const step3    = document.getElementById('ncStep3');
-      const testEl   = document.getElementById('ncTestResult');
-      const loginEl  = document.getElementById('ncLoginResult');
+      const modal        = document.getElementById('newCharModal');
+      const step0        = document.getElementById('ncStep0');
+      const step1        = document.getElementById('ncStep1');
+      const step2        = document.getElementById('ncStep2');
+      const step3        = document.getElementById('ncStep3');
+      const step1BackRow = document.getElementById('ncStep1BackRow');
+      const testEl        = document.getElementById('ncTestResult');
+      const loginEl       = document.getElementById('ncLoginResult');
+
+      // Systemwahl (Multi-System Phase 3, Feld-Audit/Plan §4 Phase 3): nur
+      // bei mehr als einem registrierten System ein eigener Schritt — mit
+      // genau einem System (heute: nur MGT2) bleibt das Verhalten wie vorher.
+      const systems  = SystemRegistry.list();
+      const hasChoice = systems.length > 1;
+      let systemId = systems[0]?.id || SystemRegistry.get().id;
 
       const showStep = n => {
+        step0.style.display = n === 0 ? '' : 'none';
         step1.style.display = n === 1 ? '' : 'none';
         step2.style.display = n === 2 ? '' : 'none';
         step3.style.display = n === 3 ? '' : 'none';
       };
-      showStep(1);
+
+      if (hasChoice) {
+        document.getElementById('ncSystemChoices').innerHTML = systems.map(s => `
+          <button class="nc-choice-btn" data-system="${s.id}">
+            <span class="nc-choice-icon">🎲</span>
+            <span class="nc-choice-label">${s.name}</span>
+          </button>`).join('');
+        step1BackRow.style.display = '';
+        showStep(0);
+      } else {
+        step1BackRow.style.display = 'none';
+        showStep(1);
+      }
       testEl.textContent  = '';
       testEl.className    = 'nc-test-result';
       loginEl.textContent = '';
@@ -464,9 +534,16 @@ const App = {
 
       modal.classList.add('visible');
 
-      const close = result => { modal.classList.remove('visible'); resolve(result); };
+      const close = syncMode => {
+        modal.classList.remove('visible');
+        resolve(syncMode === null ? null : { syncMode, systemId });
+      };
 
       document.getElementById('ncCancelBtn').onclick = () => close(null);
+      document.querySelectorAll('#ncSystemChoices .nc-choice-btn').forEach(btn => {
+        btn.onclick = () => { systemId = btn.dataset.system; showStep(1); };
+      });
+      document.getElementById('ncBackBtn0').onclick = () => showStep(0);
       document.getElementById('ncLocalBtn').onclick  = () => close('local');
       document.getElementById('ncCloudBtn').onclick  = () => {
         if (CloudSync.isConfigured()) { close('cloud'); return; }
@@ -754,6 +831,13 @@ const App = {
   _updateHeaderName() {
     const el = document.getElementById('charNameDisplay');
     if (el) el.textContent = this.currentCharacter?.metadata?.name || '';
+  },
+
+  // Unbekannt-Regel-Hinweisbanner (Multi-System Phase 3) — analog zum
+  // bestehenden #update-banner, aber dauerhaft sichtbar statt einmalig.
+  _updateUnknownSystemBanner() {
+    const el = document.getElementById('unknown-system-banner');
+    if (el) el.style.display = this._unknownSystem ? 'flex' : 'none';
   },
 
   // ── Dark Mode ───────────────────────────────────────────────────────────
@@ -1675,37 +1759,87 @@ const App = {
       return;
     }
 
-    const chars       = result.data || [];
-    const localIds    = new Set(Storage.listCharacters().map(c => c.id));
-
+    const chars = result.data || [];
     if (!chars.length) {
       listEl.innerHTML = '<p class="vh-empty">Keine Cloud-Charaktere gefunden.<br>Speichere einen Charakter um ihn zu indexieren.</p>';
       return;
     }
 
-    listEl.innerHTML = chars.map(c => {
+    // Multi-System Phase 3: sortierbare Tabelle statt flacher Liste, Spalten
+    // Name/System (Klick auf Spaltenkopf sortiert — gleiches Muster wie die
+    // Journal-Tabellen in notes.js). Sortierstand lebt nur für die Dauer
+    // dieses Modal-Aufrufs, kein Bedarf, ihn darüber hinaus zu merken.
+    this._cloudCharSort = { key: 'name', dir: 'asc' };
+    this._renderCloudCharList(modal, listEl, chars);
+  },
+
+  // Systemname zur Kennung; leer/unregistriert -> "–" statt Absturz (siehe
+  // Versions-Skew-Fall, Plan-Fund T4: altes Backend liefert evtl. gar kein
+  // system-Feld).
+  _cloudCharSystemName(id) {
+    return SystemRegistry.has(id) ? SystemRegistry.get(id).name : (id || '–');
+  },
+
+  _renderCloudCharList(modal, listEl, chars) {
+    const localIds = new Set(Storage.listCharacters().map(c => c.id));
+    const { key, dir } = this._cloudCharSort;
+    const mul = dir === 'asc' ? 1 : -1;
+
+    const sorted = [...chars].sort((a, b) => {
+      const va = key === 'system' ? this._cloudCharSystemName(a.system) : (a.name || '');
+      const vb = key === 'system' ? this._cloudCharSystemName(b.system) : (b.name || '');
+      return va.localeCompare(vb) * mul;
+    });
+
+    const th = (k, label) => {
+      const active = key === k;
+      const arrow  = active ? (dir === 'asc' ? ' ↑' : ' ↓') : ' ↕';
+      return `<th class="nt-col-head nt-sortable${active ? ' nt-sort-active' : ''}" data-sort="${k}">${label}${arrow}</th>`;
+    };
+
+    const rows = sorted.map(c => {
       const isLocal = localIds.has(c.id);
       const statusLabel = !c.mine ? '🔒 Nur lesen (Meister)' : (isLocal ? '✓ Lokal vorhanden' : '⬇ Laden');
       return `
-        <button class="cloud-char-item" data-id="${this._esc(c.id)}" data-mine="${c.mine}">
-          <span class="cloud-char-name">${this._esc(c.name || 'Namenlos')}</span>
-          <span class="cloud-char-status">${statusLabel}</span>
-        </button>`;
+        <tr class="notes-list-item cloud-char-row" data-id="${this._esc(c.id)}" data-mine="${c.mine}">
+          <td class="cloud-char-name">${this._esc(c.name || 'Namenlos')}</td>
+          <td>${this._esc(this._cloudCharSystemName(c.system))}</td>
+          <td class="cloud-char-status">${statusLabel}</td>
+        </tr>`;
     }).join('');
 
-    listEl.querySelectorAll('.cloud-char-item').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        btn.disabled = true;
-        btn.querySelector('.cloud-char-status').textContent = '⏳ …';
+    listEl.innerHTML = `
+      <div class="notes-table-wrap">
+        <table class="notes-table">
+          <thead><tr>${th('name', 'Name')}${th('system', 'System')}<th class="nt-col-head">Status</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
 
-        const r = await CloudSync.pullCharacter(btn.dataset.id);
+    listEl.querySelectorAll('.nt-sortable').forEach(head => {
+      head.addEventListener('click', () => {
+        const k = head.dataset.sort;
+        if (this._cloudCharSort.key === k) this._cloudCharSort.dir = this._cloudCharSort.dir === 'asc' ? 'desc' : 'asc';
+        else this._cloudCharSort = { key: k, dir: 'asc' };
+        this._renderCloudCharList(modal, listEl, chars);
+      });
+    });
+
+    listEl.querySelectorAll('.cloud-char-row').forEach(row => {
+      row.addEventListener('click', async () => {
+        if (row.classList.contains('cloud-char-row-busy')) return;
+        row.classList.add('cloud-char-row-busy');
+        const statusCell = row.querySelector('.cloud-char-status');
+        if (statusCell) statusCell.textContent = '⏳ …';
+
+        const r = await CloudSync.pullCharacter(row.dataset.id);
         if (!r.ok) {
-          btn.querySelector('.cloud-char-status').textContent = '✗ Fehler';
-          btn.disabled = false;
+          if (statusCell) statusCell.textContent = '✗ Fehler';
+          row.classList.remove('cloud-char-row-busy');
           return;
         }
 
-        const isMine = btn.dataset.mine === 'true';
+        const isMine = row.dataset.mine === 'true';
         const char = Character.fromJSON(r.data);
         Storage.saveCharacter(char);
         modal.classList.remove('visible');

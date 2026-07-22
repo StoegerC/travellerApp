@@ -7,6 +7,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Neu
+- **Multi-System-Umbau, Phase 3: Mehrsystem-Betrieb** — die drei Berührungspunkte des Nutzers mit dem Regelsystem sind jetzt system-bewusst:
+  - **Neuanlage**: Der „Neuer Charakter"-Dialog zeigt einen Systemwahl-Schritt, sobald mehr als ein System registriert ist (dynamisch aus `SystemRegistry.list()`, mit „Zurück"). Bei genau einem System (heute: MGT2) bleibt der Ablauf unverändert.
+  - **Cloud-Charakterliste**: statt einer flachen Liste jetzt eine sortierbare Tabelle mit den Spalten Name und System (Klick auf Spaltenkopf sortiert, wie bei den Journal-Tabellen). `GET /chars` liefert dafür das `system`-Feld mit — der Server extrahiert es wie den Namen aus dem JSON-Blob (neue `system`-Spalte in der `characters`-Tabelle), ohne die Kennung selbst zu verstehen.
+  - **Charakterwechsel**: der Charakter-Selector zeigt eine System-Kennzeichnung, sobald die lokalen Charaktere mehr als ein System umfassen. Der Wechsel baut die Tab-Leiste neu aus dem Manifest des Zielcharakters auf; existiert die gerade offene Seite dort nicht, landet man auf dem Charakter-Tab. Dafür läuft die Tab-Navigation jetzt über Event-Delegation auf dem Container statt über Listener an den einzelnen (bei einem Systemwechsel neu erzeugten) Buttons.
+  - **Unbekannt-Regel**: ein Charakter mit einer System-Kennung, die diese Installation nicht registriert hat (Import aus neuerer Version, Sync von einem Gerät mit einem hier fehlenden System), wird strikt schreibgeschützt mit einem Hinweisbanner und nur den drei Kern-Tabs (Charakter/Ausrüstung/Log) angezeigt, statt MGT2-Tabs über fremde Regeldaten zu legen.
+
 ---
 
 ## [3.26.0] – 2026-07-22

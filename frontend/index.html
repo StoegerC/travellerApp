@@ -52,6 +52,13 @@
     <button id="update-reload-btn" class="update-reload-btn">Neu laden</button>
   </div>
 
+  <!-- Unbekannt-Regel (Multi-System Phase 3): Charakter mit einer System-
+       Kennung, die diese Installation nicht kennt — nur Kern-Tabs, schreibgeschützt.
+       Sichtbarkeit steuert App._updateUnknownSystemBanner(). -->
+  <div id="unknown-system-banner" class="unknown-system-banner" style="display:none">
+    <span>⚠ Unbekanntes Regelsystem — nur Kern-Funktionen sichtbar, schreibgeschützt</span>
+  </div>
+
   <div class="container">
 
     <!-- Header – nur App-Titel, aktueller Char-Name und globale Aktionen -->
@@ -121,6 +128,15 @@
         <button id="ncCancelBtn" class="vh-close">✕</button>
       </div>
 
+      <!-- Systemwahl (Multi-System Phase 3): nur sichtbar, wenn mehr als ein
+           Regelsystem registriert ist — Inhalt kommt dynamisch aus
+           SystemRegistry.list() (siehe App._showNewCharDialog()), bei genau
+           einem System bleibt dieser Schritt komplett übersprungen. -->
+      <div id="ncStep0" style="display:none">
+        <p class="vh-hint">Welches Rollenspielsystem?</p>
+        <div class="nc-choice-row" id="ncSystemChoices"></div>
+      </div>
+
       <div id="ncStep1">
         <p class="vh-hint">Wo soll der Charakter gespeichert werden?</p>
         <div class="nc-choice-row">
@@ -134,6 +150,9 @@
             <span class="nc-choice-label">Cloud</span>
             <span class="nc-choice-desc">Geräteübergreifend synchronisiert</span>
           </button>
+        </div>
+        <div class="nc-action-row nc-btn-row" id="ncStep1BackRow" style="display:none">
+          <button id="ncBackBtn0" class="btn-secondary">← Zurück</button>
         </div>
       </div>
 
