@@ -108,6 +108,40 @@ const CampaignSync = {
     }
   },
 
+  // Generisches Erweiterungs-API (Multi-System Phase 5, siehe
+  // backend/routes/campaigns.js /ext/:key): fuer geteilte Kampagnen-Inhalte
+  // eines Regelsystems ohne eigene Route/Merge-Logik wie bei updateShips
+  // oben (MGT2-Sonderfall). key: kurzer Bezeichner (a-z0-9_-, siehe
+  // isValidExtKey serverseitig), entries: eigene mergefaehige Eintraege
+  // (id/updatedAt, Tombstone-Loeschung statt splice).
+  async getExt(id, key) {
+    try {
+      const res = await fetch(this._url(`/campaign/${id}/ext/${key}`), {
+        headers: this._headers(),
+        signal:  AbortSignal.timeout(30000),
+      });
+      if (!res.ok) return { ok: false, status: res.status };
+      return { ok: true, data: await res.json() };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
+  async updateExt(id, key, entries) {
+    try {
+      const res = await fetch(this._url(`/campaign/${id}/ext/${key}`), {
+        method:  'PUT',
+        headers: { ...this._headers(), 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ entries }),
+        signal:  AbortSignal.timeout(30000),
+      });
+      if (!res.ok) return { ok: false, status: res.status };
+      return { ok: true, data: await res.json() };
+    } catch (e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
   // joinCode: seit der Sicherheitshaertung Pflicht fuer Nicht-Mitglieder
   // (siehe backend/routes/campaigns.js) - ohne gueltigen Code antwortet der
   // Server mit 403.

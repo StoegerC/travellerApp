@@ -1627,11 +1627,23 @@ const App = {
     if (!r.ok) { listEl.innerHTML = '<p class="vh-empty">Laden fehlgeschlagen.</p>'; return; }
     const camps = r.data || [];
     if (!camps.length) { listEl.innerHTML = '<p class="vh-empty">Keine Kampagnen gefunden.</p>'; return; }
-    listEl.innerHTML = camps.map(c => `
-      <button class="campaign-item" data-id="${this._esc(c.id)}">
+
+    // Multi-System Phase 5: Kampagnen eines anderen Systems als das aktuelle
+    // Charakter-System sind ausgegraut (nicht klickbar) statt einfach
+    // wegfiltert zu werden — der Beitritt würde ohnehin serverseitig mit
+    // 409 abgelehnt, aber sichtbar zu machen "warum" ist hier hilfreicher
+    // als sie kommentarlos verschwinden zu lassen. Leeres c.system =
+    // Bestandskampagne von vor dieser Phase, kein Konflikt.
+    const mySystem = this.currentCharacter?.system;
+    listEl.innerHTML = camps.map(c => {
+      const mismatch = c.system && mySystem && c.system !== mySystem;
+      const sysName  = SystemRegistry.has(c.system) ? SystemRegistry.get(c.system).name : c.system;
+      return `
+      <button class="campaign-item${mismatch ? ' campaign-item-othersystem' : ''}" data-id="${this._esc(c.id)}" ${mismatch ? 'disabled' : ''}>
         <span class="campaign-item-name">${this._esc(c.name)}</span>
-        <span class="campaign-item-meta">${this._esc(c.id)} · ${c.memberCount} Mitglied${c.memberCount !== 1 ? 'er' : ''}</span>
-      </button>`).join('');
+        <span class="campaign-item-meta">${this._esc(c.id)} · ${c.memberCount} Mitglied${c.memberCount !== 1 ? 'er' : ''}${mismatch ? ` · anderes System (${this._esc(sysName)})` : ''}</span>
+      </button>`;
+    }).join('');
     listEl.querySelectorAll('.campaign-item').forEach(btn => {
       btn.addEventListener('click', () => {
         document.getElementById('campaignJoinId').value = btn.dataset.id;
@@ -1684,6 +1696,7 @@ const App = {
     btn.disabled = false;
     if (r.notFound) { this.showStatus('Kampagne nicht gefunden', 'error'); return; }
     if (r.status === 403) { this.showStatus('Falscher oder fehlender Beitritts-Code', 'error'); return; }
+    if (r.status === 409) { this.showStatus('Diese Kampagne gehört zu einem anderen Regelsystem', 'error'); return; }
     if (!r.ok) { this.showStatus(`Fehler: ${r.error || 'HTTP ' + r.status}`, 'error'); return; }
     const rGet = await CampaignSync.getCampaign(id);
     if (!rGet.ok) { this.showStatus('Kampagne beigetreten, Laden fehlgeschlagen', 'error'); return; }

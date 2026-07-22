@@ -7,6 +7,12 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Neu
+- **Multi-System-Umbau, Phase 5 (letzte Plan-Phase): Kampagnen systemrein** — eine Kampagne übernimmt beim Erstellen einmalig das Regelsystem ihres Gründungscharakters (neue `system`-Spalte in der `campaigns`-Tabelle, wie bei Charakteren aus dem JSON-Blob extrahiert) und behält es dauerhaft. Beitritt mit einem Charakter eines anderen Systems lehnt der Server jetzt mit `409` ab (`PUT /campaign/:id/join`); der Beitritts-Dialog graut passend dazu Kampagnen anderer Systeme aus (mit Systemnamen als Hinweis) statt sie kommentarlos verschwinden zu lassen.
+- **Generisches Kampagnen-Erweiterungs-API** (`GET`/`PUT /campaign/:id/ext/:key`, `CampaignSync.getExt`/`updateExt`) — ein künftiges System mit geteilten Kampagnen-Inhalten (z. B. gemeinsame Beweisstücke) braucht dafür keine eigene Backend-Route mehr, sondern nutzt denselben generischen Array-Merge (nach `id`/`updatedAt`, Tombstones), den `updateCampaignNotes` schon für den Kern-Teil (Journal/Personen/Orte/Quests) nutzt. MGT2s Schiffe bleiben aus Bestandsschutz-Gründen auf ihrer eigenen `/ships`-Route.
+
+Damit sind alle fünf Phasen des Multi-System-Umbaus abgeschlossen (siehe Todo.txt CHARAKTERVERWALTUNG und `frontend/js/systems/README.md`). Phase 6 (freiwillige MGT2-Migration nach `systemData`) bleibt optional, nur bei tatsächlichem Bedarf.
+
 ---
 
 ## [3.28.0] – 2026-07-22

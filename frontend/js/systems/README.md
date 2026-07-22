@@ -6,14 +6,16 @@ konkretes System — er fragt die `SystemRegistry` mit `character.system` nach d
 **Manifest**, dem Vertrag des Systems. Architektur-Plan und Entscheidungen:
 Todo.txt (CHARAKTERVERWALTUNG) bzw. das dort verlinkte Plan-Dokument.
 
-**Stand:** Phasen 0–4 umgesetzt (Kern-Modell/Registry/Manifest-Vertrag/
-Mehrsystem-Betrieb/Universal-Template, siehe Todo.txt CHARAKTERVERWALTUNG).
-Der Manifest-Vertrag umfasst `id`, `name`, `tabs`, `currency`,
-`financeCategories`, `defaultDebtCategory`, `defaultSettleCategory`,
-`calendar`, `labels`, `ageRange`, `entityExtraFields`, `metadataExtraFields`,
-`backgroundPath`, `keyEventsPath`, `mergeSpec`. `systems/universal/` ist ein
-echtes, registriertes zweites System (kein Platzhalter) — die einfachste
-Kopiervorlage für ein neues System.
+**Stand:** Alle Phasen 0–5 des Plans umgesetzt (Kern-Modell/Registry/
+Manifest-Vertrag/Mehrsystem-Betrieb/Universal-Template/systemreine
+Kampagnen, siehe Todo.txt CHARAKTERVERWALTUNG). Der Manifest-Vertrag
+umfasst `id`, `name`, `tabs`, `currency`, `financeCategories`,
+`defaultDebtCategory`, `defaultSettleCategory`, `calendar`, `labels`,
+`ageRange`, `entityExtraFields`, `metadataExtraFields`, `backgroundPath`,
+`keyEventsPath`, `mergeSpec`. `systems/universal/` ist ein echtes,
+registriertes zweites System (kein Platzhalter) — die einfachste
+Kopiervorlage für ein neues System. Optional offen: Phase 6 (freiwillige
+MGT2-Migration nach `systemData`), nur bei tatsächlichem Bedarf.
 
 ## Ein neues System anlegen (Kopie von `universal/`)
 
@@ -66,7 +68,26 @@ Verstöße werfen keinen Fehler — sie erzeugen leise falsche Merges am Spielti
   `systems/universal/pages/values.js`); weitere Widgets (Zähler, Tracker)
   entstehen bei Bedarf, nicht auf Vorrat.
 
-### 5. Registrieren — genau drei Stellen außerhalb des Ordners
+### 5. Kampagnen: geteilte Inhalte
+Kampagnen sind **systemrein** — eine Kampagne gehört ab dem Erstellen für
+immer zu genau einem System (vom Gründungscharakter übernommen), Beitritt
+mit einem Charakter eines anderen Systems lehnt der Server mit `409` ab
+(`PUT /campaign/:id/join`). Der Kern-Teil einer Kampagne (geteiltes Journal,
+Personen, Orte, Quests) ist für jedes System identisch und braucht keine
+Systemarbeit.
+
+Braucht das eigene System darüber hinaus geteilte Inhalte (z. B. eine
+Delta-Green-Zelle mit gemeinsamen Beweisstücken), **keine eigene
+Backend-Route bauen** — das generische Erweiterungs-API nutzen:
+`CampaignSync.getExt(campaignId, key)` / `updateExt(campaignId, key, entries)`
+(frontend/js/campaign.js), serverseitig `GET`/`PUT /campaign/:id/ext/:key`.
+`key` ist ein selbst gewählter, kurzer Bezeichner (`a-z0-9_-`, muss mit einem
+Buchstaben beginnen); `entries` folgt derselben Merge-Bauordnung wie überall
+(`id`/`updatedAt`, Tombstone-Löschung). MGT2s Schiffe nutzen aus
+Bestandsschutz-Gründen weiterhin ihre eigene `/ships`-Route — kein Vorbild für
+neue Systeme, sondern ein historischer Sonderfall.
+
+### 6. Registrieren — genau drei Stellen außerhalb des Ordners
 1. `<script>`-Tags in `frontend/index.html` — Reihenfolge: eigene Seiten/Daten
    zuerst, dann das eigene `manifest.js` (nach `registry.js`), alles vor `app.js`,
 2. Einträge in der `ASSETS`-Liste von `frontend/sw.js`,
@@ -75,7 +96,7 @@ Verstöße werfen keinen Fehler — sie erzeugen leise falsche Merges am Spielti
 Mehr Kern-Berührung ist verboten. Fehlt dem Vertrag etwas: den Vertrag im Kern
 erweitern (eigener Branch, nützt allen Systemen) — nicht im System hacken.
 
-### 6. Verifizieren
+### 7. Verifizieren
 - Playwright-Durchstich: Charakter im neuen System anlegen → alle Tabs rendern
   in Lese- und Bearbeitungsmodus → editieren, speichern, App neu laden → alles da.
 - Merge-Roundtrip: zwei simulierte Geräte editieren verschiedene
@@ -84,6 +105,6 @@ erweitern (eigener Branch, nützt allen Systemen) — nicht im System hacken.
   System-id kommt außerhalb von `systems/` und den drei Registrierungsstellen
   nicht vor.
 
-### 7. Release
+### 8. Release
 Wie jedes Feature: `feature/system-<id>`-Branch, CHANGELOG, `bump-version.js`
 (minor), Merge nach Freigabe.

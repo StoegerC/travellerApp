@@ -23,6 +23,13 @@ function isValidCampaignId(id) {
   return /^[a-z0-9_-]{2,32}$/.test(id);
 }
 
+// Schluessel des generischen Erweiterungs-API (Multi-System Phase 5, siehe
+// PUT /campaign/:id/ext/:key unten) - erster Buchstabe zwingend a-z, damit
+// z.B. "__proto__" (beginnt mit "_") gar nicht erst matcht.
+function isValidExtKey(key) {
+  return /^[a-z][a-z0-9_-]{0,31}$/.test(key);
+}
+
 function isGm(user) { return user.roles.includes('gm'); }
 
 // Beitritts-Code: bisher konnte JEDER authentifizierte Nutzer JEDER Kampagne
@@ -107,6 +114,10 @@ router.post('/campaign/:id', (req, res) => {
     id,
     name: name || id,
     ownerId: req.user.id,
+    // Multi-System Phase 5: einmalig vom Gruendungscharakter uebernommen,
+    // danach unveraenderlich - eine Kampagne lebt immer in genau einem
+    // System (PUT /join weiter unten prueft das beim Beitritt).
+    system: db.getCharacterSystem(charId),
     joinCode: generateJoinCode(),
     createdAt: new Date().toISOString(),
     members: [{ charId, joinedAt: new Date().toISOString() }],
@@ -142,6 +153,33 @@ router.put('/campaign/:id/ships', (req, res) => {
   res.json(campaign.ships);
 });
 
+// GET/PUT /campaign/:id/ext/:key – generisches Erweiterungs-API (Multi-System
+// Phase 5, Challenge-Fund T3): ein neues Regelsystem mit geteilten Kampagnen-
+// Inhalten (z.B. eine Delta-Green-Zelle mit gemeinsamen Beweisstücken)
+// braucht dafür KEINE eigene Route/Merge-Logik mehr wie die Schiffs-Route
+// oben (die aus Bestandsschutz-Gründen als historischer MGT2-Sonderfall
+// bestehen bleibt) — nur einen Schlüssel und ein Array mergefähiger
+// Einträge (id/updatedAt, Löschung per Tombstone statt splice, siehe
+// systems/README.md). Membership-Prüfung identisch zu /notes und /ships.
+router.get('/campaign/:id/ext/:key', (req, res) => {
+  if (!isValidExtKey(req.params.key)) return res.status(400).send('Invalid key');
+  const campaign = db.getCampaign(req.params.id);
+  if (!campaign) return res.status(404).send('Not Found');
+  if (!isCampaignMember(db, campaign, req.user.id) && !isGm(req.user)) return res.status(403).send('Forbidden');
+  res.json((campaign.ext && campaign.ext[req.params.key]) || []);
+});
+
+router.put('/campaign/:id/ext/:key', (req, res) => {
+  if (!isValidExtKey(req.params.key)) return res.status(400).send('Invalid key');
+  const { entries } = req.body || {};
+  if (!Array.isArray(entries)) return res.status(400).send('Invalid JSON');
+  const existing = db.getCampaign(req.params.id);
+  if (!existing) return res.status(404).send('Not Found');
+  if (!isCampaignMember(db, existing, req.user.id)) return res.status(403).send('Forbidden');
+  const campaign = db.updateCampaignExt(req.params.id, req.params.key, entries);
+  res.json(campaign.ext[req.params.key]);
+});
+
 // PUT /campaign/:id/notes – atomarer Merge statt last-write-wins, siehe
 // db.updateCampaignNotes. Membership-Pruefung analog zu /ships oben - vorher
 // konnte JEDER authentifizierte Nutzer in JEDE Kampagne schreiben, nicht nur
@@ -166,6 +204,15 @@ router.put('/campaign/:id/join', (req, res) => {
 
   const existing = db.getCampaign(req.params.id);
   if (!existing) return res.status(404).send('Not Found');
+
+  // Multi-System Phase 5: eine Kampagne lebt in genau einem Regelsystem -
+  // unabhaengig davon, ob der Nutzer mit einem ANDEREN Charakter schon
+  // Mitglied ist (siehe alreadyIn unten), muss GENAU DIESER Charakter zum
+  // Kampagnen-System passen. Leeres existing.system = Bestandskampagne von
+  // vor dieser Phase, kein Migrationszwang, keine Pruefung.
+  if (existing.system && db.getCharacterSystem(charId) !== existing.system) {
+    return res.status(409).send('Charakter und Kampagne gehören zu unterschiedlichen Regelsystemen');
+  }
 
   const alreadyIn = isCampaignMember(db, existing, req.user.id);
   if (!alreadyIn && !joinCodeMatches(existing.joinCode, joinCode)) {
@@ -219,3 +266,4 @@ module.exports.joinCodeMatches = joinCodeMatches;
 module.exports.generateJoinCode = generateJoinCode;
 module.exports.withMemberNames = withMemberNames;
 module.exports.campaignPollToken = campaignPollToken;
+module.exports.isValidExtKey = isValidExtKey;

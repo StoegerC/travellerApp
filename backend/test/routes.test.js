@@ -204,3 +204,78 @@ test('putCharacter: fehlendes/kaputtes system-Feld -> leerer String, kein Wurf',
   assert.strictEqual(db.listCharacters().find(c => c.id === id).system, '');
   db.deleteCharacter(id);
 });
+
+// ── Multi-System Phase 5: Kampagnen systemrein + Erweiterungs-API ───────────
+
+test('getCharacterSystem: liefert die system-Spalte, unbekannte ID -> leerer String', () => {
+  const id = 'sys-camp-char-' + Date.now();
+  db.putCharacter(id, JSON.stringify({ id, system: 'universal', metadata: { name: 'X' } }), null, 'owner-1');
+  assert.strictEqual(db.getCharacterSystem(id), 'universal');
+  assert.strictEqual(db.getCharacterSystem('gibt-es-nicht'), '');
+  db.deleteCharacter(id);
+});
+
+test('insertCampaign/listCampaigns: system wird gespeichert und in der offenen Liste mitgeliefert', () => {
+  const id = 'camp-sys-' + Date.now();
+  db.insertCampaign({
+    id, name: 'T', ownerId: 'u', system: 'universal', joinCode: 'x',
+    createdAt: new Date().toISOString(),
+    members: [], notes: { sessions: [], persons: [], locations: [], quests: [] }, ships: [],
+  });
+  const row = db.listCampaigns().find(c => c.id === id);
+  assert.strictEqual(row.system, 'universal');
+  db.deleteCampaign(id);
+});
+
+test('insertCampaign: fehlendes system-Feld -> leerer String, kein Wurf (Bestandskampagne)', () => {
+  const id = 'camp-sys-empty-' + Date.now();
+  db.insertCampaign({
+    id, name: 'T', ownerId: 'u', joinCode: 'x',
+    createdAt: new Date().toISOString(),
+    members: [], notes: { sessions: [], persons: [], locations: [], quests: [] }, ships: [],
+  });
+  assert.strictEqual(db.listCampaigns().find(c => c.id === id).system, '');
+  db.deleteCampaign(id);
+});
+
+test('updateCampaignExt: mergt granular unter einem frei waehlbaren Schluessel, unabhaengig von ships/notes', () => {
+  const id = 'camp-ext-' + Date.now();
+  db.insertCampaign({
+    id, name: 'T', ownerId: 'u', system: 'delta-green', joinCode: 'x',
+    createdAt: new Date().toISOString(),
+    members: [], notes: { sessions: [], persons: [], locations: [], quests: [] }, ships: [],
+  });
+
+  const now = Date.now();
+  const iso = off => new Date(now + off * 1000).toISOString();
+
+  // Geraet A legt ein Beweisstueck an.
+  let campaign = db.updateCampaignExt(id, 'evidence', [{ id: 'ev1', name: 'Blutprobe', updatedAt: iso(0) }]);
+  assert.deepStrictEqual(campaign.ext.evidence.map(e => e.id), ['ev1']);
+
+  // Geraet B (zeitgleich, anderes Beweisstueck) - beide bleiben erhalten,
+  // genau das granulare Merge-Verhalten, das die generische Route noetig macht.
+  campaign = db.updateCampaignExt(id, 'evidence', [{ id: 'ev2', name: 'Foto', updatedAt: iso(1) }]);
+  assert.deepStrictEqual(campaign.ext.evidence.map(e => e.id).sort(), ['ev1', 'ev2']);
+
+  // Ein zweiter Schluessel bleibt unabhaengig vom ersten.
+  campaign = db.updateCampaignExt(id, 'clues', [{ id: 'c1', name: 'Hinweis', updatedAt: iso(2) }]);
+  assert.deepStrictEqual(campaign.ext.evidence.map(e => e.id).sort(), ['ev1', 'ev2'], 'evidence unangetastet');
+  assert.deepStrictEqual(campaign.ext.clues.map(c => c.id), ['c1']);
+
+  // ships/notes bleiben von ext komplett unberuehrt.
+  assert.deepStrictEqual(campaign.ships, []);
+
+  db.deleteCampaign(id);
+});
+
+test('isValidExtKey: a-z0-9_- ab einem Buchstaben, "__proto__" wird abgelehnt', () => {
+  const { isValidExtKey } = require('../routes/campaigns');
+  assert.strictEqual(isValidExtKey('evidence'), true);
+  assert.strictEqual(isValidExtKey('clue-log_2'), true);
+  assert.strictEqual(isValidExtKey('__proto__'), false, 'beginnt nicht mit a-z');
+  assert.strictEqual(isValidExtKey('constructor'), true, 'harmlos als Objekt-Property, kein Prototype-Zugriff');
+  assert.strictEqual(isValidExtKey(''), false);
+  assert.strictEqual(isValidExtKey('Ab'), false, 'Grossbuchstaben nicht erlaubt');
+  assert.strictEqual(isValidExtKey('a'.repeat(33)), false, 'zu lang');
+});
