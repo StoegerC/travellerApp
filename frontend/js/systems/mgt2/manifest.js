@@ -74,6 +74,13 @@ const Mgt2System = {
     ships: true,
   },
 
+  // Datenpfad des Kern-Bausteins "career-background" (Phase 2, Feld-Audit
+  // Fund F1, siehe pages/career-background.js): Prägende Ereignisse und
+  // Hintergrund & Persönlichkeit liegen bei MGT2 weiterhin unter career.*
+  // (Bestandsschutz) statt am neuen Kern-Standardpfad background/keyEvents.
+  backgroundPath: 'career.background',
+  keyEventsPath: 'career.keyEvents',
+
   // Zusatzfeld auf der Kern-Charakterseite (Phase 2, Feld-Audit Fund F4):
   // Helden XP ist eine MGT2-Hausregel, kein Kern-Konzept. Bleibt unter
   // character.metadata.heroXp (Bestandsschutz) — auch der eigene, direkt

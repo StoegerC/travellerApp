@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.26.0] – 2026-07-22
+
+### Geändert
+- **Multi-System-Umbau, Phase 2 (Feld-Audit F1): career.js aufgeteilt** — die Karriere-Timeline (Dienst, Rang, Benefits, Musterung) ist MGT2-Regelwerk und bleibt in `systems/mgt2/pages/career.js`. Prägende Ereignisse, Hintergrund & Persönlichkeit (Aussehen/Persönlichkeit/Ziele/Motivation/Geheimnisse/Zitate) und Favoriten-Kontakte sind spielunabhängig und wandern in den neuen Kern-Baustein `pages/career-background.js` (`CareerBackground`, nach dem Muster von `NotesChronicle`: eigenständiges Objekt, explizit aus der System-Seite eingebunden, mit einer vom Aufrufer übergebenen `rerender`-Funktion statt fest verdrahteter Container-Id). Datenpfad bleibt für MGT2 unverändert `character.career.background`/`character.career.keyEvents` (Bestandsschutz) — neue Systeme ohne eigene Manifest-Angabe bekommen die Kern-Felder `character.background`/`character.keyEvents`. Neue Manifest-Schlüssel `backgroundPath`/`keyEventsPath`, neue App-Zugriffe `App._backgroundPath()`/`App._keyEventsPath()`. Reine Umbau-Maßnahme ohne Verhaltensänderung.
+
+---
+
 ## [3.25.0] – 2026-07-21
 
 ### Geändert
