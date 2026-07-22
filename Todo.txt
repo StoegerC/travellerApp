@@ -67,20 +67,28 @@ CHARAKTERVERWALTUNG
        arrays: {pfad: true|"key"}, ships: true für den rekursiven
        Schiffs-Merge. Shared-Prefix-Falle (career.terms + career.keyEvents)
        mit Materialized-Set abgesichert + Regressionstest.]
-       [career.js aufgeteilt ERLEDIGT: Karriere-Timeline bleibt MGT2
-       (systems/mgt2/pages/career.js); Prägende Ereignisse/Hintergrund &
-       Persönlichkeit/Favoriten-Kontakte sind jetzt der Kern-Baustein
+       [career.js aufgeteilt ERLEDIGT in 3.26.0: Karriere-Timeline bleibt
+       MGT2 (systems/mgt2/pages/career.js); Prägende Ereignisse/Hintergrund
+       & Persönlichkeit/Favoriten-Kontakte sind jetzt der Kern-Baustein
        pages/career-background.js (CareerBackground, Muster wie
        NotesChronicle, rerender-Funktion vom Aufrufer übergeben statt
        fester Container-Id). Datenpfad weiter career.background/
        career.keyEvents via Manifest-Schlüssel backgroundPath/
        keyEventsPath (App._backgroundPath()/_keyEventsPath()).]
-       Noch offen: Kern-Widget-Bibliothek (Zähler/Tabellenlisten/Tracker).
+       Damit ist Phase 2 inhaltlich abgeschlossen (Kern-Widget-Bibliothek
+       bewusst zurückgestellt, siehe Phase 4).
        Abnahme: grep traveller|UWP|Imperialkalender|Vargr|Cr über Kern leer.
     3. Mehrsystem-Betrieb: Neuanlage mit System-Auswahl, Cloud-Liste als
        sortierbare Tabelle (Name+System, GET /chars liefert system mit),
        Charakterwechsel wechselt System/Tabs (fehlender Tab -> Charakter-Tab).
     4. Universal-Template als Beweis (Kern-Tabs + freie Werte-Listen).
+       Dabei auch die Kern-Widget-Bibliothek (Zähler/Tabellenlisten/Tracker,
+       Challenge-Fund U4) bauen — bewusst NICHT vorab in Phase 2 gemacht:
+       combat.js/attributes.js haben viele bespoke ±-Zähler und eine
+       Skill-Tabelle, aber ohne ein zweites System als echten Bedarfsnachweis
+       wäre die Widget-API geraten (Verfrühte-Abstraktion-Risiko aus Plan §5).
+       Das Universal-Template zeigt den echten Bedarf; MGT2 wird danach
+       risikoarm darauf umgestellt.
     5. Kampagnen: system-Feld + Join-Prüfung + generisches Erweiterungs-API.
     6. (optional, nur bei Bedarf) freiwillige MGT2-Migration nach systemData.
 
