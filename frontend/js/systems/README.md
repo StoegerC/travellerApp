@@ -6,13 +6,16 @@ konkretes System — er fragt die `SystemRegistry` mit `character.system` nach d
 **Manifest**, dem Vertrag des Systems. Architektur-Plan und Entscheidungen:
 Todo.txt (CHARAKTERVERWALTUNG) bzw. das dort verlinkte Plan-Dokument.
 
-**Stand:** Phase 1 (Registry + MGT2-Modul als Umzug). Der Manifest-Vertrag
-umfasst bisher `id`, `name`, `tabs`; die weiteren Schlüssel (`currency`,
+**Stand:** Phasen 0–4 umgesetzt (Kern-Modell/Registry/Manifest-Vertrag/
+Mehrsystem-Betrieb/Universal-Template, siehe Todo.txt CHARAKTERVERWALTUNG).
+Der Manifest-Vertrag umfasst `id`, `name`, `tabs`, `currency`,
+`financeCategories`, `defaultDebtCategory`, `defaultSettleCategory`,
 `calendar`, `labels`, `ageRange`, `entityExtraFields`, `metadataExtraFields`,
-`financeCategories`, `backgroundPath`, `characterDefaults`, `mergeSpec`, `map`)
-kommen mit Phase 2 und werden hier dann dokumentiert.
+`backgroundPath`, `keyEventsPath`, `mergeSpec`. `systems/universal/` ist ein
+echtes, registriertes zweites System (kein Platzhalter) — die einfachste
+Kopiervorlage für ein neues System.
 
-## Ein neues System anlegen (ab Phase 4: Kopie von `universal/`)
+## Ein neues System anlegen (Kopie von `universal/`)
 
 ### 1. Ordner anlegen
 `systems/<id>/` mit `manifest.js` (+ `pages/`, `data/` nach Bedarf).
@@ -36,11 +39,12 @@ const MySystem = {
 SystemRegistry.register(MySystem);
 ```
 
-Ab Phase 2 zusätzlich (Auszug — Details folgen dort): `calendar` (Datumsformat
-**muss als String chronologisch sortieren**, z. B. `1105-032` oder ISO — die
-Chronik vergleicht lexikografisch), `mergeSpec` (**jedes Array in `systemData`
-deklarieren**, sonst gilt „lokal gewinnt komplett" und Zwei-Geräte-Edits
-verlieren still Änderungen).
+Weitere Schlüssel nach Bedarf (siehe `systems/mgt2/manifest.js` für alle,
+`systems/universal/manifest.js` fürs Minimalbeispiel): `calendar`
+(Datumsformat **muss als String chronologisch sortieren**, z. B. `1105-032`
+oder ISO — die Chronik vergleicht lexikografisch), `mergeSpec` (**jedes Array
+in `systemData` deklarieren**, sonst gilt „lokal gewinnt komplett" und
+Zwei-Geräte-Edits verlieren still Änderungen).
 
 ### 3. Daten-Bauordnung
 Alle Regeldaten leben unter `character.systemData` — **nie neue Top-Level-Felder**
@@ -56,8 +60,11 @@ Verstöße werfen keinen Fehler — sie erzeugen leise falsche Merges am Spielti
 - `App.editMode` respektieren; bei Änderungen `App.renderCurrentPage()` statt
   DOM-Toggles; Modals so bauen, dass `App._isBusyEditing()` sie erkennt
   (sonst wischt der Sync-Poll sie weg).
-- Aus der Kern-Widget-Bibliothek komponieren (ab Phase 2), statt Zähler/Listen
-  neu zu erfinden.
+- Aus der Kern-Widget-Bibliothek (`core-widgets.js`, `CoreWidgets`) komponieren
+  statt Zähler/Listen neu zu erfinden — bisher nur `renderValueList`/
+  `attachValueList` (editierbare Name+Wert-Liste, siehe
+  `systems/universal/pages/values.js`); weitere Widgets (Zähler, Tracker)
+  entstehen bei Bedarf, nicht auf Vorrat.
 
 ### 5. Registrieren — genau drei Stellen außerhalb des Ordners
 1. `<script>`-Tags in `frontend/index.html` — Reihenfolge: eigene Seiten/Daten

@@ -16,7 +16,9 @@ const FinancesPage = {
   // verhindert einen Zeilenumbruch mitten im Betrag (z.B. Währungssymbol
   // allein am Zeilenende). Bewusst beibehalten, kein Stilversehen.
   _fmt(n) {
-    return App._currency() + ' ' + Math.abs(Math.round(n)).toLocaleString('de-DE');
+    const cur = App._currency();
+    const amount = Math.abs(Math.round(n)).toLocaleString('de-DE');
+    return cur ? cur + ' ' + amount : amount;
   },
 
   _fmtSigned(n) {

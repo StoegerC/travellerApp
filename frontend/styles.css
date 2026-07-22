@@ -8241,3 +8241,68 @@ body.dark-mode .session-links .link-chip {
   background: #1b1e33;
   color: #9095b8;
 }
+
+/* ===== CORE-WIDGETS: WERTE-LISTE ===== */
+.universal-values-page { display: flex; flex-direction: column; gap: 20px; }
+
+.cw-value-list { }
+.cw-vl-title { font-size: 15px; font-weight: 600; color: #555; margin: 0 0 10px; }
+
+.cw-vl-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+
+.cw-vl-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.cw-vl-row-view { font-size: 14px; }
+.cw-vl-name  { flex: 1; font-weight: 500; }
+.cw-vl-value { color: #555; }
+
+.cw-vl-name-input, .cw-vl-value-input {
+  min-height: 42px;
+  padding: 0 10px;
+  font-size: 14px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  background: white;
+}
+.cw-vl-name-input  { flex: 2; }
+.cw-vl-value-input { flex: 1; }
+.cw-vl-name-input:focus, .cw-vl-value-input:focus { border-color: #667eea; outline: none; }
+
+.cw-vl-del {
+  background: none;
+  border: none;
+  color: #ccc;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px;
+}
+.cw-vl-del:hover { color: #dc3545; }
+
+.cw-vl-add {
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  min-height: 44px;
+}
+.cw-vl-add:hover { background: rgba(102, 126, 234, 0.18); }
+
+body.dark-mode .cw-vl-title      { color: #9095b8; }
+body.dark-mode .cw-vl-row        { background: #1a1d2e; border-color: #2c3050; }
+body.dark-mode .cw-vl-value      { color: #a8adc8; }
+body.dark-mode .cw-vl-name-input,
+body.dark-mode .cw-vl-value-input { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
+body.dark-mode .cw-vl-add        { background: #1a1e35; color: #818cf8; }
+body.dark-mode .cw-vl-add:hover  { background: #21264a; }

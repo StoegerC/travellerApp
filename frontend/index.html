@@ -389,6 +389,7 @@
   <script src="js/models/character.js?v=3.27.0"></script>
   <script src="js/sync-merge.js?v=3.27.0"></script>
   <script src="js/storage.js?v=3.27.0"></script>
+  <script src="js/core-widgets.js?v=3.27.0"></script>
   <!-- Kern-Seiten -->
   <script src="js/pages/metadata.js?v=3.27.0"></script>
   <script src="js/pages/finances.js?v=3.27.0"></script>
@@ -403,9 +404,14 @@
   <script src="js/systems/mgt2/pages/notes-travellermap.js?v=3.27.0"></script>
   <script src="js/systems/mgt2/pages/karte.js?v=3.27.0"></script>
   <script src="js/systems/mgt2/pages/combat.js?v=3.27.0"></script>
+  <script src="js/systems/universal/pages/values.js?v=3.27.0"></script>
   <script src="js/systems/registry.js?v=3.27.0"></script>
   <script src="js/systems/mgt2/calendar.js?v=3.27.0"></script>
+  <!-- Reihenfolge wichtig: MGT2 zuerst registrieren, damit es das
+       Default-/Fallback-System für Bestandscharaktere bleibt (siehe
+       systems/registry.js). Universal-Template siehe systems/README.md. -->
   <script src="js/systems/mgt2/manifest.js?v=3.27.0"></script>
+  <script src="js/systems/universal/manifest.js?v=3.27.0"></script>
   <script src="js/app.js?v=3.27.0"></script>
   <script>
     if ('serviceWorker' in navigator) {
