@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.30.0] – 2026-07-22
+
 ### Geändert
 - **combat.js auf die Kern-Zähler-Bibliothek umgestellt** — die Attribut-Karten (STR/DEX/END), der Helden-XP-Zähler sowie die transienten EW-DM/Taktik-DM-Zähler im Schiffskampf-Block nutzen jetzt `CoreWidgets.attachCounter()` statt vierfach duplizierter Klick-Verdrahtung. Reine Aufräum-Maßnahme ohne Verhaltensänderung — Markup, CSS und Klemmgrenzen bleiben exakt wie zuvor, nur die JS-Logik ist jetzt geteilt. Munitions-Zähler (Mehrfach-Dekrement, Nachladen) und der Trainings-Fortschritt (öffnet ein Modal, keine einfache ±1-Logik) passen nicht ins Zähler-Muster und bleiben bewusst System-Code.
 
