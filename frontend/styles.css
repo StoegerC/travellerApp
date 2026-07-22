@@ -2933,6 +2933,9 @@ label.attachment-upload-btn {
 .campaign-item:hover     { background: #f5f5ff; }
 .campaign-item-name      { font-weight: 600; font-size: 0.95em; }
 .campaign-item-meta      { font-size: 0.78em; color: #888; }
+.campaign-item:disabled,
+.campaign-item.campaign-item-othersystem { opacity: 0.5; cursor: default; }
+.campaign-item:disabled:hover { background: #fff; }
 
 /* Kampagne-Tab in Notes */
 .campaign-tab-header     { margin-bottom: 12px; }
@@ -7282,6 +7285,7 @@ body.dark-mode .btn-danger-sm:hover   { background: #2a1515; }
 body.dark-mode .campaign-item         { background: #1d2035; border-color: #2c3050; }
 body.dark-mode .campaign-item:hover   { background: #252840; }
 body.dark-mode .campaign-item-meta    { color: #6070a0; }
+body.dark-mode .campaign-item:disabled:hover { background: #1d2035; }
 body.dark-mode .campaign-modal-subtitle { color: #9095b8; }
 body.dark-mode .campaign-modal-divider  { color: #3a405a; }
 body.dark-mode .campaign-subtab-btn   { background: #1d2035; border-color: #2c3050; color: #9095b8; }

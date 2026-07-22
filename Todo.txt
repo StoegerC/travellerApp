@@ -116,7 +116,27 @@ CHARAKTERVERWALTUNG
        (jetzt risikoarm möglich, da die Widget-API am echten Universal-
        Bedarf erprobt ist) — kein eigener Plan-Punkt, einfache Aufräum-
        Aufgabe bei Gelegenheit.
-    5. Kampagnen: system-Feld + Join-Prüfung + generisches Erweiterungs-API.
+    5. [ERLEDIGT: Kampagnen systemrein] system-Spalte in der campaigns-Tabelle
+       (wie bei Charakteren aus dem JSON-Blob extrahiert, db.getCharacterSystem()
+       fuer den Beitritts-Check), einmalig vom Gruendungscharakter uebernommen
+       und danach unveraenderlich. PUT /campaign/:id/join lehnt einen
+       Charakter eines anderen Systems mit 409 ab (Pruefung greift auch,
+       wenn der Nutzer per anderem Charakter schon Mitglied ist — nicht nur
+       im !alreadyIn-Zweig). Beitritts-Dialog graut Kampagnen anderen
+       Systems aus (Systemname als Hinweis) statt sie zu verstecken.
+       Generisches Erweiterungs-API GET/PUT /campaign/:id/ext/:key +
+       db.updateCampaignExt() (Challenge-Fund T3): derselbe Array-Merge wie
+       updateCampaignNotes, aber unter einem vom System frei waehlbaren
+       Schluessel (isValidExtKey: a-z0-9_-, erster Buchstabe zwingend a-z)
+       — ein neues System mit geteilten Kampagnen-Inhalten braucht dafuer
+       keine eigene Backend-Route mehr. CampaignSync.getExt/updateExt im
+       Frontend ergaenzt (noch ohne Aufrufer — reine Infrastruktur fuer ein
+       kuenftiges System, absichtlich vorab gebaut, weil die Form durch den
+       bereits bestehenden/getesteten Merge-Mechanismus feststeht, nicht
+       geraten werden musste). MGT2s Schiffe bleiben aus Bestandsschutz-
+       Gruenden auf der eigenen /ships-Route. systems/README.md um
+       Abschnitt "5. Kampagnen: geteilte Inhalte" ergaenzt.
+       Damit sind alle 5 Phasen des Multi-System-Plans abgeschlossen.
     6. (optional, nur bei Bedarf) freiwillige MGT2-Migration nach systemData.
 
 SERVER / BETRIEB (nautilus)

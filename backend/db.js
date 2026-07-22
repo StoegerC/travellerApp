@@ -48,10 +48,16 @@ db.exec(`
     updated_at TEXT NOT NULL
   );
 
+  -- system: einmalig beim Erstellen vom Gruendungscharakter uebernommen
+  -- (Multi-System Phase 5) und danach unveraenderlich - eine Kampagne lebt
+  -- immer in genau einem Regelsystem, Beitritt nur mit passendem Charakter
+  -- (siehe PUT /campaign/:id/join). Leerer String bei Bestandskampagnen vor
+  -- dieser Phase (Unbekannt-Wert, kein Migrationszwang).
   CREATE TABLE IF NOT EXISTS campaigns (
     id           TEXT PRIMARY KEY,
     name         TEXT NOT NULL,
     owner_id     TEXT NOT NULL,
+    system       TEXT NOT NULL DEFAULT '',
     data         TEXT NOT NULL,
     member_count INTEGER NOT NULL DEFAULT 1,
     created_at   TEXT NOT NULL,
@@ -110,6 +116,7 @@ function _addColumnIfMissing(table, column, definition) {
 }
 _addColumnIfMissing('characters', 'owner_id', 'TEXT');
 _addColumnIfMissing('characters', 'system', "TEXT NOT NULL DEFAULT ''");
+_addColumnIfMissing('campaigns', 'system', "TEXT NOT NULL DEFAULT ''");
 // Bestandsnutzer, die zum Zeitpunkt der Haertung noch gar kein Passwort haben
 // (password_hash IS NULL), bekommen weiter unten in ensurePasswordSetForAll()
 // einen Setup-Token - sie duerfen nicht einfach als "fertig eingerichtet"
@@ -154,6 +161,14 @@ function getCharacter(id) {
 // fuer die Anreicherung der Kampagnen-Mitgliederliste in routes/campaigns.js.
 function getCharacterName(id) {
   return stmtGetCharName.get(id)?.name || '';
+}
+
+// Analog zu getCharacterName: Multi-System Phase 5, damit routes/campaigns.js
+// beim Erstellen/Beitreten pruefen kann, ob ein Charakter zum System der
+// Kampagne passt, ohne den kompletten data-Blob zu parsen.
+const stmtGetCharSystem = db.prepare('SELECT system FROM characters WHERE id = ?');
+function getCharacterSystem(id) {
+  return stmtGetCharSystem.get(id)?.system || '';
 }
 
 // Phase 3: ownerId wird von der Route mitgegeben (aus req.user.roles-Pruefung
@@ -212,10 +227,13 @@ function deleteCharacter(id) {
 // ── Kampagnen ─────────────────────────────────────────────────────────────
 
 const stmtGetCampaign    = db.prepare('SELECT data FROM campaigns WHERE id = ?');
-const stmtListCampaigns  = db.prepare('SELECT id, name, member_count AS memberCount FROM campaigns ORDER BY name');
+// system mit in der offenen Liste (Multi-System Phase 5): der Client filtert/
+// grault damit im Beitritts-Dialog Kampagnen eines anderen Systems, ohne dafuer
+// die (mitgliedsgeschuetzten) Einzel-Kampagnen erst laden zu muessen.
+const stmtListCampaigns  = db.prepare('SELECT id, name, system, member_count AS memberCount FROM campaigns ORDER BY name');
 const stmtInsertCampaign = db.prepare(`
-  INSERT INTO campaigns (id, name, owner_id, data, member_count, created_at, updated_at)
-  VALUES (@id, @name, @ownerId, @data, @memberCount, @createdAt, @updatedAt)
+  INSERT INTO campaigns (id, name, owner_id, system, data, member_count, created_at, updated_at)
+  VALUES (@id, @name, @ownerId, @system, @data, @memberCount, @createdAt, @updatedAt)
 `);
 const stmtUpdateCampaign = db.prepare(`
   UPDATE campaigns SET name = @name, owner_id = @ownerId, data = @data, member_count = @memberCount, updated_at = @updatedAt
@@ -273,6 +291,7 @@ function insertCampaign(campaign) {
     id: campaign.id,
     name: campaign.name,
     ownerId: campaign.ownerId,
+    system: campaign.system || '',
     data: JSON.stringify(campaign),
     memberCount: campaign.members.length,
     createdAt: now,
@@ -345,6 +364,23 @@ function updateCampaignShips(id, charId, ships) {
       return { ...s, crewRoles: { ...remote.crewRoles, ...(s.crewRoles?.[charId] ? { [charId]: s.crewRoles[charId] } : {}) } };
     });
     campaign.ships = SyncMerge._mergeShips(myShips, campaign.ships);
+  });
+}
+
+// Generisches Kampagnen-Erweiterungs-API (Multi-System Phase 5,
+// Challenge-Fund T3): derselbe Array-Merge wie updateCampaignNotes, aber
+// unter einem vom Regelsystem frei waehlbaren Schluessel statt einer
+// eigenen Route + Merge-Logik pro System-Erweiterung. Ein neues System mit
+// geteilten Kampagnen-Inhalten (z.B. gemeinsame Beweisstuecke) braucht
+// dafuer keine Backend-Aenderung mehr. MGT2s Schiffe bleiben aus
+// Bestandsschutz-Gruenden auf ihrer eigenen Route (updateCampaignShips
+// oben) mit ihrer crewRoles-Sonderbehandlung. entries = die eigenen
+// Eintraege des pushenden Geraets, mergefaehig wie ueberall sonst
+// (id/updatedAt, Loeschung per Tombstone statt splice).
+function updateCampaignExt(id, key, entries) {
+  return updateCampaign(id, campaign => {
+    campaign.ext = campaign.ext || {};
+    campaign.ext[key] = SyncMerge._mergeArrayField(entries || [], campaign.ext[key] || []);
   });
 }
 
@@ -633,9 +669,9 @@ function getUserUsageBytes(userId, { excludeCharId = null } = {}) {
 module.exports = {
   db,
   UPLOAD_DIR,
-  getCharacter, getCharacterName, listCharacters, putCharacter, deleteCharacter, claimUnownedCharacter,
+  getCharacter, getCharacterName, getCharacterSystem, listCharacters, putCharacter, deleteCharacter, claimUnownedCharacter,
   getCampaign, getCampaignUpdatedAt, listCampaigns, campaignExists, insertCampaign, updateCampaign, deleteCampaign,
-  updateCampaignNotes, updateCampaignShips,
+  updateCampaignNotes, updateCampaignShips, updateCampaignExt,
   upsertCampaign,
   insertFile, getFile, deleteFile, listFilesByOwner, listAllFiles, getFileStats, getAdminOverview,
   insertUser, getUserByEmail, getUserById, listUsers, setPasswordHash, setUserRoles, deleteUser,
