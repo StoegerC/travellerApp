@@ -3,13 +3,18 @@
  * Challenge-Fund U4), aus der System-Seiten komponieren statt gleiche
  * Bausteine (Zähler, Tabellenliste, Tracker …) jeweils neu zu bauen.
  *
- * Bewusst erst jetzt gebaut, nicht schon in Phase 2: ohne einen zweiten
- * echten Verwendungsfall wäre die API geraten gewesen (Plan §5, "Verfrühte
- * Abstraktion"). Das Universal-Template (systems/universal/) ist der erste
- * echte Bedarf und bekommt genau das, was es braucht — eine editierbare
- * Name+Wert-Liste. Zähler/Tracker kommen erst dazu, wenn ein System sie
- * tatsächlich braucht (MGT2s combat.js/attributes.js bleiben vorerst
- * unangetastet, siehe Todo.txt).
+ * Bewusst erst in Phase 4 gebaut, nicht schon in Phase 2: ohne einen
+ * zweiten echten Verwendungsfall wäre die API geraten gewesen (Plan §5,
+ * "Verfrühte Abstraktion"). Das Universal-Template (systems/universal/)
+ * war der erste echte Bedarf (editierbare Name+Wert-Liste). Der Zähler
+ * (attachCounter) kam als Nachtrag dazu, nachdem MGT2s combat.js darauf
+ * umgestellt wurde (siehe Todo.txt) — bewusst NUR die reine ±1-mit-Klemmen-
+ * Logik, keine feste Optik: MGT2s Attribut-Karten/Helden-XP/DM-Zähler sehen
+ * alle unterschiedlich aus, das bestehende Markup/CSS jeder Seite bleibt
+ * unangetastet, nur die Klick-Verdrahtung wird geteilt. Sonderfälle mit
+ * Mehrfach-Dekrement/Nachladen (MGT2s Munition) oder Modal-getriebener
+ * Logik (MGT2s Trainings-Fortschritt) passen NICHT ins Zähler-Muster und
+ * bleiben bewusst System-Code — nicht jedes ± gehört in den Kern.
  *
  * Muster: reine render()/attach()-Funktionspaare wie ein Seiten-Mixin,
  * aber ohne eigenen State — Daten (items) und Persistenz (onChange) gehören
@@ -113,5 +118,41 @@ const CoreWidgets = {
       Storage.saveCharacter(char);
       onStructureChange();
     });
+  },
+
+  /**
+   * Verdrahtet einen bereits vorhandenen ±-Zähler (Markup/CSS bleiben
+   * System-Sache — dieses Widget kennt nur drei Element-IDs). Aktualisiert
+   * Anzeige + Disabled-Zustand der eigenen Buttons SELBST bei jedem Klick,
+   * unabhängig davon, ob der Aufrufer danach zusätzlich neu rendert — so
+   * bleibt ein rein transienter Zähler (z.B. ein UI-lokaler DM-Modifikator,
+   * der gar nicht gespeichert wird) korrekt, ohne dass onChange irgendetwas
+   * tun muss.
+   *
+   * opts: { valueId, minusId, plusId, value, min?, max?, format? }
+   * format(value) => Anzeigetext, Default: String(value).
+   * onChange(newValue): Aufrufer entscheidet, was mit dem neuen Wert
+   * passiert (Charakterfeld setzen + Storage.saveCharacter + ggf. Seiten-
+   * Rerender wegen abhängiger Anzeigen wie Attribut-Kartenfarbe, oder gar
+   * nichts bei rein transientem Zustand).
+   */
+  attachCounter(opts, onChange) {
+    const { valueId, minusId, plusId, min, max, format } = opts;
+    let value = opts.value;
+    const clamp = v => {
+      if (min !== undefined) v = Math.max(min, v);
+      if (max !== undefined) v = Math.min(max, v);
+      return v;
+    };
+    const valueEl = document.getElementById(valueId);
+    const minusBtn = document.getElementById(minusId);
+    const plusBtn  = document.getElementById(plusId);
+    const refresh = () => {
+      if (valueEl)  valueEl.textContent = format ? format(value) : String(value);
+      if (minusBtn) minusBtn.disabled = min !== undefined && value <= min;
+      if (plusBtn)  plusBtn.disabled  = max !== undefined && value >= max;
+    };
+    minusBtn?.addEventListener('click', () => { value = clamp(value - 1); refresh(); onChange(value); });
+    plusBtn?.addEventListener('click',  () => { value = clamp(value + 1); refresh(); onChange(value); });
   },
 };
