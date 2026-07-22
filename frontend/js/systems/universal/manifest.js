@@ -19,6 +19,12 @@ const UniversalSystem = {
   id:   'universal',
   name: 'Universal (spielunabhängig)',
 
+  // Header-Banner: kurzer Markenname + Icon in der App-Kopfzeile (siehe
+  // App._banner()). Bewusst ein simples Emoji statt eigener SVG-Grafik —
+  // das Universal-Template ist die Kopiervorlage, ein neues System soll
+  // hier keine Kunst investieren müssen, bis es eine eigene will.
+  banner: { label: 'Universal', icon: '🎲' },
+
   tabs: [
     { id: 'metadata',  icon: '👤', label: 'Charakter',  page: () => MetadataPage },
     { id: 'values',    icon: '📊', label: 'Werte',      page: () => UniversalValuesPage },

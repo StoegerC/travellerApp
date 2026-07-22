@@ -10,7 +10,7 @@
   <title>Traveller – Charakterdatenblatt</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=3.30.0">
+  <link rel="stylesheet" href="styles.css?v=3.31.0">
   <script>
   (function(){
     var c=document.createElement('canvas'); c.width=c.height=64;
@@ -65,24 +65,30 @@
     <header class="header">
       <div class="header-top">
         <div class="header-brand" id="headerBrand" title="Seite neu laden">
-          <svg class="traveller-icon" viewBox="0 0 36 36" width="30" height="30" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="0.75"/>
-            <g stroke="white" stroke-width="1.6" stroke-linecap="round" opacity="0.92">
-              <line x1="18" y1="4"    x2="18" y2="11"/>
-              <line x1="18" y1="25"   x2="18" y2="32"/>
-              <line x1="4"  y1="18"   x2="11" y2="18"/>
-              <line x1="25" y1="18"   x2="32" y2="18"/>
-              <line x1="8.1"  y1="8.1"  x2="13.2" y2="13.2"/>
-              <line x1="22.8" y1="22.8" x2="27.9" y2="27.9"/>
-              <line x1="27.9" y1="8.1"  x2="22.8" y2="13.2"/>
-              <line x1="8.1"  y1="27.9" x2="13.2" y2="22.8"/>
-            </g>
-            <circle cx="18" cy="18" r="3.8" fill="white"/>
-            <circle cx="18" cy="2"  r="1.9" fill="#a78bfa"/>
-            <circle cx="34" cy="18" r="1.5" fill="#60a5fa"/>
-          </svg>
+          <!-- Icon + Markenname kommen aus dem Manifest des aktiven Regelsystems
+               (App._banner()/_updateHeaderBanner(), Multi-System) — das hier
+               gerenderte MGT2-Logo ist nur der Anfangszustand vor dem ersten
+               Charakter-Laden. -->
+          <span class="header-banner-icon" id="headerBannerIcon">
+            <svg class="traveller-icon" viewBox="0 0 36 36" width="30" height="30" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="0.75"/>
+              <g stroke="white" stroke-width="1.6" stroke-linecap="round" opacity="0.92">
+                <line x1="18" y1="4"    x2="18" y2="11"/>
+                <line x1="18" y1="25"   x2="18" y2="32"/>
+                <line x1="4"  y1="18"   x2="11" y2="18"/>
+                <line x1="25" y1="18"   x2="32" y2="18"/>
+                <line x1="8.1"  y1="8.1"  x2="13.2" y2="13.2"/>
+                <line x1="22.8" y1="22.8" x2="27.9" y2="27.9"/>
+                <line x1="27.9" y1="8.1"  x2="22.8" y2="13.2"/>
+                <line x1="8.1"  y1="27.9" x2="13.2" y2="22.8"/>
+              </g>
+              <circle cx="18" cy="18" r="3.8" fill="white"/>
+              <circle cx="18" cy="2"  r="1.9" fill="#a78bfa"/>
+              <circle cx="34" cy="18" r="1.5" fill="#60a5fa"/>
+            </svg>
+          </span>
           <div class="header-title">
-            <h1>Traveller <small class="app-version">v3.30.0</small></h1>
+            <h1><span id="headerBannerLabel">Traveller</span> <small class="app-version">v3.31.0</small></h1>
             <span id="charNameDisplay" class="char-name-display"></span>
           </div>
         </div>
@@ -378,41 +384,41 @@
     </div>
   </div>
 
-  <script src="js/cloudsync.js?v=3.30.0"></script>
-  <script src="js/auth.js?v=3.30.0"></script>
-  <script src="js/campaign.js?v=3.30.0"></script>
-  <script src="js/filesync.js?v=3.30.0"></script>
-  <script src="js/markdown.js?v=3.30.0"></script>
-  <script src="js/mention-autocomplete.js?v=3.30.0"></script>
-  <script src="js/notes-popover.js?v=3.30.0"></script>
-  <script src="js/systems/mgt2/data/skills.js?v=3.30.0"></script>
-  <script src="js/models/character.js?v=3.30.0"></script>
-  <script src="js/sync-merge.js?v=3.30.0"></script>
-  <script src="js/storage.js?v=3.30.0"></script>
-  <script src="js/core-widgets.js?v=3.30.0"></script>
+  <script src="js/cloudsync.js?v=3.31.0"></script>
+  <script src="js/auth.js?v=3.31.0"></script>
+  <script src="js/campaign.js?v=3.31.0"></script>
+  <script src="js/filesync.js?v=3.31.0"></script>
+  <script src="js/markdown.js?v=3.31.0"></script>
+  <script src="js/mention-autocomplete.js?v=3.31.0"></script>
+  <script src="js/notes-popover.js?v=3.31.0"></script>
+  <script src="js/systems/mgt2/data/skills.js?v=3.31.0"></script>
+  <script src="js/models/character.js?v=3.31.0"></script>
+  <script src="js/sync-merge.js?v=3.31.0"></script>
+  <script src="js/storage.js?v=3.31.0"></script>
+  <script src="js/core-widgets.js?v=3.31.0"></script>
   <!-- Kern-Seiten -->
-  <script src="js/pages/metadata.js?v=3.30.0"></script>
-  <script src="js/pages/finances.js?v=3.30.0"></script>
-  <script src="js/pages/equipment.js?v=3.30.0"></script>
-  <script src="js/pages/notes.js?v=3.30.0"></script>
-  <script src="js/pages/notes-chronicle.js?v=3.30.0"></script>
-  <script src="js/pages/career-background.js?v=3.30.0"></script>
+  <script src="js/pages/metadata.js?v=3.31.0"></script>
+  <script src="js/pages/finances.js?v=3.31.0"></script>
+  <script src="js/pages/equipment.js?v=3.31.0"></script>
+  <script src="js/pages/notes.js?v=3.31.0"></script>
+  <script src="js/pages/notes-chronicle.js?v=3.31.0"></script>
+  <script src="js/pages/career-background.js?v=3.31.0"></script>
   <!-- Regelsystem-Module (siehe js/systems/README.md) -->
-  <script src="js/systems/mgt2/pages/attributes.js?v=3.30.0"></script>
-  <script src="js/systems/mgt2/pages/ship.js?v=3.30.0"></script>
-  <script src="js/systems/mgt2/pages/career.js?v=3.30.0"></script>
-  <script src="js/systems/mgt2/pages/notes-travellermap.js?v=3.30.0"></script>
-  <script src="js/systems/mgt2/pages/karte.js?v=3.30.0"></script>
-  <script src="js/systems/mgt2/pages/combat.js?v=3.30.0"></script>
-  <script src="js/systems/universal/pages/values.js?v=3.30.0"></script>
-  <script src="js/systems/registry.js?v=3.30.0"></script>
-  <script src="js/systems/mgt2/calendar.js?v=3.30.0"></script>
+  <script src="js/systems/mgt2/pages/attributes.js?v=3.31.0"></script>
+  <script src="js/systems/mgt2/pages/ship.js?v=3.31.0"></script>
+  <script src="js/systems/mgt2/pages/career.js?v=3.31.0"></script>
+  <script src="js/systems/mgt2/pages/notes-travellermap.js?v=3.31.0"></script>
+  <script src="js/systems/mgt2/pages/karte.js?v=3.31.0"></script>
+  <script src="js/systems/mgt2/pages/combat.js?v=3.31.0"></script>
+  <script src="js/systems/universal/pages/values.js?v=3.31.0"></script>
+  <script src="js/systems/registry.js?v=3.31.0"></script>
+  <script src="js/systems/mgt2/calendar.js?v=3.31.0"></script>
   <!-- Reihenfolge wichtig: MGT2 zuerst registrieren, damit es das
        Default-/Fallback-System für Bestandscharaktere bleibt (siehe
        systems/registry.js). Universal-Template siehe systems/README.md. -->
-  <script src="js/systems/mgt2/manifest.js?v=3.30.0"></script>
-  <script src="js/systems/universal/manifest.js?v=3.30.0"></script>
-  <script src="js/app.js?v=3.30.0"></script>
+  <script src="js/systems/mgt2/manifest.js?v=3.31.0"></script>
+  <script src="js/systems/universal/manifest.js?v=3.31.0"></script>
+  <script src="js/app.js?v=3.31.0"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

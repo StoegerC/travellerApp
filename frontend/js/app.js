@@ -4,7 +4,7 @@
 // Laufende App-Version — wird von scripts/bump-version.js mitgebumpt.
 // Genutzt vom Import-Versionswächter (Multi-System Phase 0): JSON-Exporte
 // können ein _minAppVersion tragen, das der Import hiergegen prüft.
-const APP_VERSION = '3.30.0';
+const APP_VERSION = '3.31.0';
 
 const App = {
   currentCharacter: null,
@@ -41,6 +41,7 @@ const App = {
   // neutralen Fallback, siehe deren jeweilige Definition weiter unten).
   _KERN_ONLY_SYSTEM: {
     id: '_unknown', name: 'Unbekanntes System',
+    banner: { label: 'Unbekannt', icon: '❓' },
     tabs: [
       { id: 'metadata',  icon: '👤', label: 'Charakter',  page: () => MetadataPage },
       { id: 'equipment', icon: '🎒', label: 'Ausrüstung', page: () => EquipmentPage },
@@ -418,7 +419,7 @@ const App = {
     this.editMode = false;
     this._undoStack = [];
     this._updateUndoBtn();
-    this._updateHeaderName();
+    this._updateHeaderName(); this._updateHeaderBanner();
     this._syncState = { status: 'idle', lastSync: null, error: null };
     this._pendingPush = false;
     this._campaignData = null;
@@ -468,7 +469,7 @@ const App = {
     this._unknownSystem = false;
     this._readOnlyView  = false;
     this._updateUnknownSystemBanner();
-    this._updateHeaderName();
+    this._updateHeaderName(); this._updateHeaderBanner();
     // Tab-Leiste neu aufbauen: das neue System kann von dem des zuvor
     // offenen Charakters abweichen (Multi-System Phase 3).
     this._buildTabs();
@@ -629,7 +630,7 @@ const App = {
     if (page && page.save) page.save(this.currentCharacter);
 
     if (Storage.saveCharacter(this.currentCharacter)) {
-      this._updateHeaderName();
+      this._updateHeaderName(); this._updateHeaderBanner();
       if (saveVersion) this._saveVersion(versionMeta);
       // Kein direkter _pushToCloud()-Aufruf hier: Storage.saveCharacter() plant
       // selbst schon einen (dirty-geprüften) Push, sobald sich wirklich etwas
@@ -671,7 +672,7 @@ const App = {
     this.currentCharacter = Character.fromJSON(json);
     window.currentCharacter = this.currentCharacter;
     Storage.saveCharacter(this.currentCharacter);
-    this._updateHeaderName();
+    this._updateHeaderName(); this._updateHeaderBanner();
     this.renderCurrentPage();
     this._updateUndoBtn();
     this.showStatus('Rückgängig', 'success');
@@ -710,7 +711,7 @@ const App = {
         this.currentCharacter = Character.fromJSON(version.data);
         window.currentCharacter = this.currentCharacter;
         Storage.saveCharacter(this.currentCharacter);
-        this._updateHeaderName();
+        this._updateHeaderName(); this._updateHeaderBanner();
         this.renderCurrentPage();
         this._updateUndoBtn();
         modal.classList.remove('visible');
@@ -831,6 +832,26 @@ const App = {
   _updateHeaderName() {
     const el = document.getElementById('charNameDisplay');
     if (el) el.textContent = this.currentCharacter?.metadata?.name || '';
+  },
+
+  // App-Kopfzeile (Logo + Markenname) hängt jetzt vom aktiven Regelsystem ab
+  // statt fest "Traveller" zu zeigen. Fallback fuer Systeme ohne eigenen
+  // banner-Eintrag im Manifest: neutrales Würfel-Icon.
+  _DEFAULT_BANNER: { label: 'Rollenspiel', icon: '🎲' },
+  _banner() {
+    return this._system().banner || this._DEFAULT_BANNER;
+  },
+  _updateHeaderBanner() {
+    const banner = this._banner();
+    const iconEl  = document.getElementById('headerBannerIcon');
+    const labelEl = document.getElementById('headerBannerLabel');
+    if (iconEl) {
+      // icon darf rohes SVG-Markup (System-Manifest, vertrauenswürdig, keine
+      // Nutzereingabe) oder ein einfaches Emoji sein.
+      if (String(banner.icon).trim().startsWith('<')) iconEl.innerHTML = banner.icon;
+      else iconEl.textContent = banner.icon;
+    }
+    if (labelEl) labelEl.textContent = banner.label;
   },
 
   // Unbekannt-Regel-Hinweisbanner (Multi-System Phase 3) — analog zum
@@ -970,7 +991,7 @@ const App = {
       Storage._suppressPush = true;
       Storage.saveCharacter(cloudChar);
       Storage._suppressPush = false;
-      this._updateHeaderName();
+      this._updateHeaderName(); this._updateHeaderBanner();
       this.renderCurrentPage();
       // Hat der Merge lokale, noch nicht gepushte Änderungen eingebracht,
       // weicht das Ergebnis vom Serverstand ab → direkt nachpushen statt

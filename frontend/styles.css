@@ -131,6 +131,20 @@ body {
   filter: drop-shadow(0 0 6px rgba(167, 139, 250, 0.85));
 }
 
+/* Generischer Wrapper fuer App._banner().icon (Multi-System) — Systeme ohne
+   eigenes SVG (z.B. ein Emoji) bekommen keinen erzwungenen Glow-Filter,
+   der ist Teil des MGT2-spezifischen .traveller-icon selbst. */
+.header-banner-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  font-size: 22px;
+  line-height: 1;
+}
+
 .header h1 {
   font-size: 20px;
   font-weight: 700;
