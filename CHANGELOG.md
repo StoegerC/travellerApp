@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.27.0] – 2026-07-22
+
 ### Neu
 - **Multi-System-Umbau, Phase 3: Mehrsystem-Betrieb** — die drei Berührungspunkte des Nutzers mit dem Regelsystem sind jetzt system-bewusst:
   - **Neuanlage**: Der „Neuer Charakter"-Dialog zeigt einen Systemwahl-Schritt, sobald mehr als ein System registriert ist (dynamisch aus `SystemRegistry.list()`, mit „Zurück"). Bei genau einem System (heute: MGT2) bleibt der Ablauf unverändert.
