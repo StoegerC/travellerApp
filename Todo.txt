@@ -112,10 +112,16 @@ CHARAKTERVERWALTUNG
        Seite NICHT komplett neu rendern (wettlaufen mit dem Fokuswechsel ins
        nächste Feld, siehe core-widgets.js-Kommentar) — CoreWidgets speichert
        bei Blur nur, rendert erst bei Hinzufügen/Löschen neu.
-       Noch offen: MGT2s combat.js/attributes.js auf CoreWidgets umstellen
-       (jetzt risikoarm möglich, da die Widget-API am echten Universal-
-       Bedarf erprobt ist) — kein eigener Plan-Punkt, einfache Aufräum-
-       Aufgabe bei Gelegenheit.
+       [ERLEDIGT: combat.js auf CoreWidgets.attachCounter umgestellt —
+       Attribut-Karten, Helden-XP, EW-DM/Taktik-DM. Neues Widget deckt NUR
+       ±1-mit-Klemmen ab, Markup/CSS bleiben System-Sache (attachCounter
+       nimmt vorhandene Element-IDs entgegen statt eigenes HTML
+       vorzuschreiben) — reine Aufräum-Maßnahme ohne Verhaltensänderung,
+       mit Playwright gegen das Verhalten VOR dem Umbau verifiziert.
+       Munitions-Zähler (Mehrfach-Dekrement, Nachladen) und Trainings-
+       Fortschritt (öffnet ein Modal, keine einfache ±1-Logik) passen nicht
+       ins Zähler-Muster und bleiben bewusst System-Code — nicht jeder
+       ±-Button gehört in den Kern.]
     5. [ERLEDIGT: Kampagnen systemrein] system-Spalte in der campaigns-Tabelle
        (wie bei Charakteren aus dem JSON-Blob extrahiert, db.getCharacterSystem()
        fuer den Beitritts-Check), einmalig vom Gruendungscharakter uebernommen

@@ -75,13 +75,13 @@ const CombatPage = {
         <div class="combat-attr-label">${label}</div>
         <div class="combat-attr-dm">${this._fmtDM(a.dm)}</div>
         <div class="combat-attr-values">
-          <span class="combat-attr-current">${a.current}</span>
+          <span class="combat-attr-current" id="combat-attr-${key}-value">${a.current}</span>
           <span class="combat-attr-sep">/</span>
           <span class="combat-attr-max">${a.max}</span>
         </div>
         <div class="combat-attr-btns">
-          <button class="combat-attr-btn combat-attr-minus" data-attr="${key}" data-max="${a.max}">−</button>
-          <button class="combat-attr-btn combat-attr-plus"  data-attr="${key}" data-max="${a.max}">+</button>
+          <button class="combat-attr-btn combat-attr-minus" id="combat-attr-${key}-minus">−</button>
+          <button class="combat-attr-btn combat-attr-plus"  id="combat-attr-${key}-plus">+</button>
         </div>
       </div>`;
   },
@@ -125,7 +125,7 @@ const CombatPage = {
       <span class="combat-heroxp-label">⭐ Helden XP</span>
       <div class="combat-heroxp-controls">
         <button id="heroXpMinus" class="combat-heroxp-btn" ${xp <= 0 ? 'disabled' : ''}>−</button>
-        <span class="combat-heroxp-value">${xp}</span>
+        <span class="combat-heroxp-value" id="heroXpValue">${xp}</span>
         <button id="heroXpPlus" class="combat-heroxp-btn">+</button>
       </div>
     </div>`;
@@ -448,26 +448,20 @@ const CombatPage = {
   },
 
   attachListeners() {
-    // ── Block 1: Attribut-Buttons ────────────────────────────────────────
-    document.querySelectorAll('.combat-attr-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const key  = btn.dataset.attr;
-        const max  = parseInt(btn.dataset.max);
-        const char = window.currentCharacter;
-        const a    = char.attributes[key];
-        let current = typeof a === 'number' ? a : (a.current ?? a.value ?? 6);
-
-        current = btn.classList.contains('combat-attr-plus')
-          ? Math.min(max, current + 1)
-          : Math.max(0, current - 1);
-
+    // ── Block 1: Attribut-Buttons (Kern-Zähler-Widget, siehe core-widgets.js) ──
+    ['strength', 'dexterity', 'endurance'].forEach(key => {
+      const char = window.currentCharacter;
+      const { current, max } = this._getAttr(char, key);
+      CoreWidgets.attachCounter({
+        valueId: `combat-attr-${key}-value`, minusId: `combat-attr-${key}-minus`, plusId: `combat-attr-${key}-plus`,
+        value: current, min: 0, max,
+      }, newValue => {
         if (typeof char.attributes[key] === 'number') {
-          char.attributes[key] = { value: max, current, dm: this._calcDM(current) };
+          char.attributes[key] = { value: max, current: newValue, dm: this._calcDM(newValue) };
         } else {
-          char.attributes[key].current = current;
-          char.attributes[key].dm      = this._calcDM(current);
+          char.attributes[key].current = newValue;
+          char.attributes[key].dm      = this._calcDM(newValue);
         }
-
         Storage.saveCharacter(char);
         document.getElementById('combat-page').innerHTML = this.render(char);
         this.attachListeners();
@@ -542,17 +536,20 @@ const CombatPage = {
       });
     });
 
-    // ── Helden XP ─────────────────────────────────────────────────────────
-    const changeHeroXp = (delta) => {
+    // ── Helden XP (Kern-Zähler-Widget) ───────────────────────────────────
+    {
       const char = window.currentCharacter;
-      const cur  = typeof char.metadata.heroXp === 'number' ? char.metadata.heroXp : 0;
-      char.metadata.heroXp = Math.max(0, cur + delta);
-      Storage.saveCharacter(char);
-      document.getElementById('combat-page').innerHTML = this.render(char);
-      this.attachListeners();
-    };
-    document.getElementById('heroXpMinus')?.addEventListener('click', () => changeHeroXp(-1));
-    document.getElementById('heroXpPlus')?.addEventListener('click', () => changeHeroXp(1));
+      const xp   = typeof char.metadata.heroXp === 'number' ? char.metadata.heroXp : 0;
+      CoreWidgets.attachCounter({
+        valueId: 'heroXpValue', minusId: 'heroXpMinus', plusId: 'heroXpPlus',
+        value: xp, min: 0,
+      }, newValue => {
+        char.metadata.heroXp = newValue;
+        Storage.saveCharacter(char);
+        document.getElementById('combat-page').innerHTML = this.render(char);
+        this.attachListeners();
+      });
+    }
 
     // ── Block 4: Strahlung ───────────────────────────────────────────────
     document.getElementById('radAddBtn')?.addEventListener('click', () => {
@@ -586,13 +583,20 @@ const CombatPage = {
       this.attachListeners();
     });
 
-    const ewDmVal = () => document.getElementById('ewDmVal');
-    document.getElementById('ewDmMinus')?.addEventListener('click', () => { this._ewDM = (this._ewDM||0) - 1; const el = ewDmVal(); if(el) el.textContent = (this._ewDM>=0?'+':'') + this._ewDM; });
-    document.getElementById('ewDmPlus')?.addEventListener('click',  () => { this._ewDM = (this._ewDM||0) + 1; const el = ewDmVal(); if(el) el.textContent = (this._ewDM>=0?'+':'') + this._ewDM; });
+    // EW-DM/Taktik-DM (Kern-Zähler-Widget): rein transienter UI-Zustand
+    // dieser Seite (this._ewDM/_tacticsDM), wird nie gespeichert — deshalb
+    // reicht die Selbst-Aktualisierung des Widgets, onChange tut nichts
+    // weiter (kein Storage.saveCharacter, kein Rerender), exakt wie zuvor.
+    const dmFormat = v => (v >= 0 ? '+' : '') + v;
+    CoreWidgets.attachCounter({
+      valueId: 'ewDmVal', minusId: 'ewDmMinus', plusId: 'ewDmPlus',
+      value: this._ewDM || 0, format: dmFormat,
+    }, newValue => { this._ewDM = newValue; });
 
-    const tacDmVal = () => document.getElementById('tacDmVal');
-    document.getElementById('tacDmMinus')?.addEventListener('click', () => { this._tacticsDM = (this._tacticsDM||0) - 1; const el = tacDmVal(); if(el) el.textContent = (this._tacticsDM>=0?'+':'') + this._tacticsDM; });
-    document.getElementById('tacDmPlus')?.addEventListener('click',  () => { this._tacticsDM = (this._tacticsDM||0) + 1; const el = tacDmVal(); if(el) el.textContent = (this._tacticsDM>=0?'+':'') + this._tacticsDM; });
+    CoreWidgets.attachCounter({
+      valueId: 'tacDmVal', minusId: 'tacDmMinus', plusId: 'tacDmPlus',
+      value: this._tacticsDM || 0, format: dmFormat,
+    }, newValue => { this._tacticsDM = newValue; });
 
     // Krit-Boxen im Schiffskampf-Block
     document.querySelectorAll('.ship-combat-section .ship-crit-box').forEach(btn => {
