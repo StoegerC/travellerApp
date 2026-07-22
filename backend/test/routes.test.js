@@ -179,3 +179,28 @@ test('pushGuardViolation: blockt system-Wechsel und systemData-Verlust, sonst ni
   assert.strictEqual(g('kein json', { system: 'x' }), false);
   assert.strictEqual(g(mgt2, null), false);
 });
+
+// ── Multi-System Phase 3: system-Spalte ──────────────────────────────────────
+
+test('putCharacter/listCharacters: system wird wie name aus dem Blob extrahiert', () => {
+  const id = 'sys-col-' + Date.now();
+  db.putCharacter(id, JSON.stringify({ id, system: 'delta-green', metadata: { name: 'Agent X' } }), null, 'owner-1');
+
+  const row = db.listCharacters().find(c => c.id === id);
+  assert.strictEqual(row.system, 'delta-green');
+  assert.strictEqual(row.name, 'Agent X');
+
+  // Update auf ein anderes System wird nachgezogen (kein Stolperdraht auf DB-Ebene,
+  // das ist Aufgabe von pushGuardViolation in der Route, nicht von db.js)
+  db.putCharacter(id, JSON.stringify({ id, system: 'traveller', metadata: { name: 'Agent X' } }), null, 'owner-1');
+  assert.strictEqual(db.listCharacters().find(c => c.id === id).system, 'traveller');
+
+  db.deleteCharacter(id);
+});
+
+test('putCharacter: fehlendes/kaputtes system-Feld -> leerer String, kein Wurf', () => {
+  const id = 'sys-col-empty-' + Date.now();
+  db.putCharacter(id, JSON.stringify({ id, metadata: { name: 'Ohne System' } }), null, 'owner-1');
+  assert.strictEqual(db.listCharacters().find(c => c.id === id).system, '');
+  db.deleteCharacter(id);
+});

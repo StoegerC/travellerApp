@@ -35,9 +35,14 @@ db.exec(`
   -- owner_id: vorbereitet für Phase 3 (Nutzerverwaltung/Login), aktuell noch
   -- ungenutzt und nullable. Erst wenn echte User-Accounts existieren, füllen
   -- Routen dieses Feld und Leseabfragen filtern danach.
+  -- system: wie name aus dem JSON-Blob extrahiert (Multi-System Phase 3) –
+  -- reiner String-Kopiervorgang, der Server bleibt regelwerk-agnostisch,
+  -- er versteht die Kennung nicht, liefert sie nur fuer die Cloud-Charakter-
+  -- liste des Frontends mit.
   CREATE TABLE IF NOT EXISTS characters (
     id         TEXT PRIMARY KEY,
     name       TEXT NOT NULL DEFAULT '',
+    system     TEXT NOT NULL DEFAULT '',
     owner_id   TEXT,
     data       TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -104,6 +109,7 @@ function _addColumnIfMissing(table, column, definition) {
   if (!exists) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
 }
 _addColumnIfMissing('characters', 'owner_id', 'TEXT');
+_addColumnIfMissing('characters', 'system', "TEXT NOT NULL DEFAULT ''");
 // Bestandsnutzer, die zum Zeitpunkt der Haertung noch gar kein Passwort haben
 // (password_hash IS NULL), bekommen weiter unten in ensurePasswordSetForAll()
 // einen Setup-Token - sie duerfen nicht einfach als "fertig eingerichtet"
@@ -128,10 +134,10 @@ function transaction(fn) {
 
 const stmtGetChar    = db.prepare('SELECT data, updated_at, owner_id FROM characters WHERE id = ?');
 const stmtGetCharName = db.prepare('SELECT name FROM characters WHERE id = ?');
-const stmtListChars  = db.prepare('SELECT id, name, owner_id FROM characters ORDER BY name');
+const stmtListChars  = db.prepare('SELECT id, name, system, owner_id FROM characters ORDER BY name');
 const stmtUpsertChar = db.prepare(`
-  INSERT INTO characters (id, name, data, updated_at, owner_id) VALUES (@id, @name, @data, @updatedAt, @ownerId)
-  ON CONFLICT(id) DO UPDATE SET name = @name, data = @data, updated_at = @updatedAt
+  INSERT INTO characters (id, name, system, data, updated_at, owner_id) VALUES (@id, @name, @system, @data, @updatedAt, @ownerId)
+  ON CONFLICT(id) DO UPDATE SET name = @name, system = @system, data = @data, updated_at = @updatedAt
 `);
 const stmtDeleteChar = db.prepare('DELETE FROM characters WHERE id = ?');
 const stmtDeleteCharFiles = db.prepare("DELETE FROM files WHERE owner_type = 'character' AND owner_id = ?");
@@ -155,7 +161,7 @@ function getCharacterName(id) {
 // ownerId zurueck - Filterung nach "eigene" vs. "alle" (gm-Flag) passiert in
 // der Route, db.js bleibt hier neutral.
 function listCharacters() {
-  return stmtListChars.all().map(r => ({ id: r.id, name: r.name, ownerId: r.owner_id }));
+  return stmtListChars.all().map(r => ({ id: r.id, name: r.name, system: r.system, ownerId: r.owner_id }));
 }
 
 // expectedUpdatedAt: opaker String, wie ihn der Client zuletzt vom Server
@@ -173,11 +179,15 @@ function putCharacter(id, jsonBody, expectedUpdatedAt = null, ownerId = null) {
     if (row && expectedUpdatedAt != null && row.updated_at !== expectedUpdatedAt) {
       return { ok: false, conflict: true, data: row.data, updatedAt: row.updated_at };
     }
-    let name = '';
-    try { name = JSON.parse(jsonBody)?.metadata?.name || ''; } catch { /* keep empty */ }
+    let name = '', system = '';
+    try {
+      const parsed = JSON.parse(jsonBody);
+      name   = parsed?.metadata?.name || '';
+      system = parsed?.system || '';
+    } catch { /* keep empty */ }
     const updatedAt = new Date().toISOString();
     const finalOwnerId = row ? row.owner_id : ownerId;
-    stmtUpsertChar.run({ id, name, data: jsonBody, updatedAt, ownerId: finalOwnerId });
+    stmtUpsertChar.run({ id, name, system, data: jsonBody, updatedAt, ownerId: finalOwnerId });
     return { ok: true, updatedAt, ownerId: finalOwnerId };
   });
 }

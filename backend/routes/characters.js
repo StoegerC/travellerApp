@@ -40,7 +40,7 @@ function pushGuardViolation(storedJsonStr, incoming) {
 router.get('/chars', (req, res) => {
   const all = db.listCharacters();
   const visible = isGm(req.user) ? all : all.filter(c => c.ownerId === req.user.id);
-  res.json(visible.map(({ id, name, ownerId }) => ({ id, name, mine: ownerId === req.user.id })));
+  res.json(visible.map(({ id, name, system, ownerId }) => ({ id, name, system, mine: ownerId === req.user.id })));
 });
 
 // GET /char/:id – eigene oder gm-Flag (read-only fuer gm, siehe PUT unten).

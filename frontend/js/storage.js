@@ -141,7 +141,7 @@ const Storage = {
 
   listCharacters() {
     return this._cache
-      .map(c => ({ id: c.id, name: c.metadata?.name || 'Namenlos' }))
+      .map(c => ({ id: c.id, name: c.metadata?.name || 'Namenlos', system: c.system }))
       .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   },
 
