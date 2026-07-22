@@ -170,6 +170,36 @@ test('mergeCharacter: mergeSpec.arrays mit keyField true mergt nach "id" (traini
   assert.deepStrictEqual(merged.training.map(t => t.id).sort(), ['tr1', 'tr2']);
 });
 
+// Multi-System Phase 4: erster echter Verwendungsfall fuer dotted paths
+// UNTERHALB von systemData (Challenge-Fund T2) - das Universal-Template
+// deklariert seine beiden Werte-Listen genau so.
+const UNIVERSAL_SPEC = {
+  arrays: { 'systemData.attributes': true, 'systemData.skills': true },
+};
+
+test('mergeCharacter: mergeSpec.arrays unterhalb von systemData (Universal-Template) mergt granular', () => {
+  const local = {
+    id: 'c', system: 'universal',
+    systemData: {
+      attributes: [{ id: 'a-local', name: 'Stärke', value: '12', updatedAt: iso(2000) }],
+      skills:     [{ id: 's-local', name: 'Schwertkampf', value: '3', updatedAt: iso(2000) }],
+    },
+  };
+  const remote = {
+    id: 'c', system: 'universal',
+    systemData: {
+      attributes: [{ id: 'a-remote', name: 'Geschick', value: '10', updatedAt: iso(1000) }],
+      skills:     [{ id: 's-local', name: 'Schwertkampf', value: '1', updatedAt: iso(1000) }],
+    },
+  };
+  const merged = SyncMerge.mergeCharacter(local, remote, UNIVERSAL_SPEC);
+  assert.deepStrictEqual(merged.systemData.attributes.map(a => a.id).sort(), ['a-local', 'a-remote'],
+    'unterschiedliche Attribute beider Geraete bleiben beide erhalten');
+  assert.strictEqual(merged.systemData.skills.length, 1);
+  assert.strictEqual(merged.systemData.skills[0].value, '3',
+    'gleiche Fertigkeit auf beiden Seiten -> zeitlich spaetere (lokale) Version gewinnt');
+});
+
 test('mergeCharacter: Notizen jeder Kategorie werden vereinigt', () => {
   const local = { id: 'c', notes: {
     sessions:  [item('s1', 2000)], persons: [item('p1', 2000)],

@@ -9,6 +9,19 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.28.0] – 2026-07-22
+
+### Neu
+- **Multi-System-Umbau, Phase 4: Universal-Template als Beweis** — ein zweites, echtes registriertes Regelsystem (`systems/universal/`), bewusst ohne konkretes Regelwerk: nur die Kern-Tabs Charakter/Werte/Ausrüstung/Log, eine generische „Werte"-Seite mit frei anlegbaren Attribut- und Fertigkeiten-Listen (Name+Wert), neutrale Währung, kein Kalender/Zusatzfelder/Schiff/Karte. Dient zugleich als Kopiervorlage für künftige konkrete Systeme.
+  - Neue Kern-Widget-Bibliothek `core-widgets.js` (`CoreWidgets.renderValueList`/`attachValueList`) — eine editierbare Name+Wert-Liste, aus der die Werte-Seite komponiert statt eigene Zeilen-Logik zu bauen. Bewusst erst jetzt gebaut (nicht schon in Phase 2), da ohne einen zweiten echten Verwendungsfall die API nur geraten gewesen wäre; Zähler/Tracker folgen bei tatsächlichem Bedarf.
+  - `character.systemData` ist jetzt ein bekanntes Character-Feld (nicht mehr nur Passthrough) — nötig, damit ein frisch angelegter Charakter eines neuen Systems seine Daten dort ablegen kann, ohne dass sie beim nächsten Speichern verschwinden.
+  - Kleiner Begleitfix: `finances.js` zeigt bei einem System ohne Währung (wie Universal) den reinen Betrag statt eines führenden Leerzeichens vor der Zahl.
+
+### Geändert
+- **`sync-merge.js`-Vertrag erstmals mit einem echten zweiten System erprobt**: `mergeSpec.arrays` kann jetzt nachweislich auch Pfade unterhalb von `systemData` granular mergen (Challenge-Fund T2), nicht nur MGT2s flache Felder — neuer Regressionstest mit zwei simulierten Geräten, die unterschiedliche Attribute/Fertigkeiten anlegen.
+
+---
+
 ## [3.27.0] – 2026-07-22
 
 ### Neu

@@ -96,14 +96,26 @@ CHARAKTERVERWALTUNG
        (#unknown-system-banner). Mit einem Fake-Zweitsystem in Playwright
        end-to-end verifiziert (Systemwahl, Wechsel hin und zurück,
        Tab-Klicks nach Rebuild, Unbekannt-Regel, sortierbare Cloud-Tabelle).
-    4. Universal-Template als Beweis (Kern-Tabs + freie Werte-Listen).
-       Dabei auch die Kern-Widget-Bibliothek (Zähler/Tabellenlisten/Tracker,
-       Challenge-Fund U4) bauen — bewusst NICHT vorab in Phase 2 gemacht:
-       combat.js/attributes.js haben viele bespoke ±-Zähler und eine
-       Skill-Tabelle, aber ohne ein zweites System als echten Bedarfsnachweis
-       wäre die Widget-API geraten (Verfrühte-Abstraktion-Risiko aus Plan §5).
-       Das Universal-Template zeigt den echten Bedarf; MGT2 wird danach
-       risikoarm darauf umgestellt.
+    4. [ERLEDIGT: Universal-Template] systems/universal/ — echtes zweites
+       System, kein Regelwerk vorweggenommen: Kern-Tabs (Charakter/Werte/
+       Ausrüstung/Log), generische Werte-Seite mit frei anlegbaren Attribut-/
+       Fertigkeiten-Listen unter character.systemData (Namespace-Regel).
+       Dafür character.systemData vom Passthrough zum bekannten
+       Character-Feld gemacht (sonst würde ein erst nach der Konstruktion
+       befülltes systemData beim nächsten Speichern verschwinden). Zugleich
+       die Kern-Widget-Bibliothek core-widgets.js (CoreWidgets) begonnen —
+       bisher nur renderValueList/attachValueList (editierbare Name+Wert-
+       Liste), Zähler/Tracker folgen bei echtem Bedarf statt auf Vorrat
+       (Verfrühte-Abstraktion-Risiko aus Plan §5). mergeSpec mit
+       systemData.*-Pfaden erstmals real erprobt (Challenge-Fund T2) +
+       Regressionstest. WICHTIGE LEKTION beim Bauen: ein Feld-Blur darf die
+       Seite NICHT komplett neu rendern (wettlaufen mit dem Fokuswechsel ins
+       nächste Feld, siehe core-widgets.js-Kommentar) — CoreWidgets speichert
+       bei Blur nur, rendert erst bei Hinzufügen/Löschen neu.
+       Noch offen: MGT2s combat.js/attributes.js auf CoreWidgets umstellen
+       (jetzt risikoarm möglich, da die Widget-API am echten Universal-
+       Bedarf erprobt ist) — kein eigener Plan-Punkt, einfache Aufräum-
+       Aufgabe bei Gelegenheit.
     5. Kampagnen: system-Feld + Join-Prüfung + generisches Erweiterungs-API.
     6. (optional, nur bei Bedarf) freiwillige MGT2-Migration nach systemData.
 
@@ -134,3 +146,6 @@ UI / UX
 [ ] Schnellsuche global im Header (Personen, Orte, Quests, Sessions)
 [ ] Timeline-Ansicht: Sessions chronologisch als Zeitstrahl
 [ ] Druckansicht / PDF-Export des Charakterbogens
+
+TRAVELLER 
+[ ] Schiff Bild größer + zusätzliche Bilder (analog zum Charakter Portrait)

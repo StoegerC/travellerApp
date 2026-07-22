@@ -7,6 +7,14 @@ class Character {
     this.system     = data.system     || 'traveller';
     this.syncMode   = data.syncMode   || 'local';
     this.campaignId = data.campaignId || null;
+    // Namespace-Regel (Multi-System Phase 3 Plan §3, genutzt seit Phase 4):
+    // JEDES neue Regelsystem kapselt seine gesamten Daten unter diesem einen
+    // Kern-Feld statt eigener Top-Level-Schlüssel (die bleiben MGT2 vorbehalten,
+    // Bestandsschutz). Muss ein bekanntes Feld sein (nicht Passthrough), sonst
+    // würde ein erst nach der Konstruktion befülltes character.systemData
+    // (z.B. beim ersten Rendern einer System-Seite) beim nächsten toJSON()
+    // wieder verschwinden.
+    this.systemData = data.systemData || {};
     this.metadata = {
       name: data.metadata?.name || '',
       title: data.metadata?.title || '',
@@ -335,6 +343,7 @@ class Character {
       system:     this.system,
       syncMode:   this.syncMode,
       campaignId: this.campaignId,
+      systemData: this.systemData,
       metadata: this.metadata,
       attributes: this.attributes,
       skills: this.skills,
@@ -365,7 +374,7 @@ class Character {
 // Beim Einführen eines neuen bekannten Feldes hier ergänzen — sonst landet es
 // doppelt (einmal behandelt, einmal durchgereicht).
 Character._KNOWN_KEYS = new Set([
-  'id', 'system', 'syncMode', 'campaignId', 'metadata', 'attributes', 'skills',
-  'equipment', 'notes', 'radiationDose', 'firstAidLog', 'finances', 'career',
+  'id', 'system', 'syncMode', 'campaignId', 'systemData', 'metadata', 'attributes',
+  'skills', 'equipment', 'notes', 'radiationDose', 'firstAidLog', 'finances', 'career',
   'training', 'ships', 'activeShipId', 'shipRoles', '_syncMeta',
 ]);

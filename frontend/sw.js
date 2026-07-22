@@ -1,4 +1,4 @@
-const CACHE = 'traveller-v3.27.0';
+const CACHE = 'traveller-v3.28.0';
 
 const ASSETS = [
   './',
@@ -18,6 +18,7 @@ const ASSETS = [
   './js/models/character.js',
   './js/sync-merge.js',
   './js/storage.js',
+  './js/core-widgets.js',
   './js/pages/metadata.js',
   './js/pages/equipment.js',
   './js/pages/notes.js',
@@ -34,6 +35,8 @@ const ASSETS = [
   './js/systems/mgt2/pages/notes-travellermap.js',
   './js/systems/mgt2/pages/karte.js',
   './js/systems/mgt2/pages/combat.js',
+  './js/systems/universal/manifest.js',
+  './js/systems/universal/pages/values.js',
   './js/app.js',
 ];
 
