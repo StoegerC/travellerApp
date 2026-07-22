@@ -16,6 +16,31 @@ const Mgt2System = {
   id:   'traveller',
   name: 'Mongoose Traveller 2e',
 
+  // Header-Banner (Kopfzeile der App): kurzer Markenname + Icon, ersetzt das
+  // zuvor hart in index.html stehende Traveller-Logo. icon darf rohes
+  // SVG-Markup (beginnt mit "<") oder ein einfaches Emoji sein — siehe
+  // App._banner()/_updateHeaderBanner(). Dasselbe Kompassrosen-Icon wie
+  // bisher, jetzt als MGT2-Manifest-Wert statt Kern-Konstante.
+  banner: {
+    label: 'Traveller',
+    icon: `<svg class="traveller-icon" viewBox="0 0 36 36" width="30" height="30" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="0.75"/>
+      <g stroke="white" stroke-width="1.6" stroke-linecap="round" opacity="0.92">
+        <line x1="18" y1="4"    x2="18" y2="11"/>
+        <line x1="18" y1="25"   x2="18" y2="32"/>
+        <line x1="4"  y1="18"   x2="11" y2="18"/>
+        <line x1="25" y1="18"   x2="32" y2="18"/>
+        <line x1="8.1"  y1="8.1"  x2="13.2" y2="13.2"/>
+        <line x1="22.8" y1="22.8" x2="27.9" y2="27.9"/>
+        <line x1="27.9" y1="8.1"  x2="22.8" y2="13.2"/>
+        <line x1="8.1"  y1="27.9" x2="13.2" y2="22.8"/>
+      </g>
+      <circle cx="18" cy="18" r="3.8" fill="white"/>
+      <circle cx="18" cy="2"  r="1.9" fill="#a78bfa"/>
+      <circle cx="34" cy="18" r="1.5" fill="#60a5fa"/>
+    </svg>`,
+  },
+
   // Begriffs-Labels (Phase 2): das Log-Paket im Kern nennt Quests/Sessions
   // mit diesen Wörtern statt sie fest zu verdrahten — siehe App._label().
   labels: { quest: 'Quest', quests: 'Quests', session: 'Session', sessions: 'Sessions' },
