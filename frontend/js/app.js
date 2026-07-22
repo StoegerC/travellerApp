@@ -4,7 +4,7 @@
 // Laufende App-Version — wird von scripts/bump-version.js mitgebumpt.
 // Genutzt vom Import-Versionswächter (Multi-System Phase 0): JSON-Exporte
 // können ein _minAppVersion tragen, das der Import hiergegen prüft.
-const APP_VERSION = '3.31.0';
+const APP_VERSION = '3.32.0';
 
 const App = {
   currentCharacter: null,
@@ -287,6 +287,7 @@ const App = {
     this.initDarkMode();
     this.setupEventListeners();
     this._initPullToRefresh();
+    DiceRoller.init();
 
     const characters = Storage.listCharacters();
     if (characters.length > 0) {
@@ -419,7 +420,7 @@ const App = {
     this.editMode = false;
     this._undoStack = [];
     this._updateUndoBtn();
-    this._updateHeaderName(); this._updateHeaderBanner();
+    this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility();
     this._syncState = { status: 'idle', lastSync: null, error: null };
     this._pendingPush = false;
     this._campaignData = null;
@@ -469,7 +470,7 @@ const App = {
     this._unknownSystem = false;
     this._readOnlyView  = false;
     this._updateUnknownSystemBanner();
-    this._updateHeaderName(); this._updateHeaderBanner();
+    this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility();
     // Tab-Leiste neu aufbauen: das neue System kann von dem des zuvor
     // offenen Charakters abweichen (Multi-System Phase 3).
     this._buildTabs();
@@ -630,7 +631,7 @@ const App = {
     if (page && page.save) page.save(this.currentCharacter);
 
     if (Storage.saveCharacter(this.currentCharacter)) {
-      this._updateHeaderName(); this._updateHeaderBanner();
+      this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility();
       if (saveVersion) this._saveVersion(versionMeta);
       // Kein direkter _pushToCloud()-Aufruf hier: Storage.saveCharacter() plant
       // selbst schon einen (dirty-geprüften) Push, sobald sich wirklich etwas
@@ -672,7 +673,7 @@ const App = {
     this.currentCharacter = Character.fromJSON(json);
     window.currentCharacter = this.currentCharacter;
     Storage.saveCharacter(this.currentCharacter);
-    this._updateHeaderName(); this._updateHeaderBanner();
+    this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility();
     this.renderCurrentPage();
     this._updateUndoBtn();
     this.showStatus('Rückgängig', 'success');
@@ -711,7 +712,7 @@ const App = {
         this.currentCharacter = Character.fromJSON(version.data);
         window.currentCharacter = this.currentCharacter;
         Storage.saveCharacter(this.currentCharacter);
-        this._updateHeaderName(); this._updateHeaderBanner();
+        this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility();
         this.renderCurrentPage();
         this._updateUndoBtn();
         modal.classList.remove('visible');
@@ -941,7 +942,7 @@ const App = {
   // nach ~15 s schloss (Sync-Poll rendert die Seite neu).
   _isBusyEditing() {
     if (this._isEditingField()) return true;
-    return !!document.querySelector('.fin-modal-overlay.open, .vh-modal.visible, .traits-modal-overlay, .mention-popover-backdrop');
+    return !!document.querySelector('.fin-modal-overlay.open, .vh-modal.visible, .traits-modal-overlay, .mention-popover-backdrop, .dice-modal-overlay.open');
   },
 
   async _syncCloud() {
@@ -991,7 +992,7 @@ const App = {
       Storage._suppressPush = true;
       Storage.saveCharacter(cloudChar);
       Storage._suppressPush = false;
-      this._updateHeaderName(); this._updateHeaderBanner();
+      this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility();
       this.renderCurrentPage();
       // Hat der Merge lokale, noch nicht gepushte Änderungen eingebracht,
       // weicht das Ergebnis vom Serverstand ab → direkt nachpushen statt
