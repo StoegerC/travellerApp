@@ -184,5 +184,11 @@ UI / UX
 [ ] Timeline-Ansicht: Sessions chronologisch als Zeitstrahl
 [ ] Druckansicht / PDF-Export des Charakterbogens
 
-TRAVELLER 
-[ ] Schiff Bild größer + zusätzliche Bilder (analog zum Charakter Portrait)
+TRAVELLER
+[ERLEDIGT] Schiff Bild größer + zusätzliche Bilder (analog zum Charakter
+    Portrait) — mehrere Bilder samt Navigation/Zähler gab es schon; die
+    Größe war noch fest 120x90px. Jetzt responsiv bis 400px (analog
+    .portrait-widget), Seitenverhältnis bewusst 4:3 (Landschaft, passend
+    für ein Schiffsfoto) statt des 3:4-Hochformats beim Charakter.
+    ship-info-layout bekommt flex-wrap, damit die Spalten auf schmalen
+    Bildschirmen stapeln statt das große Bild gegen die Felder zu quetschen.

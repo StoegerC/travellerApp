@@ -7432,39 +7432,49 @@ body.dark-mode .update-reload-btn   { background: #dde0f5; color: #1a1d2e; }
 }
 
 /* Info Tab */
+/* Schiffs-Portrait ähnlich groß wie das Charakter-Portrait (.portrait-widget/
+   .portrait-frame in metadata.js): responsiv bis 400px statt fest 120x90,
+   Seitenverhältnis bleibt landscape (4:3, passend für ein Schiffsfoto statt
+   des 3:4-Hochformats beim Charakter). flex-wrap auf .ship-info-layout lässt
+   die Spalten auf schmalen Bildschirmen (Handy) untereinander stapeln, statt
+   das Bild gegen die Felder-Spalte zu quetschen. */
 .ship-info-layout {
   display: flex;
   gap: 16px;
   align-items: flex-start;
+  flex-wrap: wrap;
 }
 .ship-portrait-col {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0;
+  flex: 1 1 320px;
+  max-width: 400px;
 }
-.ship-portrait {
-  width: 120px;
-  height: 90px;
-  object-fit: cover;
+.ship-portrait-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
   border-radius: 10px;
-  border: 1px solid #ddd;
+  overflow: hidden;
 }
+.ship-portrait,
 .ship-portrait-placeholder {
-  width: 120px;
-  height: 90px;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ship-portrait { border: 1px solid #ddd; }
+.ship-portrait-placeholder {
   background: #f0f0f0;
-  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 36px;
+  font-size: 64px;
   border: 1px dashed #ccc;
+  box-sizing: border-box;
 }
-.ship-portrait-frame { position: relative; width: 120px; height: 90px; }
-.ship-portrait-frame .ship-portrait,
-.ship-portrait-frame .ship-portrait-placeholder { width: 100%; height: 100%; }
 .ship-img-nav {
   position: absolute;
   top: 50%;
@@ -7473,30 +7483,31 @@ body.dark-mode .update-reload-btn   { background: #dde0f5; color: #1a1d2e; }
   color: white;
   border: none;
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
-  font-size: 14px;
+  width: 40px;
+  height: 40px;
+  font-size: 22px;
   line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2;
+  transition: background 0.15s;
 }
 .ship-img-nav:hover:not(:disabled) { background: rgba(0, 0, 0, 0.7); }
 .ship-img-nav:disabled             { opacity: 0.25; cursor: default; }
-.ship-img-prev { left: 4px; }
-.ship-img-next { right: 4px; }
+.ship-img-prev { left: 8px; }
+.ship-img-next { right: 8px; }
 .ship-img-counter {
   position: absolute;
-  bottom: 4px;
+  bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.5);
   color: white;
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 8px;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
   pointer-events: none;
 }
 .ship-img-edit-row {
