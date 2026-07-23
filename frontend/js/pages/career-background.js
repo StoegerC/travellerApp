@@ -18,7 +18,8 @@
  * Datenpfad konfigurierbar übers Manifest (App._backgroundPath()/
  * _keyEventsPath()) — Bestandsschutz für MGT2s career.background/
  * career.keyEvents, neue Systeme ohne eigene Angabe bekommen die
- * Kern-Felder character.background/character.keyEvents.
+ * Namespace-Regel-konformen Kern-Felder character.systemData.background/
+ * character.systemData.keyEvents.
  */
 const CareerBackground = {
 

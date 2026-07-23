@@ -4,7 +4,7 @@
 // Laufende App-Version — wird von scripts/bump-version.js mitgebumpt.
 // Genutzt vom Import-Versionswächter (Multi-System Phase 0): JSON-Exporte
 // können ein _minAppVersion tragen, das der Import hiergegen prüft.
-const APP_VERSION = '3.33.0';
+const APP_VERSION = '3.34.0';
 
 const App = {
   currentCharacter: null,
@@ -253,12 +253,26 @@ const App = {
   // (siehe pages/career-background.js) sind spielunabhängig, ihr Datenpfad auf
   // character aber Bestandsschutz-abhängig: MGT2 hält sie weiterhin unter
   // career.background/career.keyEvents, ein künftiges System ohne eigene
-  // Angabe bekommt die Kern-Felder background/keyEvents auf oberster Ebene.
+  // Angabe bekommt die Namespace-Regel-konformen Kern-Felder
+  // systemData.background/systemData.keyEvents.
+  //
+  // KRITISCHER FUND (Delta-Green-Planung, behoben 23.07.2026): der Fallback
+  // zeigte bis hierher auf die BLANKEN Top-Level-Feldnamen 'background'/
+  // 'keyEvents' statt auf systemData.* — nie getestet, weil Universal (das
+  // einzige bisherige neue System) keinen Werdegang-Tab hat und
+  // CareerBackground nie aufruft. Der Fehler: _pathEnsure() hätte
+  // character.background als NEUE Top-Level-Eigenschaft direkt aufs Objekt
+  // gesetzt, nicht über den Konstruktor — da 'background'/'keyEvents' weder
+  // in Character._KNOWN_KEYS stehen noch im einmaligen Konstruktions-
+  // Passthrough gelandet wären, hätte toJSON() jede Eingabe in diesen
+  // Feldern beim nächsten Speichern stillschweigend verworfen. Exakt dieselbe
+  // Fehlerklasse wie der systemData-Bug, der in Phase 4 zum bekannten Feld
+  // gemacht wurde.
   _backgroundPath() {
-    return this._system().backgroundPath || 'background';
+    return this._system().backgroundPath || 'systemData.background';
   },
   _keyEventsPath() {
-    return this._system().keyEventsPath || 'keyEvents';
+    return this._system().keyEventsPath || 'systemData.keyEvents';
   },
 
   // Baut Tab-Leiste und Seiten-Container aus dem Manifest — exakt das Markup,
