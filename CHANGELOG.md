@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.34.0] – 2026-07-23
+
 ### Behoben
 - **Kritischer Datenverlust-Fund aus der Delta-Green-Planung**: `App._backgroundPath()`/`_keyEventsPath()` fielen ohne eigene Manifest-Angabe auf die blanken Top-Level-Feldnamen `background`/`keyEvents` zurück statt auf `systemData.background`/`systemData.keyEvents`. Da diese Felder weder in `Character._KNOWN_KEYS` noch im Konstruktions-Passthrough stehen, wurde jede Eingabe in Hintergrund & Persönlichkeit/Prägenden Ereignissen bei einem künftigen System ohne eigenen Pfad-Override beim nächsten Speichern stillschweigend verworfen — derselbe Fehler wie der `systemData`-Bug aus Phase 4, nur bisher nie ausgelöst, weil Universal (das einzige bisherige neue System) keinen Werdegang-Tab hat. MGT2 ist unberührt (überschreibt seine Pfade ohnehin explizit auf `career.background`/`career.keyEvents`).
 
