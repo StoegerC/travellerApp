@@ -145,23 +145,26 @@ CHARAKTERVERWALTUNG
        Damit sind alle 5 Phasen des Multi-System-Plans abgeschlossen.
     6. (optional, nur bei Bedarf) freiwillige MGT2-Migration nach systemData.
 
-[ ] Delta Green als drittes Regelsystem: Plan fertig (22.07.2026), noch nicht
-    umgesetzt. https://claude.ai/code/artifact/550907fd-08b9-48ce-ae38-06de6a1acdd1
-    Kritischer Fund VOR jeder Delta-Green-Arbeit: App._backgroundPath()/
-    _keyEventsPath() fallen ohne Manifest-Angabe auf blanke Top-Level-Felder
-    'background'/'keyEvents' zurueck statt auf systemData.* — nie getestet
-    (Universal nutzt CareerBackground gar nicht), verliert bei jedem
-    unbedarften neuen System die Hintergrund/Ereignisse-Eingaben beim
-    Speichern (gleicher Fehler wie systemData vor Phase 4). Fallback muss
-    auf systemData.background/systemData.keyEvents geaendert werden, bevor
-    ein System ohne eigenen Pfad-Override den Kern-Baustein nutzt. Zweiter
-    Fund: "Heimatplanet"-Label in metadata.js weiterhin hart verdrahtet
-    statt ueber den labels-Vertrag (Feld-Audit F3 nie fertig umgesetzt).
-    Phasenplan (A Kern-Fixes, B Manifest+Registrierung, C Werte-Seite
-    Charakteristiken/Skills/Sanity-Zaehler ueber CoreWidgets.attachCounter,
-    D duenner CareerBackground-Wrapper ohne Timeline, E Disorders ueber
-    CoreWidgets.renderValueList + Bonds ueber entityExtraFields.persons,
-    F Verifizieren) im Artifact.
+[ ] Delta Green als drittes Regelsystem: Plan fertig (22.07.2026), Phase A
+    (Kern-Fix 1 von 2) erledigt (23.07.2026), Rest noch nicht umgesetzt.
+    https://claude.ai/code/artifact/550907fd-08b9-48ce-ae38-06de6a1acdd1
+    [ERLEDIGT: kritischer Fund — App._backgroundPath()/_keyEventsPath()
+    fielen ohne Manifest-Angabe auf blanke Top-Level-Felder 'background'/
+    'keyEvents' zurueck statt auf systemData.* (gleicher Fehler wie
+    systemData vor Phase 4, nie ausgeloest weil Universal CareerBackground
+    gar nicht nutzt). Fallback zeigt jetzt auf systemData.background/
+    systemData.keyEvents; MGT2 unberuehrt (ueberschreibt seine Pfade
+    ohnehin explizit). Mit einem zur Laufzeit registrierten Fake-System
+    (duenner CareerBackground-Wrapper ohne Pfad-Override, wie fuer Delta
+    Greens "Hintergrund"-Tab geplant) end-to-end inkl. toJSON/fromJSON-
+    Roundtrip verifiziert — das war genau der vorher kaputte Fall.]
+    Noch offen — zweiter Fund: "Heimatplanet"-Label in metadata.js
+    weiterhin hart verdrahtet statt ueber den labels-Vertrag (Feld-Audit F3
+    nie fertig umgesetzt). Rest-Phasenplan (B Manifest+Registrierung,
+    C Werte-Seite Charakteristiken/Skills/Sanity-Zaehler ueber
+    CoreWidgets.attachCounter, D duenner CareerBackground-Wrapper ohne
+    Timeline, E Disorders ueber CoreWidgets.renderValueList + Bonds ueber
+    entityExtraFields.persons, F Verifizieren) im Artifact.
 
 SERVER / BETRIEB (nautilus)
 [ ] Persistentes Journal aktivieren — Ursache des Ausfalls vom 10.07.2026
