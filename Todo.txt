@@ -166,11 +166,49 @@ CHARAKTERVERWALTUNG
     Fake-System-Override (labels:{homeworld:'Wohnort'}) verifiziert, dass
     ein System es umbenennen kann. Damit ist Phase A vollstaendig
     abgeschlossen.]
-    Rest-Phasenplan (B Manifest+Registrierung,
-    C Werte-Seite Charakteristiken/Skills/Sanity-Zaehler ueber
-    CoreWidgets.attachCounter, D duenner CareerBackground-Wrapper ohne
-    Timeline, E Disorders ueber CoreWidgets.renderValueList + Bonds ueber
-    entityExtraFields.persons, F Verifizieren) im Artifact.
+    [ERLEDIGT: Phase B+C+D — systems/delta-green/ (manifest.js, calendar.js,
+    pages/stats.js, pages/background.js), in einem Schritt statt einzeln
+    (Phase B allein haette ein Manifest verdrahtet, das auf noch nicht
+    existierende Seiten-Objekte verweist -> Laufzeitfehler beim Tab-Klick).
+    Werte-Seite: Charakteristiken (STR/CON/DEX/INT/POW/CHA) als Zahlenfelder,
+    Ressourcen (Trefferpunkte/Willenskraft/Sanity+Breaking Point/Luck) als
+    CoreWidgets.attachCounter-Zaehler (zweite unabhaengige Erprobung nach
+    combat.js). Fertigkeiten bewusst NICHT als fester Katalog (wie im
+    urspruenglichen Plan skizziert), sondern als freie Name+Wert-Liste
+    (CoreWidgets.renderValueList, wie beim Universal-Template) — vermeidet
+    die Uebernahme der urheberrechtlich geschuetzten Delta-Green-
+    Fertigkeitsliste 1:1 aus dem Regelwerk und deckt Hausregeln/Editionen
+    gleichermassen ab. HP/Willenskraft/Sanity/Luck-Maximalwerte und Breaking
+    Point bewusst NICHT aus den Charakteristiken hergeleitet (kein
+    eingebautes Formel-Wissen ueber ein fremdes Regelwerk) — rein manuelle
+    Eingabe wie auf dem gedruckten Bogen. Icon neutrales 🕵️-Emoji statt des
+    geschuetzten Eye-in-Triangle-Logos. Hintergrund-Tab ein duenner
+    CareerBackground-Wrapper ohne eigene Timeline (Delta Green hat keine
+    Karriere-Generierung). Kalender: natives <input type="date"> statt
+    Imperialkalender. Beim Bauen gefundener und gefixter Bug: die
+    Charakteristiken-/Maximalwert-Felder lasen ihren Wert nur beim
+    Seitenwechsel aus dem DOM (App._doSave() -> page.save()) — ein
+    Struktur-Rerender durch "+ Fertigkeit hinzufuegen" auf derselben Seite
+    hat noch ungespeicherte Eingaben in diesen Feldern dabei stillschweigend
+    verworfen. Fix wie career-background.js' .cr-bg-field: eigener Blur-
+    Listener pro Feld, der direkt ins Modell schreibt. Bewusst OHNE
+    Rerender beim Max-Feld-Blur (nur Speichern) — ein Rerender in diesem
+    Moment kollidierte im Test mit einem noch laufenden Fokuswechsel zum
+    naechsten Feld ("node to be removed is no longer a child of this
+    node"); Folge ist nur ein kurzer Anzeige-Nachlauf des Zaehler-Maximums
+    bis zum naechsten echten Rerender, der Wert ist ab dem Blur bereits
+    korrekt gespeichert. Mit Playwright verifiziert: alle 5 Tabs in
+    View/Edit-Modus, Daten-Roundtrip unter systemData.*, Umschalten
+    MGT2<->Delta-Green<->Universal unbeeinflusst, Backend-Testsuite (54/54)
+    unberuehrt.]
+    Bonds bereits ueberprueft: entityExtraFields.persons.bondScore
+    (Manifest, Phase B) taucht dank des generischen Mechanismus
+    (App._renderExtraFields('persons', …) in notes.js/notes-popover.js)
+    automatisch im Personen-Formular auf ("Bindung"-Zahlenfeld 0-10) — kein
+    zusaetzlicher Delta-Green-Code noetig, mit Playwright bestaetigt.
+    Noch offen: E Disorders ueber CoreWidgets.renderValueList
+    (character.systemData.disorders), F abschliessende breitere
+    Verifikation + Fremd-Check-Grep. Details im Artifact.
 
 SERVER / BETRIEB (nautilus)
 [ ] Persistentes Journal aktivieren — Ursache des Ausfalls vom 10.07.2026

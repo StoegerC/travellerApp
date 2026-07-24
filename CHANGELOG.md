@@ -9,6 +9,16 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.36.0] – 2026-07-24
+
+### Neu
+- **Delta Green als drittes Regelsystem (Grundgerüst)** — `systems/delta-green/`: Manifest (id `delta-green`, Banner 🕵️, Labels „Operation(en)"/„Einsatzbericht(e)"/„Wohnort"), natives Datumsfeld statt Imperialkalender, Werte-Seite mit Charakteristiken (STR/CON/DEX/INT/POW/CHA), Ressourcen-Zählern (Trefferpunkte/Willenskraft/Sanity + Breaking Point/Luck, über `CoreWidgets.attachCounter` — zweite unabhängige Erprobung des Widgets nach `combat.js`) und einer freien Fertigkeiten-Liste (`CoreWidgets.renderValueList`, wie beim Universal-Template — bewusst kein fester Skill-Katalog aus dem Regelwerk, um dessen geschütztes Fertigkeitsverzeichnis nicht zu übernehmen). Hintergrund-Tab ist ein dünner Wrapper um den Kern-Baustein `CareerBackground` (keine Karriere-Timeline, Delta-Green-Agenten starten fertig rekrutiert). Bindungswert zu Personen (`entityExtraFields.persons.bondScore`, 0–10) erscheint automatisch im bestehenden Personen-Formular. Maximalwerte der Ressourcen bewusst NICHT aus den Charakteristiken hergeleitet (kein eingebautes Formel-Wissen über ein fremdes Regelwerk) — reine manuelle Eingabe wie auf dem gedruckten Bogen. Weitere Phasen (Disorders, abschließende Verifikation) folgen.
+
+### Behoben
+- **Datenverlust beim Kombinieren von Struktur-Änderung und offenen Feldern**: auf der neuen Delta-Green-Werte-Seite wurden Charakteristiken/Maximalwerte nur beim Seitenwechsel gespeichert — ein Klick auf „+ Fertigkeit" währenddessen hat die ganze Seite neu gerendert und dabei noch nicht gespeicherte Eingaben in diesen Feldern verworfen. Behoben nach demselben Muster wie `career-background.js`: eigener Blur-Listener pro Feld speichert direkt ins Modell.
+
+---
+
 ## [3.35.0] – 2026-07-24
 
 ### Geändert

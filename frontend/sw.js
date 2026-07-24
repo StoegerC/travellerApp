@@ -1,4 +1,4 @@
-const CACHE = 'traveller-v3.35.0';
+const CACHE = 'traveller-v3.36.0';
 
 const ASSETS = [
   './',
@@ -38,6 +38,10 @@ const ASSETS = [
   './js/systems/mgt2/pages/combat.js',
   './js/systems/universal/manifest.js',
   './js/systems/universal/pages/values.js',
+  './js/systems/delta-green/manifest.js',
+  './js/systems/delta-green/calendar.js',
+  './js/systems/delta-green/pages/stats.js',
+  './js/systems/delta-green/pages/background.js',
   './js/app.js',
 ];
 
