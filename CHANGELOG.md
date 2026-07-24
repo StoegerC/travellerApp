@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.37.0] – 2026-07-24
+
+### Neu
+- **Delta Green: Störungen (Disorders)** — vierter Block auf der Werte-Seite, wie die Fertigkeiten eine freie Name+Wert-Liste (`CoreWidgets.renderValueList`) unter `character.systemData.disorders`; das Wert-Feld trägt hier Auslöser/Notiz statt eines Prozentwerts. `mergeSpec` um `systemData.disorders` ergänzt (granularer Merge wie bei den Fertigkeiten). Damit ist der Delta-Green-Integrationsplan (Phasen A–F) vollständig abgeschlossen — Bindungswerte zu Personen liefen dank des generischen `entityExtraFields`-Mechanismus bereits ohne zusätzlichen Code.
+
+---
+
 ## [3.36.0] – 2026-07-24
 
 ### Neu
