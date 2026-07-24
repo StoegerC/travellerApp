@@ -4,7 +4,7 @@
 // Laufende App-Version — wird von scripts/bump-version.js mitgebumpt.
 // Genutzt vom Import-Versionswächter (Multi-System Phase 0): JSON-Exporte
 // können ein _minAppVersion tragen, das der Import hiergegen prüft.
-const APP_VERSION = '3.34.0';
+const APP_VERSION = '3.35.0';
 
 const App = {
   currentCharacter: null,
@@ -201,7 +201,14 @@ const App = {
   // App._label(key) statt harter deutscher Wörter. Fallback ohne
   // Manifest-Angabe: die MGT2-Begriffe, damit ein Kern-Grep nach neuen
   // Systemen nie auf einen leeren String trifft.
-  _LABEL_DEFAULTS: { quest: 'Quest', quests: 'Quests', session: 'Session', sessions: 'Sessions' },
+  //
+  // homeworld ergänzt (Delta-Green-Planung, Feld-Audit F3 nachgeholt):
+  // metadata.js zeigte "Heimatplanet" bisher hart verdrahtet, unpassend für
+  // ein Gegenwarts-Setting ohne Planeten (z.B. Delta Green: "Wohnort").
+  _LABEL_DEFAULTS: {
+    quest: 'Quest', quests: 'Quests', session: 'Session', sessions: 'Sessions',
+    homeworld: 'Heimatplanet',
+  },
   _label(key) {
     return this._system().labels?.[key] || this._LABEL_DEFAULTS[key] || key;
   },
