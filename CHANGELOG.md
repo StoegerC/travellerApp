@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.35.0] – 2026-07-24
+
 ### Geändert
 - **„Heimatplanet"-Label über den `labels`-Vertrag konfigurierbar** (zweiter Fund aus der Delta-Green-Planung, Feld-Audit F3 nachgeholt) — `App._label('homeworld')` statt hart verdrahtetem Text in `metadata.js` (Lese- und Bearbeitungsmodus). Fallback ohne Manifest-Angabe bleibt „Heimatplanet" (MGT2 unverändert); ein Gegenwarts-System wie Delta Green kann es künftig z. B. auf „Wohnort" umbenennen.
 
