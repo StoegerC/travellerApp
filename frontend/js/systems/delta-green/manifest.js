@@ -66,11 +66,13 @@ const DeltaGreenSystem = {
     { id: 'notes',      icon: '📝', label: 'Log',         page: () => NotesPage },
   ],
 
-  // Merge-Vertrag: Fertigkeiten-Liste granular mergen (wie Universal), damit
-  // zwei Geräte gleichzeitig unterschiedliche Einträge ändern können.
+  // Merge-Vertrag: Fertigkeiten- UND Störungen-Liste granular mergen (wie
+  // Universal), damit zwei Geräte gleichzeitig unterschiedliche Einträge
+  // ändern können.
   mergeSpec: {
     arrays: {
-      'systemData.skills': true,
+      'systemData.skills':    true,
+      'systemData.disorders': true,
     },
   },
 };

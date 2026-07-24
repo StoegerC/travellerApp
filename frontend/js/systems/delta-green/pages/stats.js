@@ -1,12 +1,15 @@
 /**
  * Werte – Charakteristiken, Ressourcen (Trefferpunkte/Willenskraft/Sanity/
- * Luck) und Fertigkeiten für Delta Green.
+ * Luck), Fertigkeiten und Störungen (Disorders) für Delta Green.
  *
- * Fertigkeiten bewusst als freie Name+Wert-Liste (CoreWidgets.renderValueList,
- * wie beim Universal-Template) statt eines fest hinterlegten Skill-Katalogs
- * wie MGT2s data/skills.js — so wird keine Delta-Green-Fertigkeitsliste aus
- * dem Regelwerk in den Code übernommen, und Hausregeln/Editionen mit
- * abweichenden Listen funktionieren genauso.
+ * Fertigkeiten UND Störungen bewusst als freie Name+Wert-Liste
+ * (CoreWidgets.renderValueList, wie beim Universal-Template) statt eines
+ * fest hinterlegten Katalogs wie MGT2s data/skills.js — so wird keine
+ * Delta-Green-Fertigkeits-/Störungsliste aus dem Regelwerk in den Code
+ * übernommen, und Hausregeln/Editionen mit abweichenden Listen
+ * funktionieren genauso. Bei Störungen steht im Wert-Feld Auslöser/Notiz
+ * statt eines Prozentwerts — dieselbe Name+Wert-Form passt trotzdem, ohne
+ * eigenes Rendering.
  *
  * Maximalwerte (Trefferpunkte/Willenskraft/Sanity/Luck) und der Breaking
  * Point werden bewusst NICHT aus den Charakteristiken hergeleitet — kein
@@ -18,8 +21,8 @@
  * erprobt).
  *
  * Datenpfad: character.systemData.characteristics/hitPoints/willpower/
- * sanity/luck/skills (Namespace-Regel, kein Feld überschreibt MGT2s
- * gleichnamige Top-Level-Felder).
+ * sanity/luck/skills/disorders (Namespace-Regel, kein Feld überschreibt
+ * MGT2s gleichnamige Top-Level-Felder).
  */
 const DgStatsPage = {
   _CHARACTERISTICS: [
@@ -45,6 +48,7 @@ const DgStatsPage = {
   _sanity(char)    { return this._pool(char, 'sanity',    { current: 50, max: 50, breakingPoint: 40 }); },
   _luck(char)      { return this._pool(char, 'luck',      { current: 50, max: 50 }); },
   _skills(char)    { return char.systemData.skills || (char.systemData.skills = []); },
+  _disorders(char) { return char.systemData.disorders || (char.systemData.disorders = []); },
 
   render(character) {
     const chars = this._characteristics(character);
@@ -70,6 +74,13 @@ const DgStatsPage = {
         ${CoreWidgets.renderValueList(this._skills(character), {
           title: 'Fertigkeiten', idPrefix: 'dgSkill',
           namePlaceholder: 'z.B. Firearms', valuePlaceholder: 'z.B. 40%', addLabel: '+ Fertigkeit',
+        })}
+      </div>
+
+      <div class="dg-block">
+        ${CoreWidgets.renderValueList(this._disorders(character), {
+          title: 'Störungen', idPrefix: 'dgDisorder',
+          namePlaceholder: 'z.B. Paranoia', valuePlaceholder: 'Auslöser/Notizen', addLabel: '+ Störung',
         })}
       </div>
     </div>`;
@@ -185,5 +196,6 @@ const DgStatsPage = {
     });
 
     CoreWidgets.attachValueList(char, this._skills(char), { idPrefix: 'dgSkill' }, rerender);
+    CoreWidgets.attachValueList(char, this._disorders(char), { idPrefix: 'dgDisorder' }, rerender);
   },
 };
