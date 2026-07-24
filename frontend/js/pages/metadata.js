@@ -109,7 +109,7 @@ const MetadataPage = {
               </div>
             </div>
             <div class="form-group">
-              <label for="charHomeworld">Heimatplanet:</label>
+              <label for="charHomeworld">${App._label('homeworld')}:</label>
               <input type="text" id="charHomeworld" value="${this._esc(meta.homeworld)}" placeholder="Planet oder Station">
             </div>
             ${App._renderMetadataExtraFields(meta)}
@@ -130,7 +130,7 @@ const MetadataPage = {
               <div><strong>Name:</strong> ${this._esc(meta.name) || '–'}</div>
               <div><strong>Titel / Rang:</strong> ${this._esc(meta.title) || '–'}</div>
               <div><strong>Alter:</strong> ${meta.age || 18} Jahre${meta.birthdate ? ` <span class="meta-birthdate">(geb. ${this._esc(meta.birthdate)})</span>` : ''}</div>
-              <div><strong>Heimatplanet:</strong> ${this._esc(meta.homeworld) || '–'}</div>
+              <div><strong>${App._label('homeworld')}:</strong> ${this._esc(meta.homeworld) || '–'}</div>
               ${App._renderMetadataExtraFieldsView(meta)}
               <div><strong>Charakter-ID:</strong> <span class="char-id-value">${this._esc(character.id)}</span></div>
             </div>
