@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.38.0] – 2026-07-25
+
 ### Neu
 - **Delta Green: Charakterdaten- und Werte-Erweiterungen** (User-Wunsch) — vier neue Textfelder auf der Charakterseite (Profession, Nationalität, Schulbildung/Ausbildung als einzeilige Felder wie die übrigen, Äußerliche Beschreibung als dreizeiliges Textfeld — neuer Kern-Feldtyp `textarea` für `metadataExtraFields`). Charakteristiken bekommen zwei abgeleitete Zeilen, bündig unter dem jeweiligen Attribut: ein automatisch berechnetes „x5"-Feld (Attributswert × 5, live bei jeder Eingabe) und ein frei editierbares Beschreibungsfeld je Attribut. Ressourcen zeigen jetzt einen abgeleiteten Richtwert in Klammern plus die kurze Ableitungsregel in Grau (Standard-Delta-Green-Formeln: Trefferpunkte = (STR+CON)/2 aufgerundet, Willenskraft = POW, Sanity = 99−POW, Breaking Point = aktuelle Sanity−POW; Luck nur mit Hinweistext, da laut Regelwerk gewürfelt statt hergeleitet) — reine Anzeigehilfe, der tatsächliche Maximalwert bleibt weiterhin frei editierbar.
 
