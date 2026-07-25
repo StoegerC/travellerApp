@@ -201,7 +201,12 @@ const DgStatsPage = {
   // Kommentar): 3 Spalten, Checkbox+Name+Wert je Zeile, plus ein einziger
   // (wiederverwendeter) Dialog fürs Abhaken, siehe _openSkillDialog().
   _renderSkillsBlock(character) {
-    const skills = this._skills(character).filter(s => !s._deleted);
+    // Alphabetisch sortiert (User-Wunsch 25.07.2026) — nur für die
+    // Anzeige, character.systemData.skills selbst behält die
+    // Einfüge-Reihenfolge (jede Zeile ist über data-id ohnehin
+    // positionsunabhängig verdrahtet, siehe _attachSkillsListeners()).
+    const skills = this._skills(character).filter(s => !s._deleted)
+      .slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', 'de'));
     const cols = this._splitIntoColumns(skills, 3);
     return `<div class="dg-block">
       <h3 class="dg-block-title">Fertigkeiten</h3>
@@ -470,10 +475,18 @@ const DgStatsPage = {
       rerender();
     };
 
-    // Abbrechen: nichts passiert — Häkchen bleibt entfernt (war beim
-    // Öffnen des Dialogs schon skill.checked=false), Wert bleibt
-    // unverändert.
-    cancelBtn.onclick = () => close();
+    // Abbrechen: macht das Abhaken rückgängig (Häkchen wird wieder
+    // gesetzt, sowohl im Modell als auch an der DOM-Checkbox selbst — die
+    // steht ja bereits auf unchecked, seit genau dieser Klick den Dialog
+    // geöffnet hat), Wert bleibt unverändert. Korrektur 25.07.2026: vorher
+    // blieb die Checkbox beim Abbrechen unchecked.
+    cancelBtn.onclick = () => {
+      skill.checked = true;
+      const cb = document.getElementById(`dgSkillCheck-${skill.id}`);
+      if (cb) cb.checked = true;
+      Storage.saveCharacter(char);
+      close();
+    };
     overlay.onclick = e => { if (e.target === overlay) close(); };
   },
 };
