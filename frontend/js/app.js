@@ -482,11 +482,31 @@ const App = {
     this.showStatus(`${this.currentCharacter.metadata.name || 'Charakter'} geladen`, 'success');
   },
 
+  // Manifest-Vertrag "defaultSkills" (optional, string[]): Namen, mit denen
+  // character.systemData.skills bei der Neuanlage vorbefüllt wird (User-
+  // Wunsch 25.07.2026, Delta Green — Namen vom offiziellen Charakterbogen
+  // übernommen, bewusst OHNE die dort abgedruckten Prozentwerte, siehe
+  // delta-green/manifest.js). Nur für BRANDNEUE Charaktere, keine
+  // rückwirkende Migration von Bestandscharakteren. Rein generischer
+  // Kern-Mechanismus (wie entityExtraFields/metadataExtraFields) — jedes
+  // System, das Fertigkeiten unter systemData.skills führt (aktuell
+  // Universal und Delta Green), kann ihn nutzen; Werte starten immer bei 0,
+  // wie ein manuell per "+ Fertigkeit" hinzugefügter Eintrag.
+  _seedDefaultSkills(char, manifest) {
+    const names = manifest?.defaultSkills;
+    if (!names || !names.length) return;
+    const now = new Date().toISOString();
+    char.systemData.skills = names.map(name => ({
+      id: CoreWidgets._uid(), name, value: 0, createdAt: now, updatedAt: now,
+    }));
+  },
+
   async createNewCharacter() {
     const result = await this._showNewCharDialog();
     if (result === null) return;
 
     const char = new Character({ system: result.systemId, syncMode: result.syncMode });
+    this._seedDefaultSkills(char, SystemRegistry.get(result.systemId));
     Storage.saveCharacter(char);
     this.currentCharacter = char;
     window.currentCharacter = char;
