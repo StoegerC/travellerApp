@@ -2,14 +2,20 @@
  * Werte – Charakteristiken, Ressourcen (Trefferpunkte/Willenskraft/Sanity/
  * Luck), Fertigkeiten und Störungen (Disorders) für Delta Green.
  *
- * Fertigkeiten UND Störungen bewusst als freie Name+Wert-Liste
- * (CoreWidgets.renderValueList, wie beim Universal-Template) statt eines
+ * Fertigkeiten UND Störungen bewusst als freie Name+Wert-Liste statt eines
  * fest hinterlegten Katalogs wie MGT2s data/skills.js — so wird keine
  * Delta-Green-Fertigkeits-/Störungsliste aus dem Regelwerk in den Code
  * übernommen, und Hausregeln/Editionen mit abweichenden Listen
- * funktionieren genauso. Bei Störungen steht im Wert-Feld Auslöser/Notiz
- * statt eines Prozentwerts — dieselbe Name+Wert-Form passt trotzdem, ohne
- * eigenes Rendering.
+ * funktionieren genauso. Störungen nutzen weiterhin
+ * CoreWidgets.renderValueList (Wert-Feld trägt Auslöser/Notiz statt eines
+ * Prozentwerts). Fertigkeiten haben seit 25.07.2026 (User-Wunsch) ein
+ * eigenes, bespoke Rendering statt CoreWidgets.renderValueList — 3-spaltige
+ * Darstellung, Checkbox+Name+Wert je Zeile, Klemmen-Dialog beim Ankreuzen
+ * (siehe _renderSkillsBlock()/_attachSkillsListeners()/_openSkillDialog()
+ * unten). Bewusst NICHT in CoreWidgets verallgemeinert — dieses
+ * Checkbox-Dialog-Muster ist eine sehr spezifische Delta-Green-Hausregel
+ * (Fehlschlag ankreuzen, nach der Sitzung 1D4 addieren), kein
+ * wiederverwendbares Kern-Konzept wie die einfache Name+Wert-Liste.
  *
  * Maximalwerte (Trefferpunkte/Willenskraft/Sanity/Luck) und der Breaking
  * Point bleiben weiterhin frei editierbar statt automatisch gesetzt — seit
@@ -128,12 +134,7 @@ const DgStatsPage = {
         </div>
       </div>
 
-      <div class="dg-block">
-        ${CoreWidgets.renderValueList(this._skills(character), {
-          title: 'Fertigkeiten', idPrefix: 'dgSkill',
-          namePlaceholder: 'z.B. Firearms', valuePlaceholder: 'z.B. 40%', addLabel: '+ Fertigkeit',
-        })}
-      </div>
+      ${this._renderSkillsBlock(character)}
 
       <div class="dg-block">
         ${CoreWidgets.renderValueList(this._disorders(character), {
@@ -174,6 +175,75 @@ const DgStatsPage = {
   _esc(s) {
     return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  },
+
+  _uid() { return 'w' + Date.now() + Math.random().toString(36).slice(2, 6); },
+
+  // Teilt items in numCols möglichst gleich große, aufeinanderfolgende
+  // Gruppen auf (Rest wandert auf die ersten Spalten) — für die
+  // 3-spaltige Fertigkeiten-Darstellung (User-Wunsch 25.07.2026).
+  _splitIntoColumns(items, numCols) {
+    const base = Math.floor(items.length / numCols);
+    const remainder = items.length % numCols;
+    const cols = [];
+    let idx = 0;
+    for (let i = 0; i < numCols; i++) {
+      const size = base + (i < remainder ? 1 : 0);
+      cols.push(items.slice(idx, idx + size));
+      idx += size;
+    }
+    return cols;
+  },
+
+  // Fertigkeiten-Abschnitt (User-Wunsch 25.07.2026, siehe Dateikopf-
+  // Kommentar): 3 Spalten, Checkbox+Name+Wert je Zeile, plus ein einziger
+  // (wiederverwendeter) Dialog fürs Ankreuzen, siehe _openSkillDialog().
+  _renderSkillsBlock(character) {
+    const skills = this._skills(character).filter(s => !s._deleted);
+    const cols = this._splitIntoColumns(skills, 3);
+    return `<div class="dg-block">
+      <h3 class="dg-block-title">Fertigkeiten</h3>
+      <p class="dg-skills-hint">Mach ein Kreuz, wenn eine Probe fehlschlägt. Addiere nach der Sitzung 1D4 auf jede angekreuzte Fertigkeit, lösche die Kreuze dann.</p>
+      <div class="dg-skill-columns">
+        ${cols.map(col => `<div class="dg-skill-col">${col.map(s => this._renderSkillRow(s)).join('')}</div>`).join('')}
+      </div>
+      ${App.editMode ? `<button class="cw-vl-add" id="dgSkillAddBtn">+ Fertigkeit</button>` : ''}
+      <div class="dg-skill-dialog-overlay" id="dgSkillDialogOverlay">
+        <div class="dg-skill-dialog">
+          <h4 class="dg-skill-dialog-title" id="dgSkillDialogTitle">Fertigkeit steigern</h4>
+          <div class="dg-skill-dialog-row">
+            <input type="number" class="dg-skill-dialog-input" id="dgSkillDialogInput" value="0">
+            <button type="button" class="dg-skill-dialog-roll" id="dgSkillDialogRoll" title="1D4 würfeln" aria-label="1D4 würfeln">🎲</button>
+          </div>
+          <div class="dg-skill-dialog-actions">
+            <button type="button" class="btn-secondary" id="dgSkillDialogCancel">Abbrechen</button>
+            <button type="button" class="btn-success" id="dgSkillDialogApply">Übernehmen</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  },
+
+  // Checkbox bewusst in BEIDEN Modi interaktiv (User-Wunsch) — anders als
+  // Name/Wert, die wie überall sonst in der App nur im Bearbeitungsmodus
+  // editierbar sind. Gleiches Muster wie die Ressourcen-Zähler weiter oben
+  // (±-Buttons rendern ebenfalls unabhängig von App.editMode).
+  _renderSkillRow(s) {
+    const value = s.value ?? 0;
+    const checkbox = `<input type="checkbox" class="dg-skill-check" id="dgSkillCheck-${s.id}" data-id="${s.id}" ${s.checked ? 'checked' : ''}>`;
+    if (App.editMode) {
+      return `<div class="dg-skill-row">
+        ${checkbox}
+        <input type="text" class="dg-skill-name-input" data-id="${s.id}" value="${this._esc(s.name)}" placeholder="Fertigkeit">
+        <input type="number" class="dg-skill-value-input" data-id="${s.id}" value="${value}">
+        <button class="dg-skill-del" data-id="${s.id}" aria-label="Fertigkeit entfernen">🗑</button>
+      </div>`;
+    }
+    return `<div class="dg-skill-row dg-skill-row-view">
+      ${checkbox}
+      <span class="dg-skill-name">${this._esc(s.name)}</span>
+      <span class="dg-skill-value">${value}</span>
+    </div>`;
   },
 
   _renderPool(prefix, label, pool, derivedValue, ruleText) {
@@ -299,7 +369,107 @@ const DgStatsPage = {
       Storage.saveCharacter(char);
     });
 
-    CoreWidgets.attachValueList(char, this._skills(char), { idPrefix: 'dgSkill' }, rerender);
+    this._attachSkillsListeners(char, rerender);
     CoreWidgets.attachValueList(char, this._disorders(char), { idPrefix: 'dgDisorder' }, rerender);
+  },
+
+  _attachSkillsListeners(char, rerender) {
+    const skills = this._skills(char);
+
+    // Checkbox in beiden Modi aktiv (siehe _renderSkillRow()): Ankreuzen
+    // (unchecked->checked) öffnet den Steigern-Dialog, Abhaken
+    // (checked->unchecked) speichert direkt ohne Dialog — die einzige Art,
+    // ein versehentliches Kreuz ohne Dialog-Umweg rückgängig zu machen.
+    document.querySelectorAll('.dg-skill-check').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const skill = skills.find(s => s.id === cb.dataset.id);
+        if (!skill) return;
+        skill.checked = cb.checked;
+        Storage.saveCharacter(char);
+        if (cb.checked) this._openSkillDialog(char, skill, rerender);
+      });
+    });
+
+    if (!App.editMode) return;
+
+    document.querySelectorAll('.dg-skill-name-input').forEach(input => {
+      input.addEventListener('blur', () => {
+        const skill = skills.find(s => s.id === input.dataset.id);
+        if (!skill) return;
+        skill.name = input.value;
+        skill.updatedAt = new Date().toISOString();
+        Storage.saveCharacter(char);
+      });
+    });
+
+    document.querySelectorAll('.dg-skill-value-input').forEach(input => {
+      input.addEventListener('blur', () => {
+        const skill = skills.find(s => s.id === input.dataset.id);
+        if (!skill) return;
+        skill.value = parseFloat(input.value) || 0;
+        skill.updatedAt = new Date().toISOString();
+        Storage.saveCharacter(char);
+      });
+    });
+
+    document.querySelectorAll('.dg-skill-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const skill = skills.find(s => s.id === btn.dataset.id);
+        if (!skill) return;
+        const now = new Date().toISOString();
+        skill._deleted  = true;
+        skill.deletedAt = now;
+        skill.updatedAt = now;
+        Storage.saveCharacter(char);
+        rerender();
+      });
+    });
+
+    document.getElementById('dgSkillAddBtn')?.addEventListener('click', () => {
+      const now = new Date().toISOString();
+      skills.push({ id: this._uid(), name: '', value: 0, checked: false, createdAt: now, updatedAt: now });
+      Storage.saveCharacter(char);
+      rerender();
+    });
+  },
+
+  // Ein einziger, wiederverwendeter Dialog für alle Fertigkeiten (statt
+  // eines Dialogs pro Zeile) — Klick-Handler werden bei jedem Öffnen per
+  // Property-Zuweisung (.onclick =) statt addEventListener() neu gesetzt,
+  // damit sich bei mehrfachem Öffnen ohne zwischenzeitlichen Rerender
+  // (z.B. Ankreuzen -> Abbrechen -> anderes Feld ankreuzen) keine
+  // doppelten Listener aufsummieren.
+  _openSkillDialog(char, skill, rerender) {
+    const overlay = document.getElementById('dgSkillDialogOverlay');
+    const title   = document.getElementById('dgSkillDialogTitle');
+    const input   = document.getElementById('dgSkillDialogInput');
+    const rollBtn   = document.getElementById('dgSkillDialogRoll');
+    const applyBtn  = document.getElementById('dgSkillDialogApply');
+    const cancelBtn = document.getElementById('dgSkillDialogCancel');
+    if (!overlay || !input) return;
+
+    title.textContent = `Fertigkeit steigern: ${skill.name || '(ohne Namen)'}`;
+    input.value = '0';
+    overlay.classList.add('open');
+
+    const close = () => overlay.classList.remove('open');
+
+    rollBtn.onclick = () => { input.value = Math.floor(Math.random() * 4) + 1; };
+
+    // Übernehmen: Zahl zum Fertigkeitswert addieren, Häkchen entfernen.
+    applyBtn.onclick = () => {
+      const n = parseInt(input.value) || 0;
+      skill.value = (parseFloat(skill.value) || 0) + n;
+      skill.checked = false;
+      skill.updatedAt = new Date().toISOString();
+      Storage.saveCharacter(char);
+      close();
+      rerender();
+    };
+
+    // Abbrechen: nichts passiert — Häkchen bleibt gesetzt (war beim Öffnen
+    // schon skill.checked=true), Wert bleibt unverändert.
+    cancelBtn.onclick = () => close();
+    overlay.onclick = e => { if (e.target === overlay) close(); };
   },
 };

@@ -8713,6 +8713,162 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
   font-family: inherit;
 }
 
+/* Fertigkeiten-Abschnitt: dezenter Hinweistext, 3-spaltige Liste,
+   Checkbox+Name+Wert je Zeile, Steigern-Dialog (User-Wunsch 25.07.2026,
+   siehe stats.js). */
+.dg-skills-hint {
+  font-size: 12px;
+  color: #999;
+  margin: -6px 0 12px;
+}
+
+.dg-skill-columns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px 16px;
+  margin-bottom: 12px;
+}
+
+.dg-skill-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dg-skill-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dg-skill-check {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  flex-shrink: 0;
+}
+
+.dg-skill-row-view {
+  min-height: 32px;
+  font-size: 13px;
+}
+
+.dg-skill-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.dg-skill-value {
+  font-weight: 700;
+  color: #444;
+}
+
+.dg-skill-name-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  border: 1px solid #d5d5e4;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.dg-skill-value-input {
+  width: 52px;
+  min-height: 36px;
+  text-align: center;
+  border: 1px solid #d5d5e4;
+  border-radius: 6px;
+  padding: 4px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.dg-skill-del {
+  background: none;
+  border: none;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 2px 4px;
+  min-width: 32px;
+  min-height: 32px;
+  color: #c0392b;
+  flex-shrink: 0;
+}
+
+@media (max-width: 700px) {
+  .dg-skill-columns { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .dg-skill-columns { grid-template-columns: 1fr; }
+}
+
+/* Steigern-Dialog: ein einziger, wiederverwendeter Overlay (siehe
+   _openSkillDialog() in stats.js), Muster wie das Würfel-Widget
+   (.dice-modal-overlay/.dice-modal). */
+.dg-skill-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 20, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+.dg-skill-dialog-overlay.open { display: flex; }
+
+.dg-skill-dialog {
+  background: #fff;
+  color: #333;
+  width: min(320px, 100%);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.dg-skill-dialog-title {
+  margin: 0 0 14px;
+  font-size: 15px;
+  color: #222;
+}
+
+.dg-skill-dialog-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.dg-skill-dialog-input {
+  flex: 1;
+  min-height: 44px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+  border: 1px solid #d5d5e4;
+  border-radius: 8px;
+  padding: 6px;
+  font-family: inherit;
+}
+
+.dg-skill-dialog-roll {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid #d5d5e4;
+  background: #f8f8fc;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.dg-skill-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 body.dark-mode .dg-block { background: #161929; border-color: #2c3050; }
 body.dark-mode .dg-block-title { color: #9095b8; }
 body.dark-mode .dg-char-cell { background: #1a1d2e; }
@@ -8729,3 +8885,11 @@ body.dark-mode .dg-pool-rule { color: #6a6f94; }
 body.dark-mode .dg-pool-derived { color: #6a6f94; }
 body.dark-mode .dg-pool-max { color: #9095b8; }
 body.dark-mode .dg-pool-max-input { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
+body.dark-mode .dg-skills-hint { color: #6a6f94; }
+body.dark-mode .dg-skill-value { color: #dde0f5; }
+body.dark-mode .dg-skill-name-input,
+body.dark-mode .dg-skill-value-input { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
+body.dark-mode .dg-skill-dialog { background: #161929; color: #dde0f5; }
+body.dark-mode .dg-skill-dialog-title { color: #dde0f5; }
+body.dark-mode .dg-skill-dialog-input { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
+body.dark-mode .dg-skill-dialog-roll { background: #1a1d2e; border-color: #2c3050; }
