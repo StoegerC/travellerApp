@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.39.2] – 2026-07-25
+
 ### Geändert
 - **Delta Green: Fertigkeiten alphabetisch sortiert** — reine Anzeigesortierung (deutsches Locale), die gespeicherte Reihenfolge bleibt unverändert Einfüge-Reihenfolge.
 
