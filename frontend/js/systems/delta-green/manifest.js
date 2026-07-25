@@ -13,9 +13,15 @@
  * Kern-Fallback (App._backgroundPath()/_keyEventsPath()) zeigt automatisch
  * auf character.systemData.background/.keyEvents.
  *
- * Bewusst KEIN Marken-Logo (Eye-in-Triangle) und KEIN fest hinterlegter
- * Fertigkeiten-Katalog aus dem Regelwerk — siehe pages/stats.js für die
- * Begründung. icon ist ein neutrales Emoji, wie beim Universal-Template.
+ * Bewusst KEIN Marken-Logo (Eye-in-Triangle) — icon ist ein neutrales
+ * Emoji, wie beim Universal-Template. `defaultSkills` (User-Wunsch
+ * 25.07.2026) befüllt neue Charaktere mit den Fertigkeits-NAMEN vom
+ * offiziellen Charakterbogen als Startpunkt — bewusst OHNE die dort
+ * abgedruckten Basis-Prozentwerte (jeder Eintrag startet bei 0, wie ein
+ * manuell hinzugefügter), das ist kein starrer Katalog: die Fertigkeiten-
+ * Liste bleibt die freie Name+Wert-Liste aus pages/stats.js, frei
+ * umbenennbar/löschbar/erweiterbar. Gilt nur für NEU angelegte Charaktere,
+ * keine rückwirkende Migration.
  *
  * Muss NACH systems/mgt2/manifest.js geladen werden (MGT2 bleibt Fallback
  * für Bestandscharaktere ohne/mit unbekannter System-Kennung).
@@ -69,6 +75,22 @@ const DeltaGreenSystem = {
   // Standard-Notation für das Würfel-Widget: Delta Green würfelt Prozentwerte
   // (2x W10 = W100) gegen Fertigkeitswerte.
   diceDefault: 'D100',
+
+  // Vorbefüllung für character.systemData.skills bei der Neuanlage (siehe
+  // App._seedDefaultSkills()) — Fertigkeits-NAMEN vom offiziellen
+  // Charakterbogen, keine Werte (siehe Kommentar oben).
+  defaultSkills: [
+    'Anthropologie', 'Archäologie', 'Artillerie', 'Athletik', 'Ausweichen',
+    'Auto fahren', 'Buchhaltung', 'Bürokratie', 'Chirurgie',
+    'Computerwissenschaften', 'Erkunden', 'Erste Hilfe', 'Forensik',
+    'Geschichte', 'Gesetzeskunde', 'Handwerk', 'Heimlichkeit', 'HUMINT',
+    'Kriminologie', 'Kunst', 'Lotsen und lenken', 'Medizin',
+    'Militärwissenschaften', 'Nahkampfwaffen', 'Navigation', 'Okkultismus',
+    'Pharmazie', 'Psychotherapie', 'Reiten', 'Schusswaffen',
+    'Schwere Maschinen', 'Schwere Waffen', 'Schwimmen', 'SIGINT',
+    'Sprengstoffe', 'Überlebenskunst', 'Überreden', 'Unnatürlich',
+    'Verkleiden', 'Wachsamkeit', 'Waffenloser Kampf', 'Wissenschaften',
+  ],
 
   tabs: [
     { id: 'metadata',   icon: '👤', label: 'Agent',       page: () => MetadataPage },

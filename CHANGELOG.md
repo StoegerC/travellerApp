@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.41.0] – 2026-07-25
+
+### Neu
+- **Delta Green: Standard-Fertigkeiten bei Neuanlage** — neue Charaktere starten jetzt mit 42 Fertigkeiten (Namen vom offiziellen Charakterbogen, bewusst ohne die dort abgedruckten Prozentwerte — jeder Eintrag startet bei 0, wie ein manuell hinzugefügter). Bleibt die freie, erweiterbare Name+Wert-Liste — Fertigkeiten können weiterhin umbenannt, gelöscht oder ergänzt werden. Neuer genereller Kern-Manifest-Vertrag `defaultSkills` (`App._seedDefaultSkills()`), gilt nur für neu angelegte Charaktere, keine rückwirkende Änderung an Bestandscharakteren; MGT2/Universal deklarieren ihn nicht und bleiben unverändert.
+
+---
+
 ## [3.40.0] – 2026-07-25
 
 ### Geändert
