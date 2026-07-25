@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.39.0] – 2026-07-25
+
 ### Neu
 - **Delta Green: Fertigkeiten-Abschnitt überarbeitet** — dezenter Hinweistext unter der Überschrift ("Mach ein Kreuz, wenn eine Probe fehlschlägt. Addiere nach der Sitzung 1D4 auf jede angekreuzte Fertigkeit, lösche die Kreuze dann."), 3-spaltige Darstellung (Fertigkeiten möglichst gleichmäßig auf die Spalten verteilt), jeder Eintrag als Checkbox + Name + Wert. Die Checkbox ist bewusst in Lese- UND Bearbeitungsmodus aktiv: Ankreuzen öffnet einen Dialog (Zahleneingabe, Default 0, plus 🎲-Button für einen 1D4-Wurf) — „Übernehmen" addiert die Zahl zum Fertigkeitswert und entfernt das Kreuz, „Abbrechen" lässt Kreuz und Wert unverändert. Direktes Abhaken (ohne vorherigen Klick zum Ankreuzen) speichert ohne Dialog. Ersetzt das bisherige generische `CoreWidgets.renderValueList` für Fertigkeiten durch ein bespoke Rendering (Störungen nutzen weiterhin die generische Liste) — das Checkbox-Dialog-Verhalten ist eine zu spezifische Delta-Green-Hausregel für den Kern.
 
