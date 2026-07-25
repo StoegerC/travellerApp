@@ -8722,6 +8722,12 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
   margin-bottom: 12px;
 }
 
+.dg-skill-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .dg-skill-col {
   display: flex;
   flex-direction: column;

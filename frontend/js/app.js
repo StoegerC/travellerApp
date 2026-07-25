@@ -4,7 +4,7 @@
 // Laufende App-Version — wird von scripts/bump-version.js mitgebumpt.
 // Genutzt vom Import-Versionswächter (Multi-System Phase 0): JSON-Exporte
 // können ein _minAppVersion tragen, das der Import hiergegen prüft.
-const APP_VERSION = '3.41.0';
+const APP_VERSION = '3.42.0';
 
 const App = {
   currentCharacter: null,
@@ -499,6 +499,14 @@ const App = {
     char.systemData.skills = names.map(name => ({
       id: CoreWidgets._uid(), name, value: 0, createdAt: now, updatedAt: now,
     }));
+  },
+
+  // Für Bestandscharaktere (vor Einführung von defaultSkills angelegt, oder
+  // nach versehentlichem Löschen): DgStatsPage nutzt das für den
+  // "Standard-Fertigkeiten ergänzen"-Knopf (nur fehlende Namen hinzufügen,
+  // siehe pages/stats.js).
+  _defaultSkills() {
+    return this._system().defaultSkills || [];
   },
 
   async createNewCharacter() {
