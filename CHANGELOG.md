@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Neu
+- **Delta Green: „Standard-Fertigkeiten ergänzen"-Knopf** — für Bestandscharaktere, die vor der Standard-Fertigkeiten-Vorbefüllung angelegt wurden (z.B. bereits vorhandene Charaktere): fügt auf der Werte-Seite nur die noch fehlenden der 42 Standardnamen hinzu (Groß-/Kleinschreibung wird ignoriert), lässt vorhandene Einträge samt Werten unangetastet und legt keine Duplikate an. Zeigt die Anzahl der fehlenden Fertigkeiten im Knopf an und verschwindet, sobald alle vorhanden sind.
+
 ---
 
 ## [3.41.0] – 2026-07-25

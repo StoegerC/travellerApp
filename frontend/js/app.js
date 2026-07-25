@@ -501,6 +501,14 @@ const App = {
     }));
   },
 
+  // Für Bestandscharaktere (vor Einführung von defaultSkills angelegt, oder
+  // nach versehentlichem Löschen): DgStatsPage nutzt das für den
+  // "Standard-Fertigkeiten ergänzen"-Knopf (nur fehlende Namen hinzufügen,
+  // siehe pages/stats.js).
+  _defaultSkills() {
+    return this._system().defaultSkills || [];
+  },
+
   async createNewCharacter() {
     const result = await this._showNewCharDialog();
     if (result === null) return;

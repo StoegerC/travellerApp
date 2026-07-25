@@ -246,16 +246,29 @@ const DgStatsPage = {
     // Anzeige, character.systemData.skills selbst behält die
     // Einfüge-Reihenfolge (jede Zeile ist über data-id ohnehin
     // positionsunabhängig verdrahtet, siehe _attachSkillsListeners()).
-    const skills = this._skills(character).filter(s => !s._deleted)
-      .slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', 'de'));
+    const activeSkills = this._skills(character).filter(s => !s._deleted);
+    const skills = activeSkills.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', 'de'));
     const cols = this._splitIntoColumns(skills, 3);
+
+    // "Standard-Fertigkeiten ergänzen"-Knopf (User-Wunsch 25.07.2026): für
+    // Bestandscharaktere, die vor defaultSkills angelegt wurden oder bei
+    // denen Einträge gelöscht wurden — fügt nur fehlende Namen hinzu (siehe
+    // _attachSkillsListeners()), verdoppelt nichts. Nur sichtbar, wenn das
+    // aktive System überhaupt defaultSkills deklariert (Delta Green) UND
+    // tatsächlich noch etwas fehlt.
+    const existingNames = new Set(activeSkills.map(s => (s.name || '').trim().toLowerCase()));
+    const missingCount = App._defaultSkills().filter(n => !existingNames.has(n.trim().toLowerCase())).length;
+
     return `<div class="dg-block">
       <h3 class="dg-block-title">Fertigkeiten</h3>
       <p class="dg-skills-hint">Mach ein Kreuz, wenn eine Probe fehlschlägt. Addiere nach der Sitzung 1D4 auf jede angekreuzte Fertigkeit, lösche die Kreuze dann.</p>
       <div class="dg-skill-columns">
         ${cols.map(col => `<div class="dg-skill-col">${col.map(s => this._renderSkillRow(s)).join('')}</div>`).join('')}
       </div>
-      ${App.editMode ? `<button class="cw-vl-add" id="dgSkillAddBtn">+ Fertigkeit</button>` : ''}
+      ${App.editMode ? `<div class="dg-skill-actions">
+        <button class="cw-vl-add" id="dgSkillAddBtn">+ Fertigkeit</button>
+        ${missingCount > 0 ? `<button class="btn-secondary" id="dgSkillFillDefaultsBtn">Standard-Fertigkeiten ergänzen (${missingCount})</button>` : ''}
+      </div>` : ''}
       <div class="dg-skill-dialog-overlay" id="dgSkillDialogOverlay">
         <div class="dg-skill-dialog">
           <h4 class="dg-skill-dialog-title" id="dgSkillDialogTitle">Fertigkeit steigern</h4>
@@ -490,6 +503,26 @@ const DgStatsPage = {
       const now = new Date().toISOString();
       skills.push({ id: this._uid(), name: '', value: 0, checked: false, createdAt: now, updatedAt: now });
       Storage.saveCharacter(char);
+      rerender();
+    });
+
+    // "Standard-Fertigkeiten ergänzen" (User-Wunsch 25.07.2026): fügt nur
+    // Namen aus App._defaultSkills() hinzu, die noch nicht (Groß-/
+    // Kleinschreibung ignoriert) unter den aktiven Fertigkeiten stehen —
+    // für Bestandscharaktere von vor der defaultSkills-Einführung, wie
+    // "Alexei 'Kernel' Morozov". Bestehende Einträge/Werte bleiben
+    // unangetastet, keine Duplikate.
+    document.getElementById('dgSkillFillDefaultsBtn')?.addEventListener('click', () => {
+      const existingNames = new Set(skills.filter(s => !s._deleted).map(s => (s.name || '').trim().toLowerCase()));
+      const now = new Date().toISOString();
+      let added = 0;
+      App._defaultSkills().forEach(name => {
+        if (existingNames.has(name.trim().toLowerCase())) return;
+        skills.push({ id: this._uid(), name, value: 0, checked: false, createdAt: now, updatedAt: now });
+        added++;
+      });
+      Storage.saveCharacter(char);
+      App.showStatus(`${added} Standard-Fertigkeit${added === 1 ? '' : 'en'} ergänzt`, 'success');
       rerender();
     });
   },
