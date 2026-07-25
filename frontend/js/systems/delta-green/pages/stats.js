@@ -19,15 +19,19 @@
  * ankreuzen, nach der Sitzung abhaken und 1D4 addieren), kein
  * wiederverwendbares Kern-Konzept wie die einfache Name+Wert-Liste.
  *
- * Maximalwerte (Trefferpunkte/Willenskraft/Sanity/Luck) und der Breaking
- * Point bleiben weiterhin frei editierbar statt automatisch gesetzt — seit
- * 25.07.2026 zeigt die App zwar einen abgeleiteten Richtwert daneben (s.u.),
- * setzt ihn aber nicht selbst ein, damit abweichende Werte (Verletzungen,
- * Hausregeln, Rundungsvarianten) jederzeit möglich bleiben, genau wie auf
- * dem gedruckten Bogen. Der aktuelle Wert bekommt einen Zähler zum
- * schnellen Anpassen am Tisch (CoreWidgets.attachCounter, wie MGT2s
- * Attribut-Karten/Helden-XP — hier an einem zweiten, unabhängigen System
- * erprobt).
+ * Maximalwerte von Trefferpunkte/Willenskraft/Sanity sowie der Breaking
+ * Point werden automatisch aus den Standardformeln berechnet und
+ * eingetragen (User-Wunsch 25.07.2026, Kurswechsel ggü. der ursprünglichen
+ * Entscheidung "bleibt frei editierbar" vom selben Tag) — kein `<input>`
+ * mehr dafür, reine Anzeige wie beim x5-Feld der Charakteristiken, live
+ * neu berechnet bei jeder Attribut-Eingabe bzw. jeder Änderung des
+ * aktuellen Sanity-Werts (Breaking Point hängt von beidem ab: POW UND
+ * aktueller Sanity). Luck hat laut Regelwerk KEINE Formel (wird gewürfelt)
+ * und bleibt deshalb als einziger Maximalwert frei editierbar — siehe
+ * `_POOLS`-Flag `auto`. Der aktuelle Wert bekommt bei allen vier
+ * Ressourcen weiterhin einen Zähler zum schnellen Anpassen am Tisch
+ * (CoreWidgets.attachCounter, wie MGT2s Attribut-Karten/Helden-XP — hier
+ * an einem zweiten, unabhängigen System erprobt).
  *
  * Charakteristiken bekommen zusätzlich zwei abgeleitete Zeilen (User-Wunsch
  * 25.07.2026): ein automatisch berechnetes "x5"-Feld (Attributswert × 5,
@@ -41,28 +45,27 @@
  * hitPoints/willpower/sanity/luck/skills/disorders (Namespace-Regel, kein
  * Feld überschreibt MGT2s gleichnamige Top-Level-Felder).
  *
- * Ressourcen zeigen zusätzlich einen abgeleiteten Richtwert in Klammern
- * plus die kurze Ableitungsregel in Grau (User-Wunsch 25.07.2026) — die
+ * Ressourcen zeigen zusätzlich die kurze Ableitungsregel in Grau — die
  * Standardformeln aus dem Delta-Green-Regelwerk (Agent's Handbook):
  * Trefferpunkte = (STR+CON)/2 aufgerundet, Willenskraft = POW,
  * Sanity = 99−POW, Breaking Point = aktuelle Sanity−POW. Luck wird laut
  * Regelwerk einmalig gewürfelt (1W100), nicht aus einer Charakteristik
- * hergeleitet — bekommt deshalb nur den Hinweistext, keinen Klammerwert.
- * Diese Richtwerte sind eine reine Anzeigehilfe (bei jedem Seiten-Rerender
- * neu berechnet, nicht live bei jedem Tastendruck) — der tatsächliche
- * Maximalwert bleibt weiterhin frei editierbar, siehe Erklärung oben zu
- * "bewusst nicht automatisch berechnet".
+ * hergeleitet — bekommt deshalb nur den Hinweistext, keinen automatisch
+ * berechneten Maximalwert.
  */
 const DgStatsPage = {
   _CHARACTERISTICS: [
     { key: 'str', label: 'STR' }, { key: 'con', label: 'CON' }, { key: 'dex', label: 'DEX' },
     { key: 'int', label: 'INT' }, { key: 'pow', label: 'POW' }, { key: 'cha', label: 'CHA' },
   ],
+  // auto: Maximalwert wird automatisch berechnet (siehe _applyDerivedResourceValues()),
+  // kein manuelles <input> mehr — nur Luck hat laut Regelwerk keine Formel
+  // (wird gewürfelt) und bleibt deshalb frei editierbar.
   _POOLS: {
-    hp:   { field: 'hitPoints', label: 'Trefferpunkte' },
-    wp:   { field: 'willpower', label: 'Willenskraft' },
-    san:  { field: 'sanity',    label: 'Sanity' },
-    luck: { field: 'luck',      label: 'Luck' },
+    hp:   { field: 'hitPoints', label: 'Trefferpunkte', auto: true },
+    wp:   { field: 'willpower', label: 'Willenskraft',  auto: true },
+    san:  { field: 'sanity',    label: 'Sanity',        auto: true },
+    luck: { field: 'luck',      label: 'Luck',          auto: false },
   },
 
   _characteristics(char) {
@@ -92,10 +95,8 @@ const DgStatsPage = {
   },
   _BREAKING_POINT_RULE: 'aktuelle Sanity − POW',
 
-  // Abgeleitete Richtwerte für die Klammer-Anzeige neben jeder Ressource
-  // (reine Anzeigehilfe, siehe Dateikopf-Kommentar) — Luck hat bewusst
-  // keinen Eintrag, da laut Regelwerk nicht aus einer Charakteristik
-  // hergeleitet.
+  // Reine Berechnung, kein Modell-Zugriff — Luck hat bewusst keinen
+  // Eintrag, da laut Regelwerk nicht aus einer Charakteristik hergeleitet.
   _derivedValues(chars, pools) {
     return {
       hp:  Math.ceil(((chars.str || 0) + (chars.con || 0)) / 2),
@@ -105,11 +106,51 @@ const DgStatsPage = {
     };
   },
 
+  // Schreibt die automatisch berechneten Ressourcen-Werte (HP/Willenskraft/
+  // Sanity-Max, Breaking Point) ins Modell UND aktualisiert — falls die
+  // Seite schon im DOM steht — die Anzeige live, ohne komplettes Rerender
+  // (reines textContent, kein innerHTML-Ersatz -> keine Fokus-Race wie bei
+  // den früheren Blur-Rerender-Versuchen, siehe combat.js-Historie).
+  // Aufrufer: render() (Elemente noch nicht im DOM -> nur die Modell-Seite
+  // greift), Charakteristik-Eingabe und Sanity-Zähler in attachListeners()
+  // (Elemente stehen -> Anzeige aktualisiert sich sofort mit).
+  _applyDerivedResourceValues(char) {
+    // Charakteristiken-Werte bevorzugt live aus dem DOM lesen (falls die
+    // Eingabefelder schon existieren) statt aus dem gespeicherten Modell —
+    // letzteres wird ja erst bei Blur aktualisiert (siehe weiter unten),
+    // würde also während des Tippens veraltete Werte liefern. Beim
+    // allerersten render() (Felder noch nicht im DOM) fällt das
+    // automatisch auf das gespeicherte Modell zurück.
+    const stored = this._characteristics(char);
+    const chars = {};
+    this._CHARACTERISTICS.forEach(c => {
+      const el = document.getElementById(`dgChar-${c.key}`);
+      chars[c.key] = el ? (parseInt(el.value) || 0) : (stored[c.key] || 0);
+    });
+    const pools = { hp: this._hitPoints(char), wp: this._willpower(char), san: this._sanity(char) };
+    const derived = this._derivedValues(chars, pools);
+    pools.hp.max          = derived.hp;
+    pools.wp.max          = derived.wp;
+    pools.san.max         = derived.san;
+    pools.san.breakingPoint = derived.breakingPoint;
+
+    const hpEl  = document.getElementById('dghpMax');
+    const wpEl  = document.getElementById('dgwpMax');
+    const sanEl = document.getElementById('dgsanMax');
+    const bpEl  = document.getElementById('dgSanBreak');
+    if (hpEl)  hpEl.textContent  = derived.hp;
+    if (wpEl)  wpEl.textContent  = derived.wp;
+    if (sanEl) sanEl.textContent = derived.san;
+    if (bpEl)  bpEl.textContent  = derived.breakingPoint;
+
+    return derived;
+  },
+
   render(character) {
     const chars = this._characteristics(character);
     const descriptions = this._charDescriptions(character);
+    this._applyDerivedResourceValues(character); // schreibt hp/wp/san.max + san.breakingPoint automatisch
     const pools = { hp: this._hitPoints(character), wp: this._willpower(character), san: this._sanity(character), luck: this._luck(character) };
-    const derived = this._derivedValues(chars, pools);
 
     return `<div class="dg-stats-page">
       <div class="dg-block">
@@ -130,9 +171,9 @@ const DgStatsPage = {
         <h3 class="dg-block-title">Ressourcen</h3>
         <div class="dg-pool-grid">
           ${Object.entries(this._POOLS).map(([prefix, meta]) =>
-            this._renderPool(prefix, meta.label, pools[prefix], derived[prefix], this._RESOURCE_RULES[prefix])
+            this._renderPool(prefix, meta.label, pools[prefix], this._RESOURCE_RULES[prefix], meta.auto)
           ).join('')}
-          ${this._renderBreakingPoint(pools.san, derived.breakingPoint)}
+          ${this._renderBreakingPoint(pools.san)}
         </div>
       </div>
 
@@ -253,7 +294,11 @@ const DgStatsPage = {
     </div>`;
   },
 
-  _renderPool(prefix, label, pool, derivedValue, ruleText) {
+  // auto=true (HP/Willenskraft/Sanity): Maximalwert ist reine Anzeige
+  // (Span, kein <input>, wie das x5-Feld) — wird automatisch berechnet,
+  // siehe _applyDerivedResourceValues(). auto=false (Luck): weiterhin
+  // manuell editierbar, da laut Regelwerk keine Formel existiert.
+  _renderPool(prefix, label, pool, ruleText, auto) {
     return `<div class="dg-pool">
       <div class="dg-pool-labelcol">
         <span class="dg-pool-label">${label}</span>
@@ -263,26 +308,26 @@ const DgStatsPage = {
         <button class="stepper-btn" id="dg${prefix}Minus" aria-label="${label} verringern">−</button>
         <span class="stepper-val" id="dg${prefix}Value">${pool.current}</span>
         <span class="dg-pool-sep">/</span>
-        ${App.editMode
-          ? `<input type="number" class="dg-pool-max-input" id="dg${prefix}Max" value="${pool.max}" min="0">`
-          : `<span class="dg-pool-max">${pool.max}</span>`}
-        ${derivedValue !== undefined ? `<span class="dg-pool-derived">(${derivedValue})</span>` : ''}
+        ${auto
+          ? `<span class="dg-pool-max" id="dg${prefix}Max">${pool.max}</span>`
+          : (App.editMode
+              ? `<input type="number" class="dg-pool-max-input" id="dg${prefix}Max" value="${pool.max}" min="0">`
+              : `<span class="dg-pool-max">${pool.max}</span>`)}
         <button class="stepper-btn" id="dg${prefix}Plus" aria-label="${label} erhöhen">+</button>
       </div>
     </div>`;
   },
 
-  _renderBreakingPoint(san, derivedValue) {
+  // Breaking Point ist immer automatisch (kein auto-Flag nötig, gibt nur
+  // diese eine Instanz).
+  _renderBreakingPoint(san) {
     return `<div class="dg-pool">
       <div class="dg-pool-labelcol">
         <span class="dg-pool-label">Breaking Point</span>
         <span class="dg-pool-rule">${this._esc(this._BREAKING_POINT_RULE)}</span>
       </div>
       <div class="stepper-controls">
-        ${App.editMode
-          ? `<input type="number" class="dg-pool-max-input" id="dgSanBreak" value="${san.breakingPoint || 0}" min="0">`
-          : `<span class="dg-pool-max">${san.breakingPoint || 0}</span>`}
-        ${derivedValue !== undefined ? `<span class="dg-pool-derived">(${derivedValue})</span>` : ''}
+        <span class="dg-pool-max" id="dgSanBreak">${san.breakingPoint || 0}</span>
       </div>
     </div>`;
   },
@@ -293,12 +338,16 @@ const DgStatsPage = {
       const el = document.getElementById(`dgChar-${c.key}`);
       if (el) chars[c.key] = parseInt(el.value) || 0;
     });
+    // Nur Luck hat noch ein manuelles Max-Feld — HP/Willenskraft/Sanity/
+    // Breaking Point werden automatisch berechnet, siehe
+    // _applyDerivedResourceValues() (dort auch schon geschrieben, hier
+    // also kein zusätzlicher Schreibzugriff nötig).
     Object.entries(this._POOLS).forEach(([prefix, meta]) => {
+      if (meta.auto) return;
       const el = document.getElementById(`dg${prefix}Max`);
       if (el) this._pool(character, meta.field, {}).max = parseInt(el.value) || 0;
     });
-    const breakEl = document.getElementById('dgSanBreak');
-    if (breakEl) this._sanity(character).breakingPoint = parseInt(breakEl.value) || 0;
+    this._applyDerivedResourceValues(character);
   },
 
   attachListeners() {
@@ -324,11 +373,14 @@ const DgStatsPage = {
         chars[c.key] = parseInt(el.value) || 0;
         Storage.saveCharacter(char);
       });
-      // x5-Zeile ist rein abgeleitet (nicht gespeichert) — bei jeder Eingabe
-      // sofort neu berechnen, kein Warten auf Blur/Speichern nötig.
+      // x5-Zeile und die automatisch berechneten Ressourcen-Maxima (HP/
+      // Willenskraft/Sanity/Breaking Point) sind rein abgeleitet (nicht
+      // extra gespeichert, siehe _applyDerivedResourceValues()) — bei
+      // jeder Eingabe sofort neu berechnen, kein Warten auf Blur nötig.
       const x5El = document.getElementById(`dgX5-${c.key}`);
       el?.addEventListener('input', () => {
         if (x5El) x5El.textContent = (parseInt(el.value) || 0) * 5;
+        this._applyDerivedResourceValues(char);
       });
     });
 
@@ -350,30 +402,31 @@ const DgStatsPage = {
         value: pool.current, min: 0, max: pool.max,
       }, newValue => {
         pool.current = newValue;
+        // Breaking Point hängt von der aktuellen Sanity ab — bei jedem
+        // Zähler-Klick (nicht nur beim Sanity-Zähler selbst, kostet aber
+        // nichts) live neu berechnen, kein Rerender nötig (reines
+        // textContent, siehe _applyDerivedResourceValues()).
+        this._applyDerivedResourceValues(char);
         Storage.saveCharacter(char);
       });
 
-      // Bewusst KEIN Rerender hier (anders als beim Hinzufügen/Löschen einer
-      // Fertigkeit weiter unten): ein Blur kann mitten in einem
-      // Fokuswechsel zum nächsten Feld auftreten (z.B. Tab zur nächsten
-      // Ressource) — ein synchrones innerHTML in diesem Moment würde mit dem
-      // noch laufenden Fokuswechsel kollidieren (führte zu "node to be
-      // removed is no longer a child of this node" beim Testen). Folge: der
-      // ±-Zähler übernimmt eine neu eingetragene Obergrenze erst nach dem
-      // nächsten echten Rerender (Tab-Wechsel) — reiner Anzeige-Nachlauf,
-      // der Wert selbst ist ab hier bereits korrekt gespeichert.
+      // Luck ist die einzige Ressource mit noch manuellem Max-Feld (kein
+      // auto-Flag) — HP/Willenskraft/Sanity werden automatisch berechnet,
+      // siehe _applyDerivedResourceValues() und den auto-Zweig oben in
+      // _renderPool(). Bewusst KEIN Rerender bei Luck-Max-Blur: ein Blur
+      // kann mitten in einem Fokuswechsel zum nächsten Feld auftreten
+      // (z.B. Tab zur nächsten Ressource) — ein synchrones innerHTML in
+      // diesem Moment würde damit kollidieren ("node to be removed is no
+      // longer a child of this node" beim Testen). Folge: der ±-Zähler
+      // übernimmt eine neu eingetragene Obergrenze erst nach dem nächsten
+      // echten Rerender (Tab-Wechsel) — reiner Anzeige-Nachlauf, der Wert
+      // selbst ist ab hier bereits korrekt gespeichert.
+      if (meta.auto) return;
       const maxEl = document.getElementById(`dg${prefix}Max`);
       maxEl?.addEventListener('blur', () => {
         pool.max = parseInt(maxEl.value) || 0;
         Storage.saveCharacter(char);
       });
-    });
-
-    const san = this._sanity(char);
-    const breakEl = document.getElementById('dgSanBreak');
-    breakEl?.addEventListener('blur', () => {
-      san.breakingPoint = parseInt(breakEl.value) || 0;
-      Storage.saveCharacter(char);
     });
 
     this._attachSkillsListeners(char, rerender);

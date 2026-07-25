@@ -8684,13 +8684,6 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
   color: #999;
 }
 
-/* Abgeleiteter Richtwert in Klammern neben dem Maximalwert — reine
-   Anzeigehilfe, siehe stats.js. */
-.dg-pool-derived {
-  font-size: 13px;
-  color: #999;
-}
-
 .dg-pool-sep { font-size: 16px; font-weight: 700; color: #bbb; }
 
 .dg-pool-max {
@@ -8891,7 +8884,6 @@ body.dark-mode .dg-char-desc-view { color: #a8adc8; }
 body.dark-mode .dg-pool-sep { color: #4a5070; }
 body.dark-mode .dg-pool-label { color: #dde0f5; }
 body.dark-mode .dg-pool-rule { color: #6a6f94; }
-body.dark-mode .dg-pool-derived { color: #6a6f94; }
 body.dark-mode .dg-pool-max { color: #9095b8; }
 body.dark-mode .dg-pool-max-input { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
 body.dark-mode .dg-skills-hint { color: #6a6f94; }
