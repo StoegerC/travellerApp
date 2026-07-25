@@ -16,6 +16,20 @@ class Character {
     // wieder verschwinden.
     this.systemData = data.systemData || {};
     this.metadata = {
+      // ...data.metadata ZUERST gespreadet: bewahrt Felder, die kein
+      // fest verdrahteter Schlüssel unten sind — z.B. App._metadataExtraFields()
+      // aus einem System-Manifest (Delta Green: profession/nationality/
+      // education/appearance). Ohne diesen Spread flog jeder unbekannte
+      // metadata-Schlüssel beim nächsten new Character()/fromJSON() still-
+      // schweigend raus, weil dieses Objekt sonst komplett neu aus den
+      // Zeilen unten zusammengesetzt wurde — dieselbe Fehlerklasse wie der
+      // systemData-Bug (Phase 4) und der backgroundPath-Fallback-Bug
+      // (Delta-Green-Planung), hier zum ersten Mal ausgelöst, weil heroXp
+      // (bisher einziges metadataExtraFields-Feld) als Sonderfall unten
+      // ohnehin explizit verdrahtet ist. Die Felder unten überschreiben den
+      // Spread bewusst (Reihenfolge!), damit ihre Default-/Typ-Logik weiter
+      // greift.
+      ...data.metadata,
       name: data.metadata?.name || '',
       title: data.metadata?.title || '',
       homeworld: data.metadata?.homeworld || '',

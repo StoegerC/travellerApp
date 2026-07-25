@@ -12,17 +12,38 @@
  * eigenes Rendering.
  *
  * Maximalwerte (Trefferpunkte/Willenskraft/Sanity/Luck) und der Breaking
- * Point werden bewusst NICHT aus den Charakteristiken hergeleitet — kein
- * eingebautes Formel-Wissen über ein fremdes Regelwerk, das diese App nicht
- * verifizieren kann. Spielende tragen sie manuell ein, genau wie auf dem
- * gedruckten Bogen; nur der aktuelle Wert bekommt einen Zähler zum
+ * Point bleiben weiterhin frei editierbar statt automatisch gesetzt — seit
+ * 25.07.2026 zeigt die App zwar einen abgeleiteten Richtwert daneben (s.u.),
+ * setzt ihn aber nicht selbst ein, damit abweichende Werte (Verletzungen,
+ * Hausregeln, Rundungsvarianten) jederzeit möglich bleiben, genau wie auf
+ * dem gedruckten Bogen. Der aktuelle Wert bekommt einen Zähler zum
  * schnellen Anpassen am Tisch (CoreWidgets.attachCounter, wie MGT2s
  * Attribut-Karten/Helden-XP — hier an einem zweiten, unabhängigen System
  * erprobt).
  *
- * Datenpfad: character.systemData.characteristics/hitPoints/willpower/
- * sanity/luck/skills/disorders (Namespace-Regel, kein Feld überschreibt
- * MGT2s gleichnamige Top-Level-Felder).
+ * Charakteristiken bekommen zusätzlich zwei abgeleitete Zeilen (User-Wunsch
+ * 25.07.2026): ein automatisch berechnetes "x5"-Feld (Attributswert × 5,
+ * rein abgeleitet — nicht gespeichert, bei jeder Eingabe live neu
+ * berechnet) und ein freier Beschreibungstext je Attribut
+ * (character.systemData.characteristicDescriptions). Beide Zeilen liegen
+ * in derselben Grid-Spalte wie das zugehörige Attribut (dg-char-table),
+ * damit sie mit ihm bündig bleiben.
+ *
+ * Datenpfad: character.systemData.characteristics/characteristicDescriptions/
+ * hitPoints/willpower/sanity/luck/skills/disorders (Namespace-Regel, kein
+ * Feld überschreibt MGT2s gleichnamige Top-Level-Felder).
+ *
+ * Ressourcen zeigen zusätzlich einen abgeleiteten Richtwert in Klammern
+ * plus die kurze Ableitungsregel in Grau (User-Wunsch 25.07.2026) — die
+ * Standardformeln aus dem Delta-Green-Regelwerk (Agent's Handbook):
+ * Trefferpunkte = (STR+CON)/2 aufgerundet, Willenskraft = POW,
+ * Sanity = 99−POW, Breaking Point = aktuelle Sanity−POW. Luck wird laut
+ * Regelwerk einmalig gewürfelt (1W100), nicht aus einer Charakteristik
+ * hergeleitet — bekommt deshalb nur den Hinweistext, keinen Klammerwert.
+ * Diese Richtwerte sind eine reine Anzeigehilfe (bei jedem Seiten-Rerender
+ * neu berechnet, nicht live bei jedem Tastendruck) — der tatsächliche
+ * Maximalwert bleibt weiterhin frei editierbar, siehe Erklärung oben zu
+ * "bewusst nicht automatisch berechnet".
  */
 const DgStatsPage = {
   _CHARACTERISTICS: [
@@ -49,24 +70,61 @@ const DgStatsPage = {
   _luck(char)      { return this._pool(char, 'luck',      { current: 50, max: 50 }); },
   _skills(char)    { return char.systemData.skills || (char.systemData.skills = []); },
   _disorders(char) { return char.systemData.disorders || (char.systemData.disorders = []); },
+  _charDescriptions(char) {
+    return char.systemData.characteristicDescriptions || (char.systemData.characteristicDescriptions = {});
+  },
+
+  // Kurzform-Ableitungsregeln (grau, neben jeder Ressource) — Standard-
+  // Delta-Green-Formeln, siehe Dateikopf-Kommentar.
+  _RESOURCE_RULES: {
+    hp:   '(STR+CON)/2, aufgerundet',
+    wp:   '= POW',
+    san:  '99 − POW',
+    luck: '1W100 bei Erschaffung (kein Attribut)',
+  },
+  _BREAKING_POINT_RULE: 'aktuelle Sanity − POW',
+
+  // Abgeleitete Richtwerte für die Klammer-Anzeige neben jeder Ressource
+  // (reine Anzeigehilfe, siehe Dateikopf-Kommentar) — Luck hat bewusst
+  // keinen Eintrag, da laut Regelwerk nicht aus einer Charakteristik
+  // hergeleitet.
+  _derivedValues(chars, pools) {
+    return {
+      hp:  Math.ceil(((chars.str || 0) + (chars.con || 0)) / 2),
+      wp:  chars.pow || 0,
+      san: 99 - (chars.pow || 0),
+      breakingPoint: (pools.san.current || 0) - (chars.pow || 0),
+    };
+  },
 
   render(character) {
     const chars = this._characteristics(character);
+    const descriptions = this._charDescriptions(character);
     const pools = { hp: this._hitPoints(character), wp: this._willpower(character), san: this._sanity(character), luck: this._luck(character) };
+    const derived = this._derivedValues(chars, pools);
 
     return `<div class="dg-stats-page">
       <div class="dg-block">
         <h3 class="dg-block-title">Charakteristiken</h3>
-        <div class="dg-char-grid">
-          ${this._CHARACTERISTICS.map(c => this._renderCharacteristic(c, chars[c.key])).join('')}
+        <div class="dg-char-table-wrap">
+          <div class="dg-char-table">
+            <div class="dg-char-rowlabel"></div>
+            ${this._CHARACTERISTICS.map(c => this._renderCharacteristic(c, chars[c.key])).join('')}
+            <div class="dg-char-rowlabel">x5</div>
+            ${this._CHARACTERISTICS.map(c => this._renderX5(c, chars[c.key])).join('')}
+            <div class="dg-char-rowlabel">Beschreibung</div>
+            ${this._CHARACTERISTICS.map(c => this._renderCharDescription(c, descriptions[c.key])).join('')}
+          </div>
         </div>
       </div>
 
       <div class="dg-block">
         <h3 class="dg-block-title">Ressourcen</h3>
         <div class="dg-pool-grid">
-          ${Object.entries(this._POOLS).map(([prefix, meta]) => this._renderPool(prefix, meta.label, pools[prefix])).join('')}
-          ${this._renderBreakingPoint(pools.san)}
+          ${Object.entries(this._POOLS).map(([prefix, meta]) =>
+            this._renderPool(prefix, meta.label, pools[prefix], derived[prefix], this._RESOURCE_RULES[prefix])
+          ).join('')}
+          ${this._renderBreakingPoint(pools.san, derived.breakingPoint)}
         </div>
       </div>
 
@@ -99,9 +157,31 @@ const DgStatsPage = {
     </div>`;
   },
 
-  _renderPool(prefix, label, pool) {
+  // Rein abgeleitet (Attributswert × 5) — nicht gespeichert, wird bei jeder
+  // Eingabe im zugehörigen Attribut-Feld live neu berechnet (siehe
+  // attachListeners()), deshalb kein <input>, sondern nur Anzeige.
+  _renderX5(c, value) {
+    return `<div class="dg-x5-cell" id="dgX5-${c.key}">${(value || 0) * 5}</div>`;
+  },
+
+  _renderCharDescription(c, text) {
+    if (App.editMode) {
+      return `<textarea class="dg-char-desc" id="dgCharDesc-${c.key}" rows="2" placeholder="Notiz zu ${c.label}">${this._esc(text || '')}</textarea>`;
+    }
+    return `<div class="dg-char-desc-view">${this._esc(text || '') || '–'}</div>`;
+  },
+
+  _esc(s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  },
+
+  _renderPool(prefix, label, pool, derivedValue, ruleText) {
     return `<div class="dg-pool">
-      <span class="stepper-label">${label}</span>
+      <div class="dg-pool-labelcol">
+        <span class="stepper-label">${label}</span>
+        ${ruleText ? `<span class="dg-pool-rule">${this._esc(ruleText)}</span>` : ''}
+      </div>
       <div class="stepper-controls">
         <button class="stepper-btn" id="dg${prefix}Minus" aria-label="${label} verringern">−</button>
         <span class="stepper-val" id="dg${prefix}Value">${pool.current}</span>
@@ -109,17 +189,24 @@ const DgStatsPage = {
         ${App.editMode
           ? `<input type="number" class="dg-pool-max-input" id="dg${prefix}Max" value="${pool.max}" min="0">`
           : `<span class="dg-pool-max">${pool.max}</span>`}
+        ${derivedValue !== undefined ? `<span class="dg-pool-derived">(${derivedValue})</span>` : ''}
         <button class="stepper-btn" id="dg${prefix}Plus" aria-label="${label} erhöhen">+</button>
       </div>
     </div>`;
   },
 
-  _renderBreakingPoint(san) {
+  _renderBreakingPoint(san, derivedValue) {
     return `<div class="dg-pool">
-      <span class="stepper-label">Breaking Point</span>
-      ${App.editMode
-        ? `<input type="number" class="dg-pool-max-input" id="dgSanBreak" value="${san.breakingPoint || 0}" min="0">`
-        : `<span class="dg-pool-max">${san.breakingPoint || 0}</span>`}
+      <div class="dg-pool-labelcol">
+        <span class="stepper-label">Breaking Point</span>
+        <span class="dg-pool-rule">${this._esc(this._BREAKING_POINT_RULE)}</span>
+      </div>
+      <div class="stepper-controls">
+        ${App.editMode
+          ? `<input type="number" class="dg-pool-max-input" id="dgSanBreak" value="${san.breakingPoint || 0}" min="0">`
+          : `<span class="dg-pool-max">${san.breakingPoint || 0}</span>`}
+        ${derivedValue !== undefined ? `<span class="dg-pool-derived">(${derivedValue})</span>` : ''}
+      </div>
     </div>`;
   },
 
@@ -158,6 +245,23 @@ const DgStatsPage = {
       const el = document.getElementById(`dgChar-${c.key}`);
       el?.addEventListener('blur', () => {
         chars[c.key] = parseInt(el.value) || 0;
+        Storage.saveCharacter(char);
+      });
+      // x5-Zeile ist rein abgeleitet (nicht gespeichert) — bei jeder Eingabe
+      // sofort neu berechnen, kein Warten auf Blur/Speichern nötig.
+      const x5El = document.getElementById(`dgX5-${c.key}`);
+      el?.addEventListener('input', () => {
+        if (x5El) x5El.textContent = (parseInt(el.value) || 0) * 5;
+      });
+    });
+
+    // Auto-Save on Blur für die Attribut-Beschreibungen, gleiches Muster wie
+    // die Charakteristiken-Felder oben.
+    const descriptions = this._charDescriptions(char);
+    this._CHARACTERISTICS.forEach(c => {
+      const el = document.getElementById(`dgCharDesc-${c.key}`);
+      el?.addEventListener('blur', () => {
+        descriptions[c.key] = el.value;
         Storage.saveCharacter(char);
       });
     });

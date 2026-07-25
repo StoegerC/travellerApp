@@ -54,6 +54,18 @@ const DeltaGreenSystem = {
   // (App._currency()/_financeCategories(), siehe app.js) reicht für die
   // schlichte Ausgaben-/Einnahmen-Verwaltung auf der Finanzen-Seite.
 
+  // Zusatzfelder auf der Kern-Charakterseite (User-Wunsch 25.07.2026):
+  // Profession/Nationalität/Ausbildung wie die übrigen Kern-Textfelder,
+  // Aussehen als mehrzeiliges Feld (neuer Kern-Feldtyp "textarea",
+  // App._renderExtraFieldHtml()). Liegen unter character.metadata
+  // (Bestandsschutz-Muster wie MGT2s heroXp), kein eigener Datenpfad nötig.
+  metadataExtraFields: [
+    { key: 'profession',  label: 'Profession',                type: 'text' },
+    { key: 'nationality', label: 'Nationalität',               type: 'text' },
+    { key: 'education',   label: 'Schulbildung, Ausbildung',   type: 'text' },
+    { key: 'appearance',  label: 'Äußerliche Beschreibung',    type: 'textarea', rows: 3 },
+  ],
+
   // Standard-Notation für das Würfel-Widget: Delta Green würfelt Prozentwerte
   // (2x W10 = W100) gegen Fertigkeitswerte.
   diceDefault: 'D100',
