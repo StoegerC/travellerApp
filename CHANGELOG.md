@@ -7,6 +7,12 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Geändert
+- **Delta Green: Fertigkeiten alphabetisch sortiert** — reine Anzeigesortierung (deutsches Locale), die gespeicherte Reihenfolge bleibt unverändert Einfüge-Reihenfolge.
+
+### Behoben
+- **Delta Green: „Abbrechen" im Fertigkeiten-Steigern-Dialog machte das Abhaken nicht rückgängig** — die Checkbox blieb unchecked stehen, obwohl der Dialog gerade durch das Abhaken ausgelöst wurde. Jetzt setzt „Abbrechen" das Häkchen wieder (Modell UND Checkbox), der Fertigkeitswert bleibt unverändert.
+
 ---
 
 ## [3.39.1] – 2026-07-25
