@@ -9,6 +9,14 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.38.1] – 2026-07-25
+
+### Geändert
+- **Delta Green: Attribut-Beschreibungstext zentriert** — sowohl im Bearbeitungs- als auch im Lesemodus.
+- **Delta Green: Ressourcen-Namen (Trefferpunkte, Willenskraft, …) besser erkennbar** — eigene, deutlich größere/dunklere Beschriftung statt des wiederverwendeten, für den kompakten Würfel-Stepper gedachten `.stepper-label`. Die Ableitungsformel bleibt bewusst dezent/grau.
+
+---
+
 ## [3.38.0] – 2026-07-25
 
 ### Neu

@@ -8635,6 +8635,7 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
   padding: 5px 6px;
   font-size: 12px;
   font-family: inherit;
+  text-align: center;
 }
 
 .dg-char-desc-view {
@@ -8643,6 +8644,7 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
   white-space: pre-line;
   overflow-wrap: break-word;
   padding: 4px 2px;
+  text-align: center;
 }
 
 .dg-pool-grid {
@@ -8662,7 +8664,17 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
 .dg-pool-labelcol {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
+}
+
+/* Ressourcen-Name (z.B. "Trefferpunkte") — deutlich lesbarer als das
+   wiederverwendete .stepper-label (das ist für den kompakten Würfel-
+   Stepper gedacht und dort bewusst klein/grau, siehe dice-roller.js;
+   User-Wunsch 25.07.2026: Ressourcen sollen besser erkennbar sein). */
+.dg-pool-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
 }
 
 /* Kurzform der Ableitungsregel, grau (User-Wunsch 25.07.2026), siehe
@@ -8712,6 +8724,7 @@ body.dark-mode .dg-x5-cell { background: #1d2035; color: #c7cbf5; }
 body.dark-mode .dg-char-desc { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
 body.dark-mode .dg-char-desc-view { color: #a8adc8; }
 body.dark-mode .dg-pool-sep { color: #4a5070; }
+body.dark-mode .dg-pool-label { color: #dde0f5; }
 body.dark-mode .dg-pool-rule { color: #6a6f94; }
 body.dark-mode .dg-pool-derived { color: #6a6f94; }
 body.dark-mode .dg-pool-max { color: #9095b8; }

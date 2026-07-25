@@ -179,7 +179,7 @@ const DgStatsPage = {
   _renderPool(prefix, label, pool, derivedValue, ruleText) {
     return `<div class="dg-pool">
       <div class="dg-pool-labelcol">
-        <span class="stepper-label">${label}</span>
+        <span class="dg-pool-label">${label}</span>
         ${ruleText ? `<span class="dg-pool-rule">${this._esc(ruleText)}</span>` : ''}
       </div>
       <div class="stepper-controls">
@@ -198,7 +198,7 @@ const DgStatsPage = {
   _renderBreakingPoint(san, derivedValue) {
     return `<div class="dg-pool">
       <div class="dg-pool-labelcol">
-        <span class="stepper-label">Breaking Point</span>
+        <span class="dg-pool-label">Breaking Point</span>
         <span class="dg-pool-rule">${this._esc(this._BREAKING_POINT_RULE)}</span>
       </div>
       <div class="stepper-controls">
