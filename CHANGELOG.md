@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Geändert
+- **Delta Green: Ressourcen-Maximalwerte automatisch berechnet** — Trefferpunkte, Willenskraft, Sanity und Breaking Point werden jetzt direkt aus den Standardformeln eingetragen (kein manuelles Eingabefeld mehr, reine Anzeige wie beim x5-Feld der Charakteristiken), live aktualisiert bei jeder Attribut-Eingabe bzw. bei jeder Änderung des aktuellen Sanity-Werts. Luck bleibt manuell editierbar, da das Regelwerk dafür keine Formel vorsieht (wird gewürfelt).
+
 ---
 
 ## [3.39.2] – 2026-07-25
