@@ -113,6 +113,9 @@ const App = {
         .map(k => `${k}="${this._escExtra(field[k])}"`).join(' ');
       return `<div class="form-group"><label>${this._escExtra(field.label)}</label><input type="number" id="${id}" value="${this._escExtra(val)}" ${attrs}></div>`;
     }
+    if (field.type === 'textarea') {
+      return `<div class="form-group"><label>${this._escExtra(field.label)}</label><textarea id="${id}" rows="${field.rows || 3}">${this._escExtra(val)}</textarea></div>`;
+    }
     return `<div class="form-group"><label>${this._escExtra(field.label)}</label><input type="text" id="${id}" value="${this._escExtra(val)}"></div>`;
   },
 
@@ -227,11 +230,17 @@ const App = {
   },
 
   // Leseansicht: gleiche "<strong>Label:</strong> Wert"-Zeile wie die
-  // übrigen Kern-Felder auf der Charakterseite.
+  // übrigen Kern-Felder auf der Charakterseite. textarea-Felder brechen
+  // Label und mehrzeiligen Text stattdessen auf zwei Zeilen auf (sonst
+  // liefe ein langer Fließtext direkt hinterm Label zusammen).
   _renderMetadataExtraFieldsView(meta = {}) {
-    return this._metadataExtraFields().map(f =>
-      `<div><strong>${this._escExtra(f.label)}:</strong> ${this._escExtra(meta[f.key] ?? f.default ?? '')}</div>`
-    ).join('');
+    return this._metadataExtraFields().map(f => {
+      const val = this._escExtra(meta[f.key] ?? f.default ?? '');
+      if (f.type === 'textarea') {
+        return `<div><strong>${this._escExtra(f.label)}:</strong><div class="meta-extra-textarea-view">${val || '–'}</div></div>`;
+      }
+      return `<div><strong>${this._escExtra(f.label)}:</strong> ${val}</div>`;
+    }).join('');
   },
 
   // Liest alle Metadata-Zusatzfelder aus dem DOM (für save()); Zahlenfelder

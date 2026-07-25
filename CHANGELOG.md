@@ -7,6 +7,12 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Neu
+- **Delta Green: Charakterdaten- und Werte-Erweiterungen** (User-Wunsch) — vier neue Textfelder auf der Charakterseite (Profession, Nationalität, Schulbildung/Ausbildung als einzeilige Felder wie die übrigen, Äußerliche Beschreibung als dreizeiliges Textfeld — neuer Kern-Feldtyp `textarea` für `metadataExtraFields`). Charakteristiken bekommen zwei abgeleitete Zeilen, bündig unter dem jeweiligen Attribut: ein automatisch berechnetes „x5"-Feld (Attributswert × 5, live bei jeder Eingabe) und ein frei editierbares Beschreibungsfeld je Attribut. Ressourcen zeigen jetzt einen abgeleiteten Richtwert in Klammern plus die kurze Ableitungsregel in Grau (Standard-Delta-Green-Formeln: Trefferpunkte = (STR+CON)/2 aufgerundet, Willenskraft = POW, Sanity = 99−POW, Breaking Point = aktuelle Sanity−POW; Luck nur mit Hinweistext, da laut Regelwerk gewürfelt statt hergeleitet) — reine Anzeigehilfe, der tatsächliche Maximalwert bleibt weiterhin frei editierbar.
+
+### Behoben
+- **Kritischer Datenverlust bei `metadataExtraFields`**: `character.metadata` wurde bei jeder Neukonstruktion (also bei jedem Laden/Reload) komplett aus einer festen Feldliste neu zusammengesetzt — jeder Schlüssel, der nicht explizit in dieser Liste stand, verschwand dabei stillschweigend. Betraf jedes über `metadataExtraFields` deklarierte Feld außer dem einzigen bisher existierenden Spezialfall `heroXp` (der separat hart verdrahtet ist) — bis jetzt nie aufgefallen, weil kein System zuvor ein zweites solches Feld hatte. Erstmals ausgelöst durch die neuen Delta-Green-Felder oben. Fix: `...data.metadata` wird jetzt zuerst gespreadet, die bekannten Felder überschreiben ihn gezielt danach (Reihenfolge). MGT2 unverändert (heroXp-Roundtrip separat verifiziert).
+
 ---
 
 ## [3.37.0] – 2026-07-24

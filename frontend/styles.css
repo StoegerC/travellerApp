@@ -2746,6 +2746,15 @@ label.attachment-upload-btn {
   margin-left: 4px;
 }
 
+/* Leseansicht eines mehrzeiligen Metadata-Zusatzfelds (z.B. Delta Greens
+   "Äußerliche Beschreibung") — Zeilenumbrüche aus der Eingabe erhalten,
+   eigene Zeile statt direkt hinterm Label wie einzeilige Zusatzfelder. */
+.meta-extra-textarea-view {
+  white-space: pre-line;
+  margin-top: 4px;
+  color: #333;
+}
+
 /* ===== CHARAKTER-ID ===== */
 .char-id-row {
   margin-top: 12px;
@@ -8027,6 +8036,7 @@ body.dark-mode .camp-ext-row td { color: #666; }
 body.dark-mode .meta-age-field label { color: #aaa; }
 body.dark-mode .meta-age-field input { background: #1e2140; border-color: #3a3f6b; color: #dde; }
 body.dark-mode .meta-birthdate { color: #888; }
+body.dark-mode .meta-extra-textarea-view { color: #ccc; }
 
 /* ===== SICHERHEIT: BEITRITTS-CODE & PASSWORT-ÄNDERN ===== */
 .campaign-joincode {
@@ -8537,10 +8547,34 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
   letter-spacing: 0.05em;
 }
 
-.dg-char-grid {
+/* Charakteristiken-Tabelle: Attribut-Zelle, x5-Zeile und Beschreibung-Zeile
+   in derselben Grid-Spalte je Attribut, damit sie bündig untereinander
+   stehen (User-Wunsch 25.07.2026). Erste Spalte trägt die Zeilen-Label
+   ("x5"/"Beschreibung"), in der Attribut-Zeile selbst bleibt sie leer.
+   overflow-x auf dem Wrap, falls die sechs Spalten auf einem schmalen
+   Bildschirm nicht mehr nebeneinander passen (Tablet bleibt Primärgerät). */
+.dg-char-table-wrap {
+  overflow-x: auto;
+}
+
+.dg-char-table {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
-  gap: 12px;
+  grid-template-columns: auto repeat(6, minmax(64px, 1fr));
+  gap: 8px 10px;
+  align-items: stretch;
+  min-width: 560px;
+}
+
+.dg-char-rowlabel {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  padding-right: 2px;
 }
 
 .dg-char-cell {
@@ -8579,6 +8613,38 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
   font-family: inherit;
 }
 
+.dg-x5-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  background: #f1f1fb;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #444;
+}
+
+.dg-char-desc {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 48px;
+  resize: vertical;
+  border: 1px solid #d5d5e4;
+  border-radius: 8px;
+  padding: 5px 6px;
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.dg-char-desc-view {
+  font-size: 12px;
+  color: #555;
+  white-space: pre-line;
+  overflow-wrap: break-word;
+  padding: 4px 2px;
+}
+
 .dg-pool-grid {
   display: flex;
   flex-direction: column;
@@ -8591,6 +8657,26 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.dg-pool-labelcol {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* Kurzform der Ableitungsregel, grau (User-Wunsch 25.07.2026), siehe
+   Dateikopf-Kommentar in stats.js für die verwendeten Standardformeln. */
+.dg-pool-rule {
+  font-size: 10px;
+  color: #999;
+}
+
+/* Abgeleiteter Richtwert in Klammern neben dem Maximalwert — reine
+   Anzeigehilfe, siehe stats.js. */
+.dg-pool-derived {
+  font-size: 13px;
+  color: #999;
 }
 
 .dg-pool-sep { font-size: 16px; font-weight: 700; color: #bbb; }
@@ -8621,6 +8707,12 @@ body.dark-mode .dg-char-cell { background: #1a1d2e; }
 body.dark-mode .dg-char-label { color: #9095b8; }
 body.dark-mode .dg-char-value { color: #dde0f5; }
 body.dark-mode .dg-char-input { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
+body.dark-mode .dg-char-rowlabel { color: #6a6f94; }
+body.dark-mode .dg-x5-cell { background: #1d2035; color: #c7cbf5; }
+body.dark-mode .dg-char-desc { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
+body.dark-mode .dg-char-desc-view { color: #a8adc8; }
 body.dark-mode .dg-pool-sep { color: #4a5070; }
+body.dark-mode .dg-pool-rule { color: #6a6f94; }
+body.dark-mode .dg-pool-derived { color: #6a6f94; }
 body.dark-mode .dg-pool-max { color: #9095b8; }
 body.dark-mode .dg-pool-max-input { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
