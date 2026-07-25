@@ -8764,25 +8764,34 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
   color: #444;
 }
 
-.dg-skill-name-input {
+/* input.dg-skill-*-input (Element+Klasse) statt nur .dg-skill-*-input:
+   die globale Regel "input[type='number'], input[type='text'] { width:
+   100% }" weiter oben in dieser Datei hat dieselbe Spezifität wie ein
+   einzelner Klassenselektor UND kommt zuerst — mit nur .dg-skill-name-input
+   gewann bisher der globale width:100%, wodurch sich Name- und Wert-Feld in
+   der gemeinsamen Zeile gegenseitig auf absurd schmale Breiten
+   zusammenschrumpften (User-Fund 25.07.2026: Namensfeld "viel zu klein"). */
+input.dg-skill-name-input {
   flex: 1;
-  min-width: 0;
-  min-height: 36px;
+  width: auto;
+  min-width: 60px;
+  min-height: 44px;
   border: 1px solid #d5d5e4;
   border-radius: 6px;
-  padding: 4px 6px;
-  font-size: 13px;
+  padding: 4px 8px;
+  font-size: 14px;
   font-family: inherit;
 }
 
-.dg-skill-value-input {
-  width: 52px;
-  min-height: 36px;
+input.dg-skill-value-input {
+  flex: 0 0 44px;
+  width: 44px;
+  min-height: 44px;
   text-align: center;
   border: 1px solid #d5d5e4;
   border-radius: 6px;
   padding: 4px;
-  font-size: 13px;
+  font-size: 14px;
   font-family: inherit;
 }
 
@@ -8792,8 +8801,8 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
   font-size: 15px;
   cursor: pointer;
   padding: 2px 4px;
-  min-width: 32px;
-  min-height: 32px;
+  min-width: 40px;
+  min-height: 40px;
   color: #c0392b;
   flex-shrink: 0;
 }

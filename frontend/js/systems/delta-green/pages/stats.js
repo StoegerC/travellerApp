@@ -10,11 +10,13 @@
  * CoreWidgets.renderValueList (Wert-Feld trägt Auslöser/Notiz statt eines
  * Prozentwerts). Fertigkeiten haben seit 25.07.2026 (User-Wunsch) ein
  * eigenes, bespoke Rendering statt CoreWidgets.renderValueList — 3-spaltige
- * Darstellung, Checkbox+Name+Wert je Zeile, Klemmen-Dialog beim Ankreuzen
- * (siehe _renderSkillsBlock()/_attachSkillsListeners()/_openSkillDialog()
- * unten). Bewusst NICHT in CoreWidgets verallgemeinert — dieses
- * Checkbox-Dialog-Muster ist eine sehr spezifische Delta-Green-Hausregel
- * (Fehlschlag ankreuzen, nach der Sitzung 1D4 addieren), kein
+ * Darstellung, Checkbox+Name+Wert je Zeile, Steigern-Dialog beim Abhaken
+ * (checked->unchecked — Ankreuzen speichert dagegen direkt ohne Dialog,
+ * Korrektur 25.07.2026, ursprünglich andersherum gebaut) siehe
+ * _renderSkillsBlock()/_attachSkillsListeners()/_openSkillDialog() unten.
+ * Bewusst NICHT in CoreWidgets verallgemeinert — dieses Checkbox-Dialog-
+ * Muster ist eine sehr spezifische Delta-Green-Hausregel (Fehlschlag
+ * ankreuzen, nach der Sitzung abhaken und 1D4 addieren), kein
  * wiederverwendbares Kern-Konzept wie die einfache Name+Wert-Liste.
  *
  * Maximalwerte (Trefferpunkte/Willenskraft/Sanity/Luck) und der Breaking
@@ -197,7 +199,7 @@ const DgStatsPage = {
 
   // Fertigkeiten-Abschnitt (User-Wunsch 25.07.2026, siehe Dateikopf-
   // Kommentar): 3 Spalten, Checkbox+Name+Wert je Zeile, plus ein einziger
-  // (wiederverwendeter) Dialog fürs Ankreuzen, siehe _openSkillDialog().
+  // (wiederverwendeter) Dialog fürs Abhaken, siehe _openSkillDialog().
   _renderSkillsBlock(character) {
     const skills = this._skills(character).filter(s => !s._deleted);
     const cols = this._splitIntoColumns(skills, 3);
@@ -377,16 +379,17 @@ const DgStatsPage = {
     const skills = this._skills(char);
 
     // Checkbox in beiden Modi aktiv (siehe _renderSkillRow()): Ankreuzen
-    // (unchecked->checked) öffnet den Steigern-Dialog, Abhaken
-    // (checked->unchecked) speichert direkt ohne Dialog — die einzige Art,
-    // ein versehentliches Kreuz ohne Dialog-Umweg rückgängig zu machen.
+    // (unchecked->checked, ein Fehlschlag während der Sitzung) speichert
+    // direkt ohne Dialog. Abhaken (checked->unchecked, "ich werte diesen
+    // Fehlschlag jetzt aus") öffnet den Steigern-Dialog — Korrektur
+    // 25.07.2026, ursprünglich andersherum gebaut.
     document.querySelectorAll('.dg-skill-check').forEach(cb => {
       cb.addEventListener('change', () => {
         const skill = skills.find(s => s.id === cb.dataset.id);
         if (!skill) return;
         skill.checked = cb.checked;
         Storage.saveCharacter(char);
-        if (cb.checked) this._openSkillDialog(char, skill, rerender);
+        if (!cb.checked) this._openSkillDialog(char, skill, rerender);
       });
     });
 
@@ -437,7 +440,7 @@ const DgStatsPage = {
   // eines Dialogs pro Zeile) — Klick-Handler werden bei jedem Öffnen per
   // Property-Zuweisung (.onclick =) statt addEventListener() neu gesetzt,
   // damit sich bei mehrfachem Öffnen ohne zwischenzeitlichen Rerender
-  // (z.B. Ankreuzen -> Abbrechen -> anderes Feld ankreuzen) keine
+  // (z.B. Abhaken -> Abbrechen -> andere Fertigkeit abhaken) keine
   // doppelten Listener aufsummieren.
   _openSkillDialog(char, skill, rerender) {
     const overlay = document.getElementById('dgSkillDialogOverlay');
@@ -467,8 +470,9 @@ const DgStatsPage = {
       rerender();
     };
 
-    // Abbrechen: nichts passiert — Häkchen bleibt gesetzt (war beim Öffnen
-    // schon skill.checked=true), Wert bleibt unverändert.
+    // Abbrechen: nichts passiert — Häkchen bleibt entfernt (war beim
+    // Öffnen des Dialogs schon skill.checked=false), Wert bleibt
+    // unverändert.
     cancelBtn.onclick = () => close();
     overlay.onclick = e => { if (e.target === overlay) close(); };
   },

@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Behoben
+- **Delta Green: Fertigkeiten-Dialog löste am falschen Häkchen-Übergang aus** — der Steigern-Dialog öffnete sich beim Ankreuzen statt beim Abhaken. Jetzt: Ankreuzen (Fehlschlag während der Sitzung) speichert direkt ohne Dialog, Abhaken (Auswertung nach der Sitzung) öffnet den Dialog.
+- **Delta Green: Fertigkeitsnamen-Feld im Bearbeitungsmodus viel zu schmal** — eine globale Regel `input[type="number"], input[type="text"] { width: 100% }` (Element+Attribut, CSS-Spezifität 0-1-1) war spezifischer als die reinen Klassenselektoren `.dg-skill-name-input`/`.dg-skill-value-input` (0-1-0) und gewann deshalb unabhängig von der Reihenfolge in der Datei — Name- und Wert-Feld in derselben Zeile schrumpften sich dadurch gegenseitig auf unbrauchbare Breiten zusammen. Fix: Selektoren auf `input.dg-skill-name-input`/`input.dg-skill-value-input` (Element+Klasse, jetzt ebenfalls 0-1-1, aber später in der Datei) verschärft, zusätzlich Touch-Höhe auf 44px angehoben.
+
 ---
 
 ## [3.39.0] – 2026-07-25
