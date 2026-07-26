@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.44.0] – 2026-07-26
+
+### Neu
+- **Delta Green: Fertigkeiten-Suchfeld** — analog zum Traveller-System, immer verfügbar (auch im Lesemodus), blendet nicht passende Fertigkeiten sofort aus statt die Liste neu zu rendern.
+
+---
+
 ## [3.43.0] – 2026-07-26
 
 ### Neu

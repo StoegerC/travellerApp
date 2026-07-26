@@ -262,6 +262,7 @@ const DgStatsPage = {
     return `<div class="dg-block">
       <h3 class="dg-block-title">Fertigkeiten</h3>
       <p class="dg-skills-hint">Mach ein Kreuz, wenn eine Probe fehlschlägt. Addiere nach der Sitzung 1D4 auf jede angekreuzte Fertigkeit, lösche die Kreuze dann.</p>
+      <input type="text" id="dgSkillFilter" class="dg-skill-filter" placeholder="Fertigkeit suchen …">
       <div class="dg-skill-columns">
         ${cols.map(col => `<div class="dg-skill-col">${col.map(s => this._renderSkillRow(s)).join('')}</div>`).join('')}
       </div>
@@ -449,6 +450,18 @@ const DgStatsPage = {
 
   _attachSkillsListeners(char, rerender) {
     const skills = this._skills(char);
+
+    // Suchfeld, analog zum Traveller-System (systems/mgt2/pages/attributes.js
+    // #skillFilter) — immer verfügbar (auch im View-Modus), blendet
+    // nicht-passende Zeilen per style.display aus statt neu zu rendern.
+    document.getElementById('dgSkillFilter')?.addEventListener('input', e => {
+      const term = e.target.value.trim().toLowerCase();
+      document.querySelectorAll('.dg-skill-row').forEach(row => {
+        const nameEl = row.querySelector('.dg-skill-name-input, .dg-skill-name');
+        const name = (nameEl?.value ?? nameEl?.textContent ?? '').toLowerCase();
+        row.style.display = name.includes(term) ? 'flex' : 'none';
+      });
+    });
 
     // Checkbox in beiden Modi aktiv (siehe _renderSkillRow()): Ankreuzen
     // (unchecked->checked, ein Fehlschlag während der Sitzung) speichert
