@@ -16,12 +16,16 @@
  * Bewusst KEIN Marken-Logo (Eye-in-Triangle) — icon ist ein neutrales
  * Emoji, wie beim Universal-Template. `defaultSkills` (User-Wunsch
  * 25.07.2026) befüllt neue Charaktere mit den Fertigkeits-NAMEN vom
- * offiziellen Charakterbogen als Startpunkt — bewusst OHNE die dort
- * abgedruckten Basis-Prozentwerte (jeder Eintrag startet bei 0, wie ein
- * manuell hinzugefügter), das ist kein starrer Katalog: die Fertigkeiten-
- * Liste bleibt die freie Name+Wert-Liste aus pages/stats.js, frei
- * umbenennbar/löschbar/erweiterbar. Gilt nur für NEU angelegte Charaktere,
- * keine rückwirkende Migration.
+ * offiziellen Charakterbogen als Startpunkt, jeweils mit dem dort
+ * abgedruckten Basis-Prozentwert im Namen selbst (z.B. "Anthropologie
+ * (0%)", User-Wunsch 26.07.2026) — das ist trotzdem kein starrer Katalog:
+ * die Fertigkeiten-Liste bleibt die freie Name+Wert-Liste aus
+ * pages/stats.js, frei umbenennbar/löschbar/erweiterbar, und der
+ * eigentliche Wert (was der Charakter tatsächlich investiert hat) startet
+ * unabhängig vom Namenstext weiterhin bei 0, wie ein manuell
+ * hinzugefügter Eintrag. Gilt nur für NEU angelegte Charaktere, keine
+ * rückwirkende Migration (siehe "Standard-Fertigkeiten ergänzen"-Knopf in
+ * pages/stats.js für Bestandscharaktere).
  *
  * Muss NACH systems/mgt2/manifest.js geladen werden (MGT2 bleibt Fallback
  * für Bestandscharaktere ohne/mit unbekannter System-Kennung).
@@ -77,19 +81,25 @@ const DeltaGreenSystem = {
   diceDefault: 'D100',
 
   // Vorbefüllung für character.systemData.skills bei der Neuanlage (siehe
-  // App._seedDefaultSkills()) — Fertigkeits-NAMEN vom offiziellen
-  // Charakterbogen, keine Werte (siehe Kommentar oben).
+  // App._seedDefaultSkills()) — Fertigkeits-NAMEN samt Basis-Prozentwert
+  // vom offiziellen Charakterbogen, im Namen selbst (siehe Kommentar
+  // oben); der tatsächliche Fertigkeitswert (systemData.skills[].value)
+  // startet trotzdem bei 0.
   defaultSkills: [
-    'Anthropologie', 'Archäologie', 'Artillerie', 'Athletik', 'Ausweichen',
-    'Auto fahren', 'Buchhaltung', 'Bürokratie', 'Chirurgie',
-    'Computerwissenschaften', 'Erkunden', 'Erste Hilfe', 'Forensik',
-    'Geschichte', 'Gesetzeskunde', 'Handwerk', 'Heimlichkeit', 'HUMINT',
-    'Kriminologie', 'Kunst', 'Lotsen und lenken', 'Medizin',
-    'Militärwissenschaften', 'Nahkampfwaffen', 'Navigation', 'Okkultismus',
-    'Pharmazie', 'Psychotherapie', 'Reiten', 'Schusswaffen',
-    'Schwere Maschinen', 'Schwere Waffen', 'Schwimmen', 'SIGINT',
-    'Sprengstoffe', 'Überlebenskunst', 'Überreden', 'Unnatürlich',
-    'Verkleiden', 'Wachsamkeit', 'Waffenloser Kampf', 'Wissenschaften',
+    'Anthropologie (0%)', 'Archäologie (0%)', 'Artillerie (0%)',
+    'Athletik (30%)', 'Ausweichen (30%)', 'Auto fahren (20%)',
+    'Buchhaltung (10%)', 'Bürokratie (10%)', 'Chirurgie (0%)',
+    'Computerwissenschaften (0%)', 'Erkunden (20%)', 'Erste Hilfe (10%)',
+    'Forensik (0%)', 'Geschichte (10%)', 'Gesetzeskunde (0%)',
+    'Handwerk (0%)', 'Heimlichkeit (10%)', 'HUMINT (10%)',
+    'Kriminologie (10%)', 'Kunst (0%)', 'Lotsen und lenken (0%)',
+    'Medizin (0%)', 'Militärwissenschaften (0%)', 'Nahkampfwaffen (30%)',
+    'Navigation (10%)', 'Okkultismus (10%)', 'Pharmazie (0%)',
+    'Psychotherapie (10%)', 'Reiten (10%)', 'Schusswaffen (20%)',
+    'Schwere Maschinen (10%)', 'Schwere Waffen (0%)', 'Schwimmen (20%)',
+    'SIGINT (0%)', 'Sprengstoffe (0%)', 'Überlebenskunst (10%)',
+    'Überreden (20%)', 'Unnatürlich (0%)', 'Verkleiden (10%)',
+    'Wachsamkeit (20%)', 'Waffenloser Kampf (40%)', 'Wissenschaften (0%)',
   ],
 
   tabs: [

@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.42.1] – 2026-07-26
+
+### Geändert
+- **Delta Green: Basis-Prozentwerte in den Standard-Fertigkeitsnamen** — die 42 vorbefüllten Fertigkeiten tragen jetzt den auf dem offiziellen Charakterbogen abgedruckten Basiswert direkt im Namen (z.B. „Anthropologie (0%)", „Athletik (30%)"), als Gedächtnisstütze. Der eigentliche, editierbare Fertigkeitswert startet weiterhin bei 0.
+
+---
+
 ## [3.42.0] – 2026-07-25
 
 ### Neu
