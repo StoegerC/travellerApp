@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.45.0] – 2026-07-26
+
+### Geändert
+- **Delta Green: Attribute-Layout neu geordnet** — „Charakteristiken" heißt jetzt „Attribute" (Datenpfad unverändert, Bestandsschutz). Die Tabelle ist gedreht: eine Zeile je Attribut statt einer Spalte je Attribut, mit Wert/x5/Beschreibung als Spalten. Ressourcen stehen jetzt rechts neben den Attributen statt darunter (bricht unter ~640px Breite wieder auf Untereinander um). Konzept vorab per Artifact abgestimmt.
+
+---
+
 ## [3.44.0] – 2026-07-26
 
 ### Neu
