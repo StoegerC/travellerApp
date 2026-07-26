@@ -1,6 +1,9 @@
 /**
- * Werte – Charakteristiken, Ressourcen (Trefferpunkte/Willenskraft/Sanity/
- * Luck), Fertigkeiten und Störungen (Disorders) für Delta Green.
+ * Werte – Attribute (UI-Begriff seit 26.07.2026, User-Wunsch; intern und im
+ * Datenmodell weiterhin "Charakteristiken"/"characteristics" —
+ * Bestandsschutz, siehe Kommentar bei _renderAttrLabel()), Ressourcen
+ * (Trefferpunkte/Willenskraft/Sanity/Luck), Fertigkeiten und Störungen
+ * (Disorders) für Delta Green.
  *
  * Fertigkeiten UND Störungen bewusst als freie Name+Wert-Liste statt eines
  * fest hinterlegten Katalogs wie MGT2s data/skills.js — so wird keine
@@ -23,23 +26,25 @@
  * Point werden automatisch aus den Standardformeln berechnet und
  * eingetragen (User-Wunsch 25.07.2026, Kurswechsel ggü. der ursprünglichen
  * Entscheidung "bleibt frei editierbar" vom selben Tag) — kein `<input>`
- * mehr dafür, reine Anzeige wie beim x5-Feld der Charakteristiken, live
- * neu berechnet bei jeder Attribut-Eingabe bzw. jeder Änderung des
- * aktuellen Sanity-Werts (Breaking Point hängt von beidem ab: POW UND
- * aktueller Sanity). Luck hat laut Regelwerk KEINE Formel (wird gewürfelt)
- * und bleibt deshalb als einziger Maximalwert frei editierbar — siehe
+ * mehr dafür, reine Anzeige wie beim x5-Feld der Attribute, live neu
+ * berechnet bei jeder Attribut-Eingabe bzw. jeder Änderung des aktuellen
+ * Sanity-Werts (Breaking Point hängt von beidem ab: POW UND aktueller
+ * Sanity). Luck hat laut Regelwerk KEINE Formel (wird gewürfelt) und
+ * bleibt deshalb als einziger Maximalwert frei editierbar — siehe
  * `_POOLS`-Flag `auto`. Der aktuelle Wert bekommt bei allen vier
  * Ressourcen weiterhin einen Zähler zum schnellen Anpassen am Tisch
  * (CoreWidgets.attachCounter, wie MGT2s Attribut-Karten/Helden-XP — hier
- * an einem zweiten, unabhängigen System erprobt).
+ * an einem zweiten, unabhängigen System erprobt). Seit 26.07.2026 stehen
+ * die Ressourcen im Layout rechts neben den Attributen statt darunter
+ * (dg-attr-resource-row, User-Wunsch — Konzept vorab per Artifact
+ * abgestimmt).
  *
- * Charakteristiken bekommen zusätzlich zwei abgeleitete Zeilen (User-Wunsch
- * 25.07.2026): ein automatisch berechnetes "x5"-Feld (Attributswert × 5,
- * rein abgeleitet — nicht gespeichert, bei jeder Eingabe live neu
- * berechnet) und ein freier Beschreibungstext je Attribut
- * (character.systemData.characteristicDescriptions). Beide Zeilen liegen
- * in derselben Grid-Spalte wie das zugehörige Attribut (dg-char-table),
- * damit sie mit ihm bündig bleiben.
+ * Attribute bekommen zusätzlich zwei abgeleitete Spalten (User-Wunsch
+ * 25.07.2026, seit 26.07.2026 Spalten statt Zeilen — die Tabelle wurde
+ * gedreht: eine Zeile je Attribut statt einer Spalte je Attribut): ein
+ * automatisch berechnetes "x5"-Feld (Attributswert × 5, rein abgeleitet —
+ * nicht gespeichert, bei jeder Eingabe live neu berechnet) und ein freier
+ * Beschreibungstext je Attribut (character.systemData.characteristicDescriptions).
  *
  * Datenpfad: character.systemData.characteristics/characteristicDescriptions/
  * hitPoints/willpower/sanity/luck/skills/disorders (Namespace-Regel, kein
@@ -153,27 +158,33 @@ const DgStatsPage = {
     const pools = { hp: this._hitPoints(character), wp: this._willpower(character), san: this._sanity(character), luck: this._luck(character) };
 
     return `<div class="dg-stats-page">
-      <div class="dg-block">
-        <h3 class="dg-block-title">Charakteristiken</h3>
-        <div class="dg-char-table-wrap">
-          <div class="dg-char-table">
-            <div class="dg-char-rowlabel"></div>
-            ${this._CHARACTERISTICS.map(c => this._renderCharacteristic(c, chars[c.key])).join('')}
-            <div class="dg-char-rowlabel">x5</div>
-            ${this._CHARACTERISTICS.map(c => this._renderX5(c, chars[c.key])).join('')}
-            <div class="dg-char-rowlabel">Beschreibung</div>
-            ${this._CHARACTERISTICS.map(c => this._renderCharDescription(c, descriptions[c.key])).join('')}
+      <div class="dg-attr-resource-row">
+        <div class="dg-block">
+          <h3 class="dg-block-title">Attribute</h3>
+          <div class="dg-attr-table-wrap">
+            <div class="dg-attr-table">
+              <div class="dg-attr-headcell"></div>
+              <div class="dg-attr-headcell">Wert</div>
+              <div class="dg-attr-headcell">x5</div>
+              <div class="dg-attr-headcell">Beschreibung</div>
+              ${this._CHARACTERISTICS.map(c => `
+                ${this._renderAttrLabel(c)}
+                ${this._renderAttrValue(c, chars[c.key])}
+                ${this._renderX5(c, chars[c.key])}
+                ${this._renderCharDescription(c, descriptions[c.key])}
+              `).join('')}
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="dg-block">
-        <h3 class="dg-block-title">Ressourcen</h3>
-        <div class="dg-pool-grid">
-          ${Object.entries(this._POOLS).map(([prefix, meta]) =>
-            this._renderPool(prefix, meta.label, pools[prefix], this._RESOURCE_RULES[prefix], meta.auto)
-          ).join('')}
-          ${this._renderBreakingPoint(pools.san)}
+        <div class="dg-block">
+          <h3 class="dg-block-title">Ressourcen</h3>
+          <div class="dg-pool-grid">
+            ${Object.entries(this._POOLS).map(([prefix, meta]) =>
+              this._renderPool(prefix, meta.label, pools[prefix], this._RESOURCE_RULES[prefix], meta.auto)
+            ).join('')}
+            ${this._renderBreakingPoint(pools.san)}
+          </div>
         </div>
       </div>
 
@@ -188,17 +199,22 @@ const DgStatsPage = {
     </div>`;
   },
 
-  _renderCharacteristic(c, value) {
+  // Namensgebung bewusst uneinheitlich zur Anzeige: intern heißt es weiter
+  // "Charakteristik"/"char" (Datenpfad character.systemData.characteristics
+  // bleibt unverändert, Bestandsschutz — ein Umbenennen des Datenfelds hätte
+  // vorhandene Delta-Green-Charaktere auf 0 zurückgesetzt), nur die
+  // UI-Überschrift heißt seit 26.07.2026 "Attribute" (User-Wunsch). Neue,
+  // rein layoutbezogene Bausteine (Zeile=Attribut statt Spalte=Attribut,
+  // siehe render()) heißen deshalb bewusst "attr", nicht "char".
+  _renderAttrLabel(c) {
+    return `<div class="dg-attr-label">${c.label}</div>`;
+  },
+
+  _renderAttrValue(c, value) {
     if (App.editMode) {
-      return `<div class="dg-char-cell">
-        <label class="dg-char-label" for="dgChar-${c.key}">${c.label}</label>
-        <input type="number" class="dg-char-input" id="dgChar-${c.key}" value="${value}" min="0" max="99">
-      </div>`;
+      return `<input type="number" class="dg-attr-value-input" id="dgChar-${c.key}" value="${value}" min="0" max="99">`;
     }
-    return `<div class="dg-char-cell">
-      <span class="dg-char-label">${c.label}</span>
-      <span class="dg-char-value">${value}</span>
-    </div>`;
+    return `<div class="dg-attr-value">${value}</div>`;
   },
 
   // Rein abgeleitet (Attributswert × 5) — nicht gespeichert, wird bei jeder

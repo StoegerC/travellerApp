@@ -8547,65 +8547,73 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
   letter-spacing: 0.05em;
 }
 
-/* Charakteristiken-Tabelle: Attribut-Zelle, x5-Zeile und Beschreibung-Zeile
-   in derselben Grid-Spalte je Attribut, damit sie bündig untereinander
-   stehen (User-Wunsch 25.07.2026). Erste Spalte trägt die Zeilen-Label
-   ("x5"/"Beschreibung"), in der Attribut-Zeile selbst bleibt sie leer.
-   overflow-x auf dem Wrap, falls die sechs Spalten auf einem schmalen
-   Bildschirm nicht mehr nebeneinander passen (Tablet bleibt Primärgerät). */
-.dg-char-table-wrap {
+/* Attribute + Ressourcen nebeneinander statt untereinander (User-Wunsch
+   26.07.2026, Konzept vorab per Artifact abgestimmt) — Ressourcen-Spalte
+   schmaler, da sie keine Beschreibungstexte enthält. Bricht unter ~640px
+   (Smartphone Hochformat) auf Untereinander um. */
+.dg-attr-resource-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 640px) {
+  .dg-attr-resource-row { grid-template-columns: 1fr; }
+}
+
+/* Attribut-Tabelle: eine ZEILE je Attribut (bis 25.07.2026 umgekehrt: eine
+   SPALTE je Attribut, gedreht auf User-Wunsch 26.07.2026), Spalten sind
+   Wert/x5/Beschreibung. overflow-x auf dem Wrap als Sicherheitsnetz, falls
+   die Beschreibung-Spalte auf einem schmalen Bildschirm zu wenig Platz hat
+   (Tablet bleibt Primärgerät). */
+.dg-attr-table-wrap {
   overflow-x: auto;
 }
 
-.dg-char-table {
+.dg-attr-table {
   display: grid;
-  grid-template-columns: auto repeat(6, minmax(64px, 1fr));
+  grid-template-columns: 56px 64px 64px minmax(120px, 1fr);
   gap: 8px 10px;
-  align-items: stretch;
-  min-width: 560px;
+  align-items: center;
+  min-width: 360px;
 }
 
-.dg-char-rowlabel {
-  display: flex;
-  align-items: center;
-  font-size: 11px;
+.dg-attr-headcell {
+  font-size: 10px;
   font-weight: 700;
-  color: #888;
+  color: #999;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-  padding-right: 2px;
+  letter-spacing: 0.06em;
+  text-align: center;
 }
 
-.dg-char-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 6px;
-  border-radius: 10px;
-  background: #f8f8fc;
-}
-
-.dg-char-label {
+.dg-attr-label {
   font-size: 12px;
   font-weight: 700;
   color: #666;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  background: #f8f8fc;
+  border-radius: 8px;
+  padding: 10px 4px;
+  text-align: center;
 }
 
-.dg-char-value {
-  font-size: 26px;
+.dg-attr-value {
+  font-size: 18px;
   font-weight: 800;
   color: #222;
+  background: #f8f8fc;
+  border-radius: 8px;
+  padding: 10px 4px;
+  text-align: center;
 }
 
-.dg-char-input {
+.dg-attr-value-input {
   width: 100%;
   min-height: 44px;
   text-align: center;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   border: 1px solid #d5d5e4;
   border-radius: 8px;
@@ -8887,11 +8895,10 @@ input.dg-skill-value-input {
 
 body.dark-mode .dg-block { background: #161929; border-color: #2c3050; }
 body.dark-mode .dg-block-title { color: #9095b8; }
-body.dark-mode .dg-char-cell { background: #1a1d2e; }
-body.dark-mode .dg-char-label { color: #9095b8; }
-body.dark-mode .dg-char-value { color: #dde0f5; }
-body.dark-mode .dg-char-input { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
-body.dark-mode .dg-char-rowlabel { color: #6a6f94; }
+body.dark-mode .dg-attr-headcell { color: #6a6f94; }
+body.dark-mode .dg-attr-label { background: #1a1d2e; color: #9095b8; }
+body.dark-mode .dg-attr-value { background: #1a1d2e; color: #dde0f5; }
+body.dark-mode .dg-attr-value-input { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
 body.dark-mode .dg-x5-cell { background: #1d2035; color: #c7cbf5; }
 body.dark-mode .dg-char-desc { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
 body.dark-mode .dg-char-desc-view { color: #a8adc8; }
