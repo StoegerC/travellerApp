@@ -8431,7 +8431,7 @@ body.dark-mode .cw-vl-add:hover  { background: #21264a; }
 .stepper-row { display: flex; align-items: flex-end; justify-content: center; gap: 6px; margin-bottom: 16px; }
 .stepper-group { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .stepper-label { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; }
-.stepper-controls { display: flex; align-items: center; gap: 4px; }
+.stepper-controls { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .stepper-btn {
   width: 40px; height: 40px; min-width: 40px; min-height: 40px;
   border-radius: 10px; border: 1px solid #e2e2ee; background: #f8f8fc;
@@ -8661,18 +8661,28 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
   gap: 12px;
 }
 
+/* flex-wrap: nowrap statt wrap (Fund 26.07.2026): seit die Ressourcen-Spalte
+   neben statt unter den Attributen steht, ist sie deutlich schmaler — bei
+   langen Ableitungsregeln (Trefferpunkte, Luck) reichte die Breite nicht
+   mehr für Labelspalte + Zähler nebeneinander, wodurch der ganze
+   Zähler (±-Buttons/Wert/Max) in die nächste Zeile rutschte. Fix: die
+   Labelspalte (.dg-pool-labelcol) darf jetzt schrumpfen und ihren Text
+   intern umbrechen (siehe unten), der Zähler bleibt dafür per
+   flex-shrink:0 immer als Ganzes auf einer Zeile. */
 .dg-pool {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .dg-pool-labelcol {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* Ressourcen-Name (z.B. "Trefferpunkte") — deutlich lesbarer als das
@@ -8690,6 +8700,7 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
 .dg-pool-rule {
   font-size: 10px;
   color: #999;
+  overflow-wrap: break-word;
 }
 
 .dg-pool-sep { font-size: 16px; font-weight: 700; color: #bbb; }
@@ -8702,7 +8713,15 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
   color: #777;
 }
 
-.dg-pool-max-input {
+/* input.dg-pool-max-input (Element+Klasse) statt nur .dg-pool-max-input:
+   dieselbe Spezifitäts-Falle wie schon bei .dg-skill-name-input/
+   .dg-skill-value-input (siehe dort) — die globale Regel
+   "input[type='number'] { width: 100% }" hat dieselbe Spezifität wie ein
+   einzelner Klassenselektor und gewann bisher, wodurch Luck (die einzige
+   Ressource mit noch manuellem Max-Feld) auf über 200px statt 60px
+   aufblies und dadurch die Labelspalte auf fast 0 zusammendrückte (Fund
+   26.07.2026, sichtbar als "Zähler springt in die nächste Zeile"). */
+input.dg-pool-max-input {
   width: 60px;
   min-height: 40px;
   text-align: center;
