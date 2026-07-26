@@ -8715,6 +8715,14 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
   margin: -6px 0 12px;
 }
 
+/* Suchfeld analog zum Traveller-System (#skillFilter in
+   systems/mgt2/pages/attributes.js) — width/min-height/font-size kommen
+   schon von der globalen input[type="text"]-Regel, hier nur der Abstand
+   zur Liste darunter. */
+.dg-skill-filter {
+  margin-bottom: 10px;
+}
+
 .dg-skill-columns {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
