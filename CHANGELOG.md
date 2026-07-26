@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Neu
+- **Delta Green: „Alle Fertigkeiten löschen"-Knopf** — mit Sicherheitsabfrage, entfernt alle aktiven Fertigkeiten auf einmal (nur sichtbar, wenn welche vorhanden sind). Löscht per Tombstone wie das einzelne Löschen, kein harter Datenverlust im Sync.
+
 ---
 
 ## [3.42.1] – 2026-07-26

@@ -268,6 +268,7 @@ const DgStatsPage = {
       ${App.editMode ? `<div class="dg-skill-actions">
         <button class="cw-vl-add" id="dgSkillAddBtn">+ Fertigkeit</button>
         ${missingCount > 0 ? `<button class="btn-secondary" id="dgSkillFillDefaultsBtn">Standard-Fertigkeiten ergänzen (${missingCount})</button>` : ''}
+        ${activeSkills.length > 0 ? `<button class="btn-danger" id="dgSkillDeleteAllBtn">Alle Fertigkeiten löschen</button>` : ''}
       </div>` : ''}
       <div class="dg-skill-dialog-overlay" id="dgSkillDialogOverlay">
         <div class="dg-skill-dialog">
@@ -523,6 +524,24 @@ const DgStatsPage = {
       });
       Storage.saveCharacter(char);
       App.showStatus(`${added} Standard-Fertigkeit${added === 1 ? '' : 'en'} ergänzt`, 'success');
+      rerender();
+    });
+
+    // "Alle Fertigkeiten löschen" (User-Wunsch 26.07.2026): Tombstone wie
+    // beim einzelnen Löschen (siehe .dg-skill-del oben), nur für alle
+    // aktiven Einträge auf einmal — mit Sicherheitsabfrage, weil nicht per
+    // Undo-Knopf rückgängig zu machen ist wie ein einzelner Löschvorgang.
+    document.getElementById('dgSkillDeleteAllBtn')?.addEventListener('click', () => {
+      const active = skills.filter(s => !s._deleted);
+      if (!active.length) return;
+      if (!confirm(`Alle ${active.length} Fertigkeiten wirklich löschen?`)) return;
+      const now = new Date().toISOString();
+      active.forEach(s => {
+        s._deleted  = true;
+        s.deletedAt = now;
+        s.updatedAt = now;
+      });
+      Storage.saveCharacter(char);
       rerender();
     });
   },
