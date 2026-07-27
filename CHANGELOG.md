@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Geändert
+- **Delta Green: Ressourcen-Maximalwerte wieder frei editierbar** — Trefferpunkte, Willenskraft, Sanity und Breaking Point lassen sich im Bearbeitungsmodus wieder manuell eintragen (z.B. für Verletzungen oder Hausregeln), direkt daneben steht weiterhin der live berechnete Richtwert in Klammern zum Vergleich. Der eingetragene Wert wird dabei nicht mehr automatisch überschrieben.
+
 ---
 
 ## [3.46.0] – 2026-07-27

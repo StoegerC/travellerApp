@@ -8733,6 +8733,14 @@ input.dg-pool-max-input {
   font-family: inherit;
 }
 
+/* Abgeleiteter Richtwert in Klammern neben dem (wieder frei editierbaren)
+   Maximalwert-Feld — User-Wunsch 27.07.2026, siehe stats.js
+   _applyDerivedResourceValues(). */
+.dg-pool-derived {
+  font-size: 13px;
+  color: #999;
+}
+
 /* Fertigkeiten-Abschnitt: dezenter Hinweistext, 3-spaltige Liste,
    Checkbox+Name+Wert je Zeile, Steigern-Dialog (User-Wunsch 25.07.2026,
    siehe stats.js). */
@@ -9008,6 +9016,7 @@ body.dark-mode .dg-pool-label { color: #dde0f5; }
 body.dark-mode .dg-pool-rule { color: #6a6f94; }
 body.dark-mode .dg-pool-max { color: #9095b8; }
 body.dark-mode .dg-pool-max-input { background: #1d2035; color: #dde0f5; border-color: #2c3050; }
+body.dark-mode .dg-pool-derived { color: #6a6f94; }
 body.dark-mode .dg-skills-hint { color: #6a6f94; }
 body.dark-mode .dg-skill-value { color: #dde0f5; }
 body.dark-mode .dg-skill-name-input,
