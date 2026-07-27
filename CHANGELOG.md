@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.46.0] – 2026-07-27
+
 ### Neu
 - **Delta Green: „Motivationen und Syndrome" im Hintergrund-Tab** — neuer Block nach „Favoriten-Kontakte": frei erweiterbare Tabelle mit Spalten SM (Schalter, startet bei „M", im Bearbeitungsmodus zwischen „M"/„S" umschaltbar, im Lesemodus gesperrt), Bezeichnung (Textfeld) und Details. Details öffnet denselben Dialog wie bei der Ausrüstung: Markdown-Text im Bearbeitungsmodus, gerenderte Vorschau im Lesemodus, Bild-Upload über FileSync — bewusst dieselben CSS-Klassen wiederverwendet für exakt gleiches Verhalten/Aussehen. Konzept vorab per Artifact abgestimmt.
 
