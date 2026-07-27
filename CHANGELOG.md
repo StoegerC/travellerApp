@@ -9,6 +9,13 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.45.1] – 2026-07-27
+
+### Behoben
+- **Delta Green: Ressourcen-Zähler sprang bei langen Ableitungsregeln (Trefferpunkte, Luck) in die nächste Zeile** — seit die Ressourcen-Spalte neben statt unter den Attributen steht, ist sie schmaler; die Beschriftung schrumpft jetzt und bricht bei Bedarf selbst um, während der ±-Zähler immer auf einer Zeile bleibt. Dabei zusätzlich einen zweiten Fund derselben CSS-Spezifitätsfalle wie zuvor bei den Fertigkeiten behoben: das Luck-Maximalfeld blies sich durch eine globale `input[type="number"]`-Regel auf über 200px statt 60px auf.
+
+---
+
 ## [3.45.0] – 2026-07-26
 
 ### Geändert
