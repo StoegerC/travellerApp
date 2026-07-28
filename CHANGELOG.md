@@ -9,6 +9,16 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ---
 
+## [3.48.0] – 2026-07-28
+
+### Geändert
+- **Delta Green: „Störungen" in den Hintergrund-Tab verschoben** — der Block steht jetzt direkt unter „Motivationen und Syndrome" statt im Werte-Tab, da Störungen inhaltlich eher zum psychologischen Profil des Charakters gehören als zu den Spielwerten. Reine Positionsänderung, Datenpfad/-struktur unverändert.
+
+### Neu
+- **Delta Green: Hinweistext zum Syndrom-Regelmechanismus** — bei „Motivationen und Syndrome" steht jetzt dezent, dass ein Syndrom entsteht, wenn der Agent seinen Breaking Point überschreitet.
+
+---
+
 ## [3.47.0] – 2026-07-27
 
 ### Geändert

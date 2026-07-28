@@ -21,7 +21,18 @@
  * pages/equipment.js's _showTraits(): Markdown-Text + Bild-Upload über
  * FileSync, imperativ erzeugt/angehängt statt Teil des deklarativen
  * render() — Details bleibt bewusst in BEIDEN Modi klickbar, wie bei der
- * Ausrüstung.
+ * Ausrüstung. Dezenter Hinweistext zum Regelmechanismus (Syndrom entsteht
+ * beim Überschreiten des Breaking Point) auf User-Bestätigung hin ergänzt,
+ * bewusst nicht selbst geraten (Unsicherheit über exakten offiziellen
+ * Wortlaut).
+ *
+ * "Störungen" (Disorders, character.systemData.disorders) sind seit
+ * 27.07.2026 ebenfalls hier, direkt unter "Motivationen und Syndrome" —
+ * vorher im Werte-Tab (systems/delta-green/pages/stats.js), User-
+ * Einschätzung: Störungen gehören inhaltlich eher zum psychologischen
+ * Profil des Charakters als zu den Spielwerten. Reine Positionsänderung,
+ * Datenpfad/Datenstruktur (freie Name+Wert-Liste über
+ * CoreWidgets.renderValueList/attachValueList) unverändert.
  */
 const DgBackgroundPage = {
   _esc(s) {
@@ -33,9 +44,23 @@ const DgBackgroundPage = {
   _motivationsSyndromes(char) {
     return char.systemData.motivationsSyndromes || (char.systemData.motivationsSyndromes = []);
   },
+  _disorders(char) {
+    return char.systemData.disorders || (char.systemData.disorders = []);
+  },
 
   render(character) {
-    return CareerBackground.render(character) + this._renderMotivationsBlock(character);
+    return CareerBackground.render(character)
+      + this._renderMotivationsBlock(character)
+      + this._renderDisordersBlock(character);
+  },
+
+  _renderDisordersBlock(character) {
+    return `<div class="dg-block">
+      ${CoreWidgets.renderValueList(this._disorders(character), {
+        title: 'Störungen', idPrefix: 'dgDisorder',
+        namePlaceholder: 'z.B. Paranoia', valuePlaceholder: 'Auslöser/Notizen', addLabel: '+ Störung',
+      })}
+    </div>`;
   },
 
   _renderMotivationsBlock(character) {
@@ -43,6 +68,7 @@ const DgBackgroundPage = {
     return `<div class="dg-block">
       <h3 class="dg-block-title">Motivationen und Syndrome</h3>
       <p class="dg-block-hint">„M" = Motivation, „S" = Syndrom.</p>
+      <p class="dg-block-hint">Ein Syndrom entsteht, wenn der Agent seinen Breaking Point überschreitet.</p>
       <div class="dg-ms-table">
         ${rows.map(r => this._renderMsRow(r)).join('') || '<p class="cr-empty">Noch keine Einträge.</p>'}
       </div>
@@ -72,6 +98,7 @@ const DgBackgroundPage = {
     };
     CareerBackground.attachListeners(char, rerender);
     this._attachMotivationsListeners(char, rerender);
+    CoreWidgets.attachValueList(char, this._disorders(char), { idPrefix: 'dgDisorder' }, rerender);
   },
 
   _attachMotivationsListeners(char, rerender) {
