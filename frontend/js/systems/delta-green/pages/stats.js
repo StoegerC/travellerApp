@@ -2,16 +2,18 @@
  * Werte – Attribute (UI-Begriff seit 26.07.2026, User-Wunsch; intern und im
  * Datenmodell weiterhin "Charakteristiken"/"characteristics" —
  * Bestandsschutz, siehe Kommentar bei _renderAttrLabel()), Ressourcen
- * (Trefferpunkte/Willenskraft/Sanity/Luck), Fertigkeiten und Störungen
- * (Disorders) für Delta Green.
+ * (Trefferpunkte/Willenskraft/Sanity/Luck) und Fertigkeiten für Delta Green.
+ * Störungen (Disorders) sind seit 27.07.2026 NICHT mehr hier, sondern im
+ * Hintergrund-Tab (systems/delta-green/pages/background.js) unter
+ * "Motivationen und Syndrome" — User-Einschätzung: Störungen gehören
+ * inhaltlich eher zum psychologischen Profil des Charakters als zu den
+ * Spielwerten, siehe dort für Details/Datenpfad.
  *
- * Fertigkeiten UND Störungen bewusst als freie Name+Wert-Liste statt eines
- * fest hinterlegten Katalogs wie MGT2s data/skills.js — so wird keine
- * Delta-Green-Fertigkeits-/Störungsliste aus dem Regelwerk in den Code
- * übernommen, und Hausregeln/Editionen mit abweichenden Listen
- * funktionieren genauso. Störungen nutzen weiterhin
- * CoreWidgets.renderValueList (Wert-Feld trägt Auslöser/Notiz statt eines
- * Prozentwerts). Fertigkeiten haben seit 25.07.2026 (User-Wunsch) ein
+ * Fertigkeiten bewusst als freie Name+Wert-Liste statt eines fest
+ * hinterlegten Katalogs wie MGT2s data/skills.js — so wird keine
+ * Delta-Green-Fertigkeitsliste aus dem Regelwerk in den Code übernommen,
+ * und Hausregeln/Editionen mit abweichenden Listen funktionieren genauso.
+ * Fertigkeiten haben seit 25.07.2026 (User-Wunsch) ein
  * eigenes, bespoke Rendering statt CoreWidgets.renderValueList — 3-spaltige
  * Darstellung, Checkbox+Name+Wert je Zeile, Steigern-Dialog beim Abhaken
  * (checked->unchecked — Ankreuzen speichert dagegen direkt ohne Dialog,
@@ -51,8 +53,9 @@
  * Beschreibungstext je Attribut (character.systemData.characteristicDescriptions).
  *
  * Datenpfad: character.systemData.characteristics/characteristicDescriptions/
- * hitPoints/willpower/sanity/luck/skills/disorders (Namespace-Regel, kein
- * Feld überschreibt MGT2s gleichnamige Top-Level-Felder).
+ * hitPoints/willpower/sanity/luck/skills (Namespace-Regel, kein Feld
+ * überschreibt MGT2s gleichnamige Top-Level-Felder; disorders liegt
+ * weiterhin unter systemData, wird aber jetzt in background.js verwaltet).
  *
  * Ressourcen zeigen zusätzlich die kurze Ableitungsregel in Grau — die
  * Standardformeln aus dem Delta-Green-Regelwerk (Agent's Handbook):
@@ -86,7 +89,6 @@ const DgStatsPage = {
   _sanity(char)    { return this._pool(char, 'sanity',    { current: 50, max: 50, breakingPoint: 40 }); },
   _luck(char)      { return this._pool(char, 'luck',      { current: 50, max: 50 }); },
   _skills(char)    { return char.systemData.skills || (char.systemData.skills = []); },
-  _disorders(char) { return char.systemData.disorders || (char.systemData.disorders = []); },
   _charDescriptions(char) {
     return char.systemData.characteristicDescriptions || (char.systemData.characteristicDescriptions = {});
   },
@@ -188,13 +190,6 @@ const DgStatsPage = {
       </div>
 
       ${this._renderSkillsBlock(character)}
-
-      <div class="dg-block">
-        ${CoreWidgets.renderValueList(this._disorders(character), {
-          title: 'Störungen', idPrefix: 'dgDisorder',
-          namePlaceholder: 'z.B. Paranoia', valuePlaceholder: 'Auslöser/Notizen', addLabel: '+ Störung',
-        })}
-      </div>
     </div>`;
   },
 
@@ -460,7 +455,6 @@ const DgStatsPage = {
     });
 
     this._attachSkillsListeners(char, rerender);
-    CoreWidgets.attachValueList(char, this._disorders(char), { idPrefix: 'dgDisorder' }, rerender);
   },
 
   _attachSkillsListeners(char, rerender) {
