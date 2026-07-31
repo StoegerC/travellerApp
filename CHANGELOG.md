@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Behoben
+- **Ausrüstung: Waffen-Attribut-Auswahl zeigte immer Traveller-Attribute** — unabhängig vom aktiven Regelsystem stand in der Attribut/Skill-Spalte einer Waffe hart MGT2s Liste (STR/DEX/END/INT/EDU/SOZ/PSI), sichtbar z.B. bei Delta-Green-Charakteren. Die Liste kommt jetzt vom aktiven System (neuer Manifest-Schlüssel `characteristicLabels`): MGT2 zeigt weiterhin seine sieben Attribute, Delta Green seine sechs (STR/CON/DEX/INT/POW/CHA), das Universal-Template (keine feste Attributliste) zeigt konsequent nur die „–"-Option.
+
 ---
 
 ## [3.50.0] – 2026-07-31

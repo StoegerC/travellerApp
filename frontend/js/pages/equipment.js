@@ -2,11 +2,6 @@ const EquipmentPage = {
   _activeTab: 'melee',
   skillNames: typeof TravellerSkills !== 'undefined' ? TravellerSkills.getSkills() : [],
 
-  _attrLabels: {
-    strength: 'STR', dexterity: 'DEX', endurance: 'END',
-    intelligence: 'INT', education: 'EDU', socialStatus: 'SOZ', psi: 'PSI'
-  },
-
   _esc(s) {
     return String(s || '')
       .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -90,10 +85,14 @@ const EquipmentPage = {
     </select>`;
   },
 
+  // Optionen kommen vom aktiven System (App._characteristicLabels(), User-
+  // Fund 31.07.2026 — vorher hart MGT2s Attributliste, unabhängig vom
+  // System). Systeme ohne feste Attributliste (z.B. Universal-Template)
+  // zeigen dadurch automatisch nur die "–"-Option.
   _attrSel(cls, current) {
     return `<select class="${cls}">
       <option value="">–</option>
-      ${Object.entries(this._attrLabels).map(([k, l]) =>
+      ${Object.entries(App._characteristicLabels()).map(([k, l]) =>
         `<option value="${k}"${current === k ? ' selected' : ''}>${l}</option>`).join('')}
     </select>`;
   },
