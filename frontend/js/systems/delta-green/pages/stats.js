@@ -77,6 +77,31 @@ const DgStatsPage = {
     luck: { field: 'luck',      label: 'Luck' },
   },
 
+  // Summe der Attributspunkte (User-Wunsch 30.07.2026) — nur im
+  // Bearbeitungsmodus sichtbar (siehe render()), rein informativ, keine
+  // Regelbindung (z.B. Punktekauf-Limits sind Sache der jeweiligen
+  // Delta-Green-Ausgabe/Hausregel, nicht Teil dieser App).
+  _attrSum(chars) {
+    return this._CHARACTERISTICS.reduce((sum, c) => sum + (chars[c.key] || 0), 0);
+  },
+
+  // Charakteristiken-Werte bevorzugt live aus dem DOM lesen (falls die
+  // Eingabefelder schon existieren) statt aus dem gespeicherten Modell —
+  // letzteres wird ja erst bei Blur aktualisiert (siehe attachListeners()),
+  // würde also während des Tippens veraltete Werte liefern. Beim
+  // allerersten render() (Felder noch nicht im DOM) fällt das automatisch
+  // auf das gespeicherte Modell zurück. Gemeinsam genutzt von
+  // _applyDerivedResourceValues() und der Attributspunkte-Summe.
+  _readAttrInputs(char) {
+    const stored = this._characteristics(char);
+    const chars = {};
+    this._CHARACTERISTICS.forEach(c => {
+      const el = document.getElementById(`dgChar-${c.key}`);
+      chars[c.key] = el ? (parseInt(el.value) || 0) : (stored[c.key] || 0);
+    });
+    return chars;
+  },
+
   _characteristics(char) {
     return char.systemData.characteristics
       || (char.systemData.characteristics = { str: 0, con: 0, dex: 0, int: 0, pow: 0, cha: 0 });
@@ -125,18 +150,7 @@ const DgStatsPage = {
   // Charakteristik-Eingabe und Sanity-Zähler in attachListeners() (Elemente
   // stehen -> Anzeige aktualisiert sich sofort mit).
   _applyDerivedResourceValues(char) {
-    // Charakteristiken-Werte bevorzugt live aus dem DOM lesen (falls die
-    // Eingabefelder schon existieren) statt aus dem gespeicherten Modell —
-    // letzteres wird ja erst bei Blur aktualisiert (siehe weiter unten),
-    // würde also während des Tippens veraltete Werte liefern. Beim
-    // allerersten render() (Felder noch nicht im DOM) fällt das
-    // automatisch auf das gespeicherte Modell zurück.
-    const stored = this._characteristics(char);
-    const chars = {};
-    this._CHARACTERISTICS.forEach(c => {
-      const el = document.getElementById(`dgChar-${c.key}`);
-      chars[c.key] = el ? (parseInt(el.value) || 0) : (stored[c.key] || 0);
-    });
+    const chars = this._readAttrInputs(char);
     const pools = { hp: this._hitPoints(char), wp: this._willpower(char), san: this._sanity(char) };
     const derived = this._derivedValues(chars, pools);
 
@@ -176,6 +190,7 @@ const DgStatsPage = {
               `).join('')}
             </div>
           </div>
+          ${App.editMode ? `<p class="dg-block-hint dg-attr-sum">Summe der Attributspunkte: <span id="dgAttrSum">${this._attrSum(chars)}</span></p>` : ''}
         </div>
 
         <div class="dg-block">
@@ -401,6 +416,8 @@ const DgStatsPage = {
       el?.addEventListener('input', () => {
         if (x5El) x5El.textContent = (parseInt(el.value) || 0) * 5;
         this._applyDerivedResourceValues(char);
+        const sumEl = document.getElementById('dgAttrSum');
+        if (sumEl) sumEl.textContent = this._attrSum(this._readAttrInputs(char));
       });
     });
 
