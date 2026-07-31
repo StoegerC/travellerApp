@@ -23,6 +23,30 @@ const NotesPage = {
     return p.image || null;
   },
 
+  // Klick aufs Personen-Bild (Lesemodus .person-img-view UND Bearbeitungs-
+  // Vorschau .person-img-edit, User-Wunsch 31.07.2026) zeigt es groß, im
+  // Original-Seitenverhältnis (object-fit: contain, wie schon die Vorschau
+  // selbst seit dem letzten Fix) statt auf die kleine Box beschränkt zu
+  // bleiben. Imperativ erzeugt/angehängt statt Teil des deklarativen
+  // render(), gleiches Muster wie equipment.js' _showTraits()/
+  // background.js' _showMsDetails() — schließt per Klick auf den
+  // Hintergrund oder Escape.
+  _openImageLightbox(src) {
+    if (!src) return;
+    const overlay = document.createElement('div');
+    overlay.className = 'img-lightbox-overlay';
+    overlay.innerHTML = `<img src="${this._esc(src)}" class="img-lightbox-img" alt="">`;
+    document.body.appendChild(overlay);
+
+    const close = () => {
+      overlay.remove();
+      document.removeEventListener('keydown', onKey);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    overlay.addEventListener('click', () => close());
+    document.addEventListener('keydown', onKey);
+  },
+
   // ─────────────────────────────── Datenzugriff ────────────────────────────
   // Roh-Zugriff (inkl. Tombstones) – nötig für save(), damit gelöschte
   // Einträge beim Zurückschreiben nicht aus character.notes verschwinden.
@@ -1478,6 +1502,14 @@ const NotesPage = {
       App.renderCurrentPage();
     });
 
+    // Klick aufs Personen-Bild (Lese- UND Bearbeitungsmodus) zeigt es groß,
+    // siehe _openImageLightbox(). Deckt nur ab, was HIER schon im DOM steht —
+    // ein per Upload frisch eingesetztes .person-img-edit (siehe weiter
+    // unten) bekommt seinen eigenen Listener direkt an Ort und Stelle.
+    document.querySelectorAll('.person-img-view, .person-img-edit').forEach(img => {
+      img.addEventListener('click', () => this._openImageLightbox(img.src));
+    });
+
     // Person-Bild Upload (komprimiert auf max 320×320, JPEG 0.75, dann als
     // echte Datei hochgeladen statt als Base64 im Charakter-JSON eingebettet)
     document.getElementById('personImgUpload')?.addEventListener('change', e => {
@@ -1505,7 +1537,11 @@ const NotesPage = {
             window._personCurrentImage       = null;
             window._personCurrentImageFileId = result.data.id;
             const preview = document.getElementById('personImgPreview');
-            if (preview) preview.innerHTML = `<img src="${this._esc(FileSync.getUrl(result.data.id))}" class="person-img-edit">`;
+            if (preview) {
+              preview.innerHTML = `<img src="${this._esc(FileSync.getUrl(result.data.id))}" class="person-img-edit">`;
+              const newImg = preview.querySelector('.person-img-edit');
+              newImg.addEventListener('click', () => this._openImageLightbox(newImg.src));
+            }
             const rmBtn = document.getElementById('personImgRemove');
             if (!rmBtn) {
               const uploadBtn = document.querySelector('.person-img-upload-btn');
