@@ -91,6 +91,17 @@ const App = {
     return this._system().entityExtraFields?.[pluralType] || [];
   },
 
+  // Attribut-Kürzel des aktiven Systems (key -> Anzeige-Label), z.B. MGT2s
+  // { strength: 'STR', … } oder Delta Greens { str: 'STR', … } — genutzt von
+  // der Waffen-Attribut-Auswahl in equipment.js (User-Fund 31.07.2026: dort
+  // stand bis dahin MGT2s Liste hart verdrahtet, unabhängig vom aktiven
+  // System, z.B. sichtbar bei Delta-Green-Charakteren). Kern-Fallback: leeres
+  // Objekt -> Dropdown zeigt nur die "–"-Option (z.B. Universal-Template,
+  // das keine feste Attributliste hat, sondern eine freie Name+Wert-Liste).
+  _characteristicLabels() {
+    return this._system().characteristicLabels || {};
+  },
+
   _escExtra(s) {
     return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');

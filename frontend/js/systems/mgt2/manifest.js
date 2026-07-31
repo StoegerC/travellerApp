@@ -71,6 +71,18 @@ const Mgt2System = {
   // 18–120 ist eine MGT2-Annahme (Musterungsalter), kein Kern-Konzept.
   ageRange: [18, 120],
 
+  // Attribut-Kürzel für die Waffen-Attribut-Auswahl in equipment.js
+  // (User-Fund 31.07.2026, Feld-Audit-artige Nachzügler-Korrektur): stand
+  // vorher hart in equipment.js, unabhängig vom aktiven System, dadurch
+  // z.B. bei Delta-Green-Charakteren fälschlich sichtbar. character.attributes
+  // (das eigentliche Werte-Objekt mit den .dm-Feldern für die Mod-Berechnung
+  // in equipment.js' _weaponMod()) bleibt unverändert MGT2-Bestandsfeld,
+  // hier geht es nur um die Label-Liste fürs Dropdown.
+  characteristicLabels: {
+    strength: 'STR', dexterity: 'DEX', endurance: 'END',
+    intelligence: 'INT', education: 'EDU', socialStatus: 'SOZ', psi: 'PSI',
+  },
+
   // Währung & Finanz-Kategorien (Phase 2, Feld-Audit Fund F5): Kern-Seiten
   // (finances.js, equipment.js, notes.js) fragen App._currency()/
   // _financeCategories() statt "Cr" bzw. die Kategorienliste hart zu kennen.

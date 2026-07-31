@@ -32,6 +32,12 @@ const UniversalSystem = {
     { id: 'notes',     icon: '📝', label: 'Log',        page: () => NotesPage },
   ],
 
+  // Kein characteristicLabels-Override (User-Fund 31.07.2026, siehe
+  // App._characteristicLabels()/equipment.js _attrSel()): Attribute liegen
+  // hier als freie Name+Wert-Liste (systemData.attributes), kein fester
+  // Schlüsselsatz wie bei MGT2/Delta Green — die Waffen-Attribut-Auswahl
+  // zeigt deshalb konsequent nur die "–"-Option statt eine erfundene Liste.
+
   // Namespace-Regel (Plan §3): alle Regeldaten unter character.systemData.
   // mergeSpec deklariert die beiden Listen granular (keyField "id"), damit
   // zwei Geräte gleichzeitig unterschiedliche Einträge ändern können, ohne

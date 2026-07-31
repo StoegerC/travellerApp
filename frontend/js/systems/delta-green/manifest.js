@@ -80,6 +80,24 @@ const DeltaGreenSystem = {
   // (2x W10 = W100) gegen Fertigkeitswerte.
   diceDefault: 'D100',
 
+  // Attribut-Kürzel für die Waffen-Attribut-Auswahl in equipment.js
+  // (User-Fund 31.07.2026): dort stand bis dahin MGT2s Attributliste hart
+  // verdrahtet, unabhängig vom aktiven System — bei einem Delta-Green-
+  // Charakter waren dadurch Traveller-Attribute (STR im Sinne von
+  // Strength/Stärke, EDU, SOZ, PSI, …) auswählbar. Dieselben Kürzel wie
+  // DgStatsPage._CHARACTERISTICS. Bewusst NUR die Label-Liste fürs
+  // Dropdown — equipment.js' _weaponMod()-Berechnung liest weiterhin
+  // character.attributes[key].dm (MGT2-Bestandsfeld, existiert bei Delta
+  // Green nicht), eine Auswahl hier wirkt sich also noch auf keinen
+  // sichtbaren Mod-Wert aus. Das ist kein Fehler dieser Änderung, sondern
+  // der bisherige Stand: die Skill-Auswahl daneben (character.skills mit
+  // .level) griff bei Delta Green schon vorher ins Leere (eigener
+  // Datenpfad systemData.skills mit .value). Ein echtes Delta-Green-Mod-
+  // System wäre eine eigene, hier nicht getroffene Design-Entscheidung.
+  characteristicLabels: {
+    str: 'STR', con: 'CON', dex: 'DEX', int: 'INT', pow: 'POW', cha: 'CHA',
+  },
+
   // PDF-Export (User-Wunsch 31.07.2026, siehe pdf-export.js): Agent, Werte
   // und Ausrüstung, in dieser Reihenfolge. Bewusst nicht Hintergrund/Log —
   // nur die klassischen "Charakterbogen"-Werte, wie explizit gewünscht.
