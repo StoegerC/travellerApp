@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.50.0] – 2026-07-31
+
 ### Neu
 - **Journal: Personen-Bild anklicken zum Vergrößern** — Klick auf das Bild in der Detailansicht oder der Bearbeitungs-Vorschau zeigt es groß über einer abgedunkelten Fläche, im Original-Seitenverhältnis. Schließt per Klick irgendwo im Bild oder Escape.
 
