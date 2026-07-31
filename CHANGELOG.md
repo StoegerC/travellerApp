@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Neu
+- **Delta Green: Summe der Attributspunkte im Bearbeitungsmodus** — unter der Attribute-Tabelle steht jetzt die Summe aller sechs Attributwerte, live aktualisiert bei jeder Eingabe. Nur im Bearbeitungsmodus sichtbar.
+
 ---
 
 ## [3.48.0] – 2026-07-28

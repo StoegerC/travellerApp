@@ -8621,6 +8621,15 @@ body.dark-mode .dice-history-empty { color: #6a6f94; }
   font-family: inherit;
 }
 
+/* Summe der Attributspunkte (User-Wunsch 30.07.2026) — nur im
+   Bearbeitungsmodus, siehe stats.js render(). .dg-block-hint hat
+   negativen top-margin (rückt unter eine Überschrift), hier aber unter der
+   Tabelle nicht passend -> eigener Abstand + etwas Betonung fürs Zahlwort. */
+.dg-attr-sum {
+  margin: 10px 0 0;
+  font-weight: 600;
+}
+
 .dg-x5-cell {
   display: flex;
   align-items: center;
