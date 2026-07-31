@@ -98,6 +98,10 @@
           <button id="darkModeBtn" class="btn-dark-mode" title="Dark Mode umschalten">🌙</button>
           <button id="undoBtn" class="btn-undo" disabled title="Rückgängig (Cmd/Strg+Z)">↩</button>
           <button id="historyBtn" class="btn-history" title="Versionsverlauf"><span class="btn-icon-sym">⏱</span><span class="btn-label-text"> Verlauf</span></button>
+          <!-- PDF-Export (pdf-export.js): Sichtbarkeit steuert
+               PdfExport.updateVisibility() (nur Systeme mit Manifest-
+               Schlüssel printTabs, aktuell nur Delta Green). -->
+          <button id="pdfExportBtn" class="btn-pdf-export" title="Als PDF exportieren" style="display:none"><span class="btn-icon-sym">🖨</span><span class="btn-label-text"> PDF</span></button>
           <button id="toggleEditBtn" class="btn-edit">✎ Bearbeiten</button>
           <span id="status-message" class="status"></span>
         </div>
@@ -133,6 +137,13 @@
   <div class="dice-modal-overlay" id="diceOverlay">
     <div class="dice-modal" id="diceModalContent"></div>
   </div>
+
+  <!-- PDF-Export (pdf-export.js): unsichtbarer Container, wird nur beim
+       Drucken (window.print(), siehe PdfExport.export()) über eine
+       @media print-Regel sichtbar — alles andere wird während des Drucks
+       ausgeblendet (siehe styles.css). Nach dem Drucken (afterprint) wieder
+       geleert. -->
+  <div id="printExportContainer" class="print-export-container"></div>
 
   <!-- Neuer Charakter: Lokal oder Cloud -->
   <div id="newCharModal" class="vh-modal">
@@ -396,6 +407,7 @@
   <script src="js/auth.js?v=3.48.1"></script>
   <script src="js/campaign.js?v=3.48.1"></script>
   <script src="js/dice-roller.js?v=3.48.1"></script>
+  <script src="js/pdf-export.js?v=3.48.1"></script>
   <script src="js/filesync.js?v=3.48.1"></script>
   <script src="js/markdown.js?v=3.48.1"></script>
   <script src="js/mention-autocomplete.js?v=3.48.1"></script>

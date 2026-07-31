@@ -181,8 +181,16 @@ UI / UX
     bereits vorbereitet (öffnet das Widget mit vorgegebener Notation),
     aber noch nirgends aufgerufen. Nur bei Bedarf umsetzen.
 [ ] Schnellsuche global im Header (Personen, Orte, Quests, Sessions)
+[ERLEDIGT] Druckansicht / PDF-Export des Charakterbogens — Delta Green
+    (User-Wunsch 31.07.2026, Delta-Green-only siehe Scope-Notiz): Knopf im
+    Header (🖨 PDF, pdf-export.js), druckt Agent/Werte/Ausrüstung über den
+    nativen Browser-Druckdialog statt einer externen PDF-Bibliothek. Manifest-
+    Schlüssel printTabs steuert Sichtbarkeit + Auswahl — bei MGT2/Universal
+    bewusst nicht gesetzt, Knopf bleibt dort unsichtbar. Seiten-Module können
+    optional renderPrint(character) anbieten (Fallback render()), genutzt von
+    metadata.js (ohne App-Chrome wie Charakter-Selektor/Sync/Export-Knopf) und
+    equipment.js (alle vier Kategorien statt nur des aktiven Sub-Tabs).
 [ ] Timeline-Ansicht: Sessions chronologisch als Zeitstrahl
-[ ] Druckansicht / PDF-Export des Charakterbogens
 
 TRAVELLER
 [ERLEDIGT] Schiff Bild größer + zusätzliche Bilder (analog zum Charakter

@@ -61,6 +61,21 @@ const EquipmentPage = {
     return html;
   },
 
+  // Für den PDF-Export (siehe pdf-export.js): alle vier Kategorien
+  // nacheinander statt nur des gerade aktiven Sub-Tabs (_activeTab) — ein
+  // Export soll die komplette Ausrüstung zeigen, nicht nur das, was
+  // zufällig zuletzt angeklickt war. Finanzen bewusst ausgeklammert
+  // (User-Wunsch 31.07.2026: nur Agent, Werte, Ausrüstung).
+  renderPrint(character) {
+    const data = this._d(character);
+    return `
+      <h3>Nahkampf</h3>${this._meleeTab(data.melee, character)}
+      <h3>Fernkampf</h3>${this._rangedTab(data.ranged, character)}
+      <h3>Rüstung</h3>${this._armorTab(data.armor)}
+      <h3>Sonstiges</h3>${this._miscTab(data.misc)}
+    `;
+  },
+
   _wrap(tableHtml, addId) {
     return `<div class="equip-section">
       ${App.editMode && addId ? `<div class="equip-add-row"><button id="${addId}" class="btn-success">+ Hinzufügen</button></div>` : ''}

@@ -318,6 +318,7 @@ const App = {
     this.setupEventListeners();
     this._initPullToRefresh();
     DiceRoller.init();
+    PdfExport.init();
 
     const characters = Storage.listCharacters();
     if (characters.length > 0) {
@@ -450,7 +451,7 @@ const App = {
     this.editMode = false;
     this._undoStack = [];
     this._updateUndoBtn();
-    this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility();
+    this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility(); PdfExport.updateVisibility();
     this._syncState = { status: 'idle', lastSync: null, error: null };
     this._pendingPush = false;
     this._campaignData = null;
@@ -509,6 +510,14 @@ const App = {
     return this._system().defaultSkills || [];
   },
 
+  // PDF-Export (pdf-export.js): Array von Tab-IDs, die exportiert werden
+  // sollen (Reihenfolge = Druck-Reihenfolge). Ohne diesen Manifest-
+  // Schlüssel bleibt der Druck-Knopf unsichtbar (siehe
+  // PdfExport.updateVisibility()) — aktuell nur bei Delta Green gesetzt.
+  _printTabs() {
+    return this._system().printTabs || [];
+  },
+
   async createNewCharacter() {
     const result = await this._showNewCharDialog();
     if (result === null) return;
@@ -528,7 +537,7 @@ const App = {
     this._unknownSystem = false;
     this._readOnlyView  = false;
     this._updateUnknownSystemBanner();
-    this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility();
+    this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility(); PdfExport.updateVisibility();
     // Tab-Leiste neu aufbauen: das neue System kann von dem des zuvor
     // offenen Charakters abweichen (Multi-System Phase 3).
     this._buildTabs();
@@ -689,7 +698,7 @@ const App = {
     if (page && page.save) page.save(this.currentCharacter);
 
     if (Storage.saveCharacter(this.currentCharacter)) {
-      this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility();
+      this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility(); PdfExport.updateVisibility();
       if (saveVersion) this._saveVersion(versionMeta);
       // Kein direkter _pushToCloud()-Aufruf hier: Storage.saveCharacter() plant
       // selbst schon einen (dirty-geprüften) Push, sobald sich wirklich etwas
@@ -731,7 +740,7 @@ const App = {
     this.currentCharacter = Character.fromJSON(json);
     window.currentCharacter = this.currentCharacter;
     Storage.saveCharacter(this.currentCharacter);
-    this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility();
+    this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility(); PdfExport.updateVisibility();
     this.renderCurrentPage();
     this._updateUndoBtn();
     this.showStatus('Rückgängig', 'success');
@@ -770,7 +779,7 @@ const App = {
         this.currentCharacter = Character.fromJSON(version.data);
         window.currentCharacter = this.currentCharacter;
         Storage.saveCharacter(this.currentCharacter);
-        this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility();
+        this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility(); PdfExport.updateVisibility();
         this.renderCurrentPage();
         this._updateUndoBtn();
         modal.classList.remove('visible');
@@ -1050,7 +1059,7 @@ const App = {
       Storage._suppressPush = true;
       Storage.saveCharacter(cloudChar);
       Storage._suppressPush = false;
-      this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility();
+      this._updateHeaderName(); this._updateHeaderBanner(); DiceRoller.updateVisibility(); PdfExport.updateVisibility();
       this.renderCurrentPage();
       // Hat der Merge lokale, noch nicht gepushte Änderungen eingebracht,
       // weicht das Ergebnis vom Serverstand ab → direkt nachpushen statt

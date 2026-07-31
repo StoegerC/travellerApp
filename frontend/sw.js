@@ -12,6 +12,7 @@ const ASSETS = [
   './js/auth.js',
   './js/campaign.js',
   './js/dice-roller.js',
+  './js/pdf-export.js',
   './js/filesync.js',
   './js/markdown.js',
   './js/mention-autocomplete.js',
