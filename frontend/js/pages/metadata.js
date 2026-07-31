@@ -176,6 +176,45 @@ const MetadataPage = {
     return html;
   },
 
+  // Für den PDF-Export (siehe pdf-export.js): nur die eigentlichen
+  // Charakterdaten (Portrait + Charakterdaten-Block), OHNE App-Chrome wie
+  // Charakter-Selektor, Sync-Badge, Kampagnen-Sektion oder JSON-Export-
+  // Knopf — die gehören nicht auf ein gedrucktes Charakterblatt. Auch ohne
+  // Portrait-Navigation/Upload (nur das aktuell gewählte Bild, statisch).
+  renderPrint(character) {
+    const meta      = character.metadata;
+    const portraits = meta.portraits || [];
+    const idx       = Math.min(meta.portraitIndex || 0, Math.max(0, portraits.length - 1));
+    const current   = this._portraitSrc(portraits[idx]);
+
+    const portraitWidget = `
+      <div class="portrait-widget">
+        <div class="portrait-frame">
+          ${current
+            ? `<img class="portrait-img" src="${this._esc(current)}" alt="Portrait">`
+            : `<div class="portrait-placeholder">Kein Portrait</div>`}
+        </div>
+      </div>`;
+
+    return `
+      <div class="meta-grid">
+        <div>
+          <h3>Portrait</h3>
+          ${portraitWidget}
+        </div>
+        <div>
+          <h3>Charakterdaten</h3>
+          <div style="display:grid;gap:12px;">
+            <div><strong>Name:</strong> ${this._esc(meta.name) || '–'}</div>
+            <div><strong>Titel / Rang:</strong> ${this._esc(meta.title) || '–'}</div>
+            <div><strong>Alter:</strong> ${meta.age || 18} Jahre${meta.birthdate ? ` <span class="meta-birthdate">(geb. ${this._esc(meta.birthdate)})</span>` : ''}</div>
+            <div><strong>${App._label('homeworld')}:</strong> ${this._esc(meta.homeworld) || '–'}</div>
+            ${App._renderMetadataExtraFieldsView(meta)}
+          </div>
+        </div>
+      </div>`;
+  },
+
   save(character) {
     if (!document.getElementById('charName')) return;
     character.metadata = {

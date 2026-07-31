@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Neu
+- **Delta Green: PDF-Export für Agent, Werte und Ausrüstung** — neuer Knopf im Header (🖨 PDF) druckt diese drei Seiten über den nativen Browser-Druckdialog ("Als PDF sichern"), jede auf einer eigenen Seite. Ausrüstung zeigt dabei alle vier Kategorien (Nahkampf/Fernkampf/Rüstung/Sonstiges) statt nur des gerade offenen Sub-Tabs. Nur bei Delta Green sichtbar.
+
 ---
 
 ## [3.48.1] – 2026-07-31

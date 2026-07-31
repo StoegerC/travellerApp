@@ -80,6 +80,14 @@ const DeltaGreenSystem = {
   // (2x W10 = W100) gegen Fertigkeitswerte.
   diceDefault: 'D100',
 
+  // PDF-Export (User-Wunsch 31.07.2026, siehe pdf-export.js): Agent, Werte
+  // und Ausrüstung, in dieser Reihenfolge. Bewusst nicht Hintergrund/Log —
+  // nur die klassischen "Charakterbogen"-Werte, wie explizit gewünscht.
+  // Kein entsprechender Schlüssel bei MGT2/Universal (Anpassungswünsche
+  // gelten bis auf Widerruf nur für Delta Green) — der Druck-Knopf bleibt
+  // dort deshalb unsichtbar.
+  printTabs: ['metadata', 'stats', 'equipment'],
+
   // Vorbefüllung für character.systemData.skills bei der Neuanlage (siehe
   // App._seedDefaultSkills()) — Fertigkeits-NAMEN samt Basis-Prozentwert
   // vom offiziellen Charakterbogen, im Namen selbst (siehe Kommentar
