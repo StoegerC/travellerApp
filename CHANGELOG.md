@@ -7,6 +7,9 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+### Behoben
+- **Journal: Seitenverhältnis von Personen-Bildern bleibt erhalten** — hochgeladene Bilder wurden bisher auf eine feste Box zugeschnitten (`object-fit: cover`), egal ob Hoch- oder Querformat. Jetzt wird das ganze Bild ohne Beschnitt gezeigt (`object-fit: contain`), bei abweichendem Format mit dezentem Leerraum in der Box-Hintergrundfarbe. Betrifft Detailansicht und Bearbeitungs-Vorschau; der kleine runde Listen-Avatar bleibt bewusst wie gewohnt zugeschnitten.
+
 ---
 
 ## [3.49.0] – 2026-07-31

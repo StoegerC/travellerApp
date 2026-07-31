@@ -1769,10 +1769,16 @@ button {
 }
 
 /* ── Personen-Bild (Detailansicht, Lesemodus) ────────────────────────────── */
+/* object-fit: contain statt cover (User-Wunsch 31.07.2026): Seitenverhältnis
+   des hochgeladenen Bildes bleibt erhalten statt auf die 120×160-Box
+   zugeschnitten zu werden — bei abweichendem Format bleibt oben/unten bzw.
+   links/rechts Leerraum in der Box-Hintergrundfarbe (wie beim Platzhalter
+   in .person-img-wrap, siehe unten). */
 .person-img-view {
   width: 120px;
   height: 160px;
-  object-fit: cover;
+  object-fit: contain;
+  background: #f5f5f5;
   border-radius: 8px;
   border: 2px solid #ddd;
   flex-shrink: 0;
@@ -1818,10 +1824,13 @@ button {
   justify-content: center;
 }
 
+/* object-fit: contain statt cover (User-Wunsch 31.07.2026, siehe
+   .person-img-view oben) — .person-img-wrap liefert bereits den
+   Leerraum-Hintergrund (auch im Dark Mode, siehe dortigen Override). */
 .person-img-edit {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .person-img-placeholder {
@@ -6679,6 +6688,11 @@ body.dark-mode .session-active-badge {
 
 /* ── Personen-Bearbeitungsformular ── */
 body.dark-mode .person-img-wrap {
+  background: #1d2035;
+  border-color: #2c3050;
+}
+/* Leerraum-Hintergrund bei object-fit: contain (siehe .person-img-view) */
+body.dark-mode .person-img-view {
   background: #1d2035;
   border-color: #2c3050;
 }
