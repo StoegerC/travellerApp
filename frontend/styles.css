@@ -9145,13 +9145,19 @@ body.dark-mode .dg-ms-label-view { color: #dde0f5; }
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
   cursor: zoom-out;
 }
 
+/* width/height (statt nur max-width/max-height) sind hier bewusst gesetzt:
+   Personen-Bilder werden beim Upload auf max. 320px komprimiert (siehe
+   notes.js) — ein reines max-width/max-height:100% deckelt zwar die
+   Größe nach oben, VERGRÖSSERT ein kleineres Bild aber nicht über seine
+   natürliche Pixelgröße hinaus. Mit expliziten vw/vh-Maßen + object-fit:
+   contain füllt das Bild fast den ganzen Bildschirm, unabhängig von
+   seiner Originalgröße (User-Wunsch 01.08.2026: "noch größer"). */
 .img-lightbox-img {
-  max-width: 100%;
-  max-height: 100%;
+  width: 92vw;
+  height: 92vh;
   object-fit: contain;
   border-radius: 8px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
