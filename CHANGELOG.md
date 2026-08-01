@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.50.2] – 2026-08-01
+
 ### Geändert
 - **Journal: Bild-Lightbox deutlich größer** — die Vergrößerung füllte bisher höchstens die Originalgröße des hochgeladenen Bildes (max. 320px durch die Upload-Kompression), jetzt füllt sie fast den ganzen Bildschirm.
 
