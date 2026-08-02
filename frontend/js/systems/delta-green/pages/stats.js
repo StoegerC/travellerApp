@@ -432,6 +432,19 @@ const DgStatsPage = {
       });
     });
 
+    this._attachPoolListeners(char);
+    this._attachSkillsListeners(char, rerender);
+  },
+
+  // Ressourcen-Zähler + Maximalwert-/Breaking-Point-Felder — ausgelagert
+  // aus attachListeners() (User-Wunsch 02.08.2026), damit der neue Kampf-Tab
+  // (systems/delta-green/pages/combat.js) dieselbe Verdrahtung wiederverwenden
+  // kann statt sie zu duplizieren (Single Source of Truth für die
+  // Ressourcen-Logik). Gleiche IDs wie im _renderPool()/_renderBreakingPoint()-
+  // Markup — unkritisch, weil pro Tab immer nur ein Seiten-Container gefüllt
+  // ist (siehe Render-Zyklus in CLAUDE.md), Werte-Tab und Kampf-Tab existieren
+  // also nie gleichzeitig im DOM.
+  _attachPoolListeners(char) {
     Object.entries(this._POOLS).forEach(([prefix, meta]) => {
       const pool = this._pool(char, meta.field, {});
       CoreWidgets.attachCounter({
@@ -470,8 +483,6 @@ const DgStatsPage = {
       san.breakingPoint = parseInt(breakEl.value) || 0;
       Storage.saveCharacter(char);
     });
-
-    this._attachSkillsListeners(char, rerender);
   },
 
   _attachSkillsListeners(char, rerender) {
