@@ -42,6 +42,7 @@ const ASSETS = [
   './js/systems/delta-green/manifest.js',
   './js/systems/delta-green/calendar.js',
   './js/systems/delta-green/pages/stats.js',
+  './js/systems/delta-green/pages/combat.js',
   './js/systems/delta-green/pages/background.js',
   './js/app.js',
 ];

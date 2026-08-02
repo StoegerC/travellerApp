@@ -128,10 +128,16 @@ const DeltaGreenSystem = {
     'Wachsamkeit (20%)', 'Waffenloser Kampf (40%)', 'Wissenschaften (0%)',
   ],
 
+  // Reihenfolge bewusst so gewählt (User-Wunsch 02.08.2026): die drei
+  // "Spielwerte"-Tabs Werte/Ausrüstung/Kampf direkt hintereinander, bevor
+  // die eher erzählerischen Tabs Hintergrund/Log folgen — Kampf baut
+  // inhaltlich auf Werte (Ressourcen) und Ausrüstung (aktive Bewaffnung/
+  // Rüstung) auf, siehe pages/combat.js.
   tabs: [
     { id: 'metadata',   icon: '👤', label: 'Agent',       page: () => MetadataPage },
     { id: 'stats',      icon: '📊', label: 'Werte',       page: () => DgStatsPage },
     { id: 'equipment',  icon: '🎒', label: 'Ausrüstung',  page: () => EquipmentPage },
+    { id: 'combat',     icon: '⚔️', label: 'Kampf',       page: () => DgCombatPage },
     { id: 'background', icon: '📖', label: 'Hintergrund', page: () => DgBackgroundPage },
     { id: 'notes',      icon: '📝', label: 'Log',         page: () => NotesPage },
   ],
