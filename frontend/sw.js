@@ -1,4 +1,4 @@
-const CACHE = 'traveller-v3.50.2';
+const CACHE = 'traveller-v3.51.0';
 
 const ASSETS = [
   './',

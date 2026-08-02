@@ -7,6 +7,10 @@ Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
 ## [Unreleased]
 
+---
+
+## [3.51.0] – 2026-08-02
+
 ### Neu
 - **Delta Green: neuer Kampf-Tab** — Ressourcen (Trefferpunkte/Willenskraft/Sanity/Luck/Breaking Point) inkl. ±-Zähler, aktive Rüstung mit Gesamtschutz, aktive Nahkampf-/Fernkampfwaffe inkl. Werten und ±-Munitionszähler, sowie eine Kurzreferenz der drei kampfrelevanten Fertigkeiten (Ausweichen/Schusswaffen/Nahkampfwaffen). Ressourcen-Zähler teilen sich dieselbe Verdrahtung wie der Werte-Tab (eine Änderung wirkt sofort auf beiden Tabs).
 
